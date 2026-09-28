@@ -1,183 +1,177 @@
-# Piloto Reto 5 - Mapa de riesgos (DATOS SINTETICOS)
+# Piloto Reto 5 · Mapa de riesgos multicriterio
 
-Demostracion end-to-end del modelo multicriterio descrito en `Propuesta_Reto_5_v2.docx`:
-Bronce -> Plata -> Oro, calculo del Indice de Criticidad Territorial (ICT), mapa de
-calor y alertas, sobre datos **completamente inventados**.
+Piloto del **Índice de Criticidad Territorial (ICT)** para la convocatoria
+*Transforma la Energía* (Reto 5, Grupo Ecopetrol), desarrollado por CEN&T
+Ingenieros Consultores. Recorre de punta a punta el flujo de la propuesta:
+arquitectura medallion (Bronce → Plata → Oro), modelo multicriterio explicable,
+mapa de calor, alertas tempranas y una aplicación web para explorarlo.
 
-**Nada de lo que hay aqui es informacion real de Ecopetrol, de La Guajira ni de
-ninguna comunidad.** Los proyectos, paquetes de trabajo, comunidades, areas
-protegidas y el registro de riesgos son generados por `src/generar_datos.py`.
-Sirve para validar el mecanismo del modelo y el flujo de datos, no para sacar
-conclusiones sobre riesgos reales.
+> **Datos sintéticos.** Nada de lo que hay aquí es información real de
+> Ecopetrol, de La Guajira ni de ninguna comunidad. Proyectos, paquetes de
+> trabajo, comunidades, áreas protegidas, clima y el registro de riesgos los
+> genera `src/generar_datos.py`. El piloto sirve para validar el mecanismo del
+> modelo y el flujo de datos, no para sacar conclusiones sobre riesgos reales.
 
-## Que incluye
+## Inicio rápido
 
-- **Motor multicriterio** (`src/modelo/ict.py`): Indice de Criticidad Territorial
-  (ICT) 0-100 por paquete de trabajo, con normalizacion, decaimiento por
-  distancia, agregacion configurable y contribucion por criterio.
-- **AHP** (`src/modelo/ahp.py`): ejemplo de derivacion de pesos por comparacion
-  por pares, con razon de consistencia.
-- **Estadistica espacial** (`src/modelo/espacial.py`): kernel density para el
-  mapa de calor y Getis-Ord Gi* para puntos calientes significativos.
-- **Pipeline Bronce/Plata/Oro** (`src/generar_datos.py`, `src/bronce_a_plata.py`,
-  `src/plata_a_oro.py`).
-- **Validacion** (`src/validacion.py`): backtest contra eventos materializados
-  y analisis de sensibilidad de los pesos.
-- **API + frontend** (`app/`): FastAPI + Leaflet + Chart.js, sin build step.
-  El diseno sigue la skill de proyecto `.claude/skills/reto5-design/`
-  (tokens, componentes y recetas derivados de las referencias en `multimedia/`).
-- **Exportacion SIG** (`src/exportar_gis.py`): GeoPackage listo para ArcGIS/QGIS.
-
-Los parametros del modelo (pesos, umbrales, radios de influencia) estan en
-[`parametros.yaml`](parametros.yaml), versionados y separados del codigo.
-
-## Arranque con un solo comando
-
-Desde la carpeta del proyecto (local o de red), con Python 3.12 instalado:
+Requisitos: [Git](https://git-scm.com/downloads), **Python 3.12** e internet
+(la interfaz carga fuentes, mapas base, gráficos e iconos desde CDN).
 
 ```bash
+git clone https://github.com/DESARROLLO-CENYT/Piloto_Ecopetrol_Reto5.git
+cd Piloto_Ecopetrol_Reto5
 py -3.12 iniciar.py
 ```
 
-Crea el entorno virtual en una carpeta local de cada PC (`%LOCALAPPDATA%\reto5-piloto`),
-instala dependencias solo la primera vez, genera los datos si faltan, levanta
-el servidor y abre el navegador. Opciones: `--regenerar`, `--red` (para abrirlo
-desde otros PC de la red), `--puerto 8001`, `--sin-navegador`. En Windows
-tambien sirve doble clic sobre `iniciar.bat`.
+En Mac o Linux el último comando es `python3.12 iniciar.py`. En Windows también
+sirve doble clic sobre `iniciar.bat`.
 
-Copia compartida del equipo: `\\192.168.1.2\cenyt-desarollo\RETO-ECOPETROL\piloto`
-(`py -3.12 \\192.168.1.2\cenyt-desarollo\RETO-ECOPETROL\piloto\iniciar.py`).
+`iniciar.py` hace solo lo que falte, en este orden:
 
-## Como correrlo en otro PC (paso a paso manual)
+1. Crea el entorno virtual en una carpeta local del PC
+   (`%LOCALAPPDATA%\reto5-piloto` en Windows, `~/.cache/reto5-piloto` en Mac/Linux).
+2. Instala `requirements.txt` la primera vez (unos minutos) o cuando cambie.
+3. Genera los datos si no existe la capa Oro (menos de un minuto).
+4. Levanta la aplicación en `http://127.0.0.1:8000` y abre el navegador.
 
-Requisitos: **Python 3.12** e **internet** (el frontend carga fuentes, Leaflet,
-Chart.js, iconos y los mapas base desde CDN; sin conexion la pagina abre pero
-sin mapa ni graficos).
+| Opción | Para qué |
+|---|---|
+| `--regenerar` | Vuelve a generar los datos aunque ya existan |
+| `--red` | Permite abrir la aplicación desde otros PC de la red local (muestra la IP) |
+| `--puerto 8001` | Usa otro puerto si el 8000 está ocupado |
+| `--sin-navegador` | No abre el navegador |
 
-1. Copiar la carpeta `piloto/` completa **sin** `.venv/` (el entorno virtual
-   guarda rutas de este equipo y no funciona en otro; OneDrive lo sincroniza
-   igual, asi que si llega, borrarlo en el otro PC y recrearlo).
-2. Crear el entorno e instalar dependencias (una sola vez), desde `piloto/`:
+`Ctrl+C` en la terminal detiene el servidor.
 
-   Windows:
-   ```bash
-   py -3.12 -m venv .venv
-   .venv/Scripts/python.exe -m pip install -r requirements.txt
-   ```
-   Mac / Linux:
-   ```bash
-   python3.12 -m venv .venv
-   .venv/bin/python -m pip install -r requirements.txt
-   ```
-3. Datos: si `data/gold/` ya viene copiada se puede saltar este paso. Para
-   regenerar todo (Pasos 1-4; tarda menos de un minuto):
-   ```bash
-   .venv/Scripts/python.exe ejecutar_pipeline.py
-   ```
-   Los datos salen iguales por la semilla 42, salvo las fechas, que se
-   calculan desde el dia en que se corre.
-4. Levantar la aplicacion y abrir `http://127.0.0.1:8000`:
-   ```bash
-   .venv/Scripts/python.exe run_app.py
-   ```
-   (en Mac / Linux cambiar `.venv/Scripts/python.exe` por `.venv/bin/python`)
+### Actualizar a la última versión
 
-Opcional, GeoPackage para ArcGIS/QGIS (Paso 7):
-```bash
-cd src && ../.venv/Scripts/python.exe exportar_gis.py && cd ..
-```
-
-### Pruebas
+Desde la carpeta del repositorio:
 
 ```bash
-.venv/Scripts/python.exe -m pytest tests/ -v
+git pull
+py -3.12 iniciar.py
 ```
 
-## Guion de demo (5-7 minutos)
+Si cambió `requirements.txt`, `iniciar.py` reinstala las dependencias solo.
+Si cambió el modelo o el generador de datos, agrega `--regenerar`.
 
-1. **Portada** (`http://127.0.0.1:8000`): ICT promedio, zonas en alerta y
-   distribucion por categoria con datos vivos. Senalar el chip "Datos
-   sinteticos" de la barra superior.
-2. **Mapa** (base satelital): los 14 paquetes coloreados por nivel sobre el
-   mapa de calor. Clic en una tarjeta del carrusel de alertas (abajo) o en
-   un paquete: la tarjeta de detalle muestra el ICT como indicador circular,
-   la causa de escalamiento y el **radar de criterios frente al promedio del
-   portafolio** - el punto central de la propuesta: el modelo es explicable.
-3. **Tab "Alertas"** del panel: las causas estan encadenadas al ICT para
-   evitar falsos positivos.
-4. **Tab "Modelo"**: mover los pesos y pulsar "Recalcular": cambian el
-   ranking de "Zonas prioritarias", los colores y las alertas en vivo, sin
-   tocar codigo. "Restablecer" vuelve a los pesos por defecto.
-5. **Tab "Filtros"** y boton de capas (arriba a la derecha): puntos de riesgo
-   por categoria/estado/tipo, comunidades, areas protegidas, hidrologia y
-   vias. El boton de mapa alterna entre satelite y mapa claro.
-6. **"Ver en datos"** desde la tarjeta de detalle abre Explorar filtrado por
-   ese paquete: registro de riesgos ordenable, barras por categoria (clic en
-   una barra filtra el registro) y riesgos identificados por semana.
-7. **Datos y modelo**: recorrer la arquitectura medallion (que entra en
-   Bronce, que limpia Plata, que produce Oro), las imperfecciones plantadas
-   en los datos sinteticos, el catalogo de tablas con su linaje entre capas
-   y la explicacion del ICT con el ejemplo del paquete mas critico.
-8. **Terminal**: correr `validacion.py` en vivo (o mostrar su salida ya
-   generada) para explicar el backtest y el analisis de sensibilidad, dejando
-   claro que en este piloto es circular (eventos sinteticos generados con las
-   mismas variables) y que la validacion real requiere el historial de
-   Ecopetrol.
-9. **Cerrar con el GeoPackage** (`exports/reto5_piloto.gpkg`) abierto en
-   QGIS/ArcGIS, mostrando que la salida es agnostica del software SIG, tal
-   como exige el Anexo 1 del reto.
+## Qué incluye
+
+**Aplicación** (`app/`, FastAPI + Leaflet + Chart.js, sin paso de compilación):
+
+- **Inicio**: resumen con el ICT promedio y la distribución de riesgos.
+- **Mapa**: paquetes coloreados por nivel sobre mapa satelital y de calor,
+  alertas, filtros, capas de contexto, pesos del modelo ajustables en vivo y
+  tarjeta de detalle con el radar de criterios.
+- **Explorar**: registro de riesgos ordenable y filtrable, riesgos por
+  categoría y por semana, paquetes prioritarios.
+- **Datos y modelo**: arquitectura medallion, qué datos se crearon, catálogo
+  de tablas con su linaje y la explicación del ICT, todo leído en vivo de los
+  archivos.
+
+**Pipeline y modelo** (`src/`):
+
+- `generar_datos.py`: datos sintéticos de entrada (capa Bronce), "sucios" a
+  propósito: duplicados, vacíos, textos inconsistentes, ~12 % sin coordenadas.
+- `bronce_a_plata.py`: limpieza, deduplicación, taxonomía y geolocalización.
+- `plata_a_oro.py`: los cinco criterios, el ICT, niveles, escalamiento,
+  tendencia, mapa de calor (KDE) y Getis-Ord Gi*.
+- `validacion.py`: backtest y análisis de sensibilidad de los pesos.
+- `exportar_gis.py`: GeoPackage para ArcGIS o QGIS.
+- `modelo/ict.py`, `modelo/ahp.py`, `modelo/espacial.py`: el motor del ICT,
+  la derivación de pesos por AHP y la estadística espacial.
+
+Los parámetros del modelo (pesos, umbrales, radios de influencia) viven en
+[`parametros.yaml`](parametros.yaml), separados del código.
+
+## Comandos individuales
+
+Con el entorno que crea `iniciar.py` (en Windows,
+`%LOCALAPPDATA%\reto5-piloto\venv\Scripts\python.exe`; abajo abreviado como `python`):
+
+```bash
+python ejecutar_pipeline.py          # pasos 1-4: datos, limpieza, ICT y validación
+python run_app.py                    # solo el servidor
+python -m pytest tests/ -v           # pruebas del modelo
+cd src && python exportar_gis.py     # GeoPackage en exports/
+```
+
+### Instalación manual (sin `iniciar.py`)
+
+```bash
+py -3.12 -m venv .venv
+.venv/Scripts/python.exe -m pip install -r requirements.txt
+.venv/Scripts/python.exe ejecutar_pipeline.py
+.venv/Scripts/python.exe run_app.py
+```
+
+En Mac o Linux: `python3.12 -m venv .venv` y `.venv/bin/python` en lugar de
+`.venv/Scripts/python.exe`.
+
+## Guion de demo (5 a 7 minutos)
+
+1. **Inicio** (`http://127.0.0.1:8000`): ICT promedio y riesgos por categoría
+   con datos vivos. Señalar el chip "Datos sintéticos" de la barra superior.
+2. **Mapa**: los 14 paquetes coloreados por nivel sobre el mapa de calor. Clic
+   en una alerta del carrusel inferior o en un paquete: la tarjeta de detalle
+   muestra el ICT, la causa de escalamiento y el **radar de criterios frente al
+   promedio del portafolio**. Es el punto central: el modelo es explicable.
+3. **Pestaña "Alertas"**: las causas están encadenadas al ICT para evitar
+   falsos positivos.
+4. **Pestaña "Modelo"**: mover los pesos y pulsar "Recalcular". Cambian en vivo
+   el ranking de zonas prioritarias, los colores y las alertas, sin tocar
+   código. "Restablecer" vuelve a los pesos por defecto.
+5. **Pestaña "Filtros" y botón de capas**: riesgos por categoría, estado y
+   tipo; comunidades, áreas protegidas, hidrología y vías; satélite o mapa claro.
+6. **"Ver en datos"** desde la tarjeta de detalle: abre Explorar filtrado por
+   ese paquete. Un clic en una barra de categoría filtra el registro.
+7. **Datos y modelo**: qué entra en Bronce, qué limpia Plata, qué produce Oro,
+   las imperfecciones plantadas, el catálogo de tablas y el ICT del paquete más
+   crítico descompuesto por criterio.
+8. **Validación**: mostrar el backtest y la sensibilidad, aclarando que el
+   backtest es circular (ver limitaciones).
+9. **Cierre**: el GeoPackage (`exports/reto5_piloto.gpkg`) abierto en QGIS o
+   ArcGIS, para mostrar que la salida no depende de un software SIG.
 
 ## Limitaciones (leer antes de mostrar el piloto)
 
-- **Backtest circular**: los eventos materializados sinteticos se generaron
-  con las mismas variables que usa el modelo (zonas "calientes" plantadas a
-  proposito). El backtest confirma que el mecanismo funciona, **no** que los
-  pesos o criterios sean los correctos.
-- **Pesos supuestos**: los valores en `parametros.yaml` son un punto de
-  partida razonable, no una calibracion con expertos. Eso ocurre en la
-  Fase 2 de la propuesta.
-- **Geografia de referencia, entidades ficticias**: se usa la caja
-  geografica de La Guajira solo para ubicar objetos inventados; ninguna
-  comunidad, area protegida o via representa algo real.
-- **IA/ML fuera de alcance**: intencionalmente, ver Seccion 12 de la
-  propuesta ("Opciones de mejora y evolucion").
-- **Stack de este piloto (local, FastAPI + Leaflet) no es la arquitectura de
-  produccion propuesta** (Azure Data Factory + Databricks + ArcGIS Enterprise
-  + Power BI, ver `Arquitectura.html`). Aqui se prioriza velocidad de
-  demostracion; el modelo (`src/modelo/`) esta escrito para poder migrarse a
-  PySpark/Sedona sin rehacer la logica.
+- **Backtest circular**: los eventos materializados sintéticos se generaron
+  con las mismas variables que usa el modelo. Confirma que el mecanismo
+  funciona, **no** que los pesos o criterios sean los correctos; eso requiere
+  el histórico real de Ecopetrol.
+- **Pesos supuestos**: los de `parametros.yaml` son un punto de partida, no
+  una calibración con expertos (Fase 2 de la propuesta).
+- **Geografía de referencia, entidades ficticias**: se usa el marco de La
+  Guajira solo para ubicar objetos inventados. La silueta de la portada es un
+  contorno aproximado, no el límite oficial del DANE o IGAC.
+- **IA y ML fuera de alcance**, a propósito: están en la sección de opciones de
+  mejora de la propuesta.
+- **Este stack no es la arquitectura de producción.** La propuesta plantea
+  Azure Data Lake Storage Gen2, Databricks con Sedona, ArcGIS Enterprise y
+  Power BI; el piloto usa archivos locales y Python / GeoPandas con la misma
+  lógica, para poder migrarla sin reescribirla.
 
 ## Estructura
 
 ```
-piloto/
-  parametros.yaml          # pesos, umbrales, radios - editable sin tocar codigo
-  ejecutar_pipeline.py      # corre los pasos 1-4 en orden
-  run_app.py                 # levanta la API + frontend
-  src/
-    generar_datos.py        # Paso 1: datos sinteticos (Bronce)
-    bronce_a_plata.py        # Paso 2: limpieza y estandarizacion
-    plata_a_oro.py            # Paso 3: modelo ICT + KDE + Getis-Ord
-    validacion.py              # Paso 4: backtest + sensibilidad
-    exportar_gis.py            # Paso 7: GeoPackage para ArcGIS/QGIS
-    modelo/
-      ict.py                    # motor del Indice de Criticidad Territorial
-      ahp.py                     # derivacion de pesos por AHP
-      espacial.py                # KDE y Getis-Ord Gi*
-  app/
-    main.py                   # FastAPI (Paso 5)
-    static/                     # frontend sin build step
-      tokens.css, components.css  # sistema de diseno (copiado de la skill)
-      ui.js                        # topbar compartida y helpers de formato/graficos
-      index.html  + home.*          # portada
-      mapa.html   + mapa.*          # mapa (Leaflet)
-      explorar.html + explorar.*    # exploracion de datos (Chart.js)
-      datos.html  + datos.*         # descripcion de capas, tablas y modelo ICT
-    catalogo.py                 # inventario vivo de Bronce/Plata/Oro para /api/catalogo
-  .claude/skills/reto5-design/   # skill del sistema de diseno del frontend
-  data/{bronze,silver,gold}/    # capas medallion (generadas, no versionar)
-  exports/                       # GeoPackage y GeoJSON de salida
-  tests/test_ict.py              # pruebas unitarias del modelo
+iniciar.py / iniciar.bat     arranque con un solo comando
+parametros.yaml              pesos, umbrales y radios del modelo
+ejecutar_pipeline.py         corre los pasos 1-4 en orden
+run_app.py                   levanta solo el servidor
+requirements.txt             dependencias con versiones fijas
+src/                         pipeline Bronce -> Plata -> Oro y el modelo
+  modelo/                    ICT, AHP y estadística espacial
+app/
+  main.py                    API (FastAPI)
+  catalogo.py                inventario vivo de las capas para /api/catalogo
+  static/                    interfaz: HTML, CSS y JS sin compilación
+tests/                       pruebas unitarias del modelo
+multimedia/                  logos e imágenes de referencia de diseño
+.claude/skills/reto5-design/ sistema de diseño de la interfaz
+data/, exports/              se generan al correr el pipeline (no se versionan)
 ```
-#   P i l o t o _ E c o p e t r o l _ R e t o 5  
- 
+
+El diseño de la interfaz sigue la skill de proyecto
+`.claude/skills/reto5-design/` (tokens, componentes y recetas derivados de las
+imágenes de `multimedia/`). Si cambias `tokens.css` o `components.css`, hazlo
+en la skill y cópialo a `app/static/`.

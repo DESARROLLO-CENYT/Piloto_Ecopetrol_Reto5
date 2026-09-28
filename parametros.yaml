@@ -1,0 +1,75 @@
+# Parametros del modelo multicriterio (ICT).
+# Editable sin tocar codigo. Version de referencia para reproducibilidad.
+version: "0.1.0-piloto"
+fecha_actualizacion: "2026-09-28"
+autor: "piloto"
+
+# Pesos por criterio (deben sumar 1.0). Obtenidos aqui por defecto/uniforme;
+# en produccion se derivan con AHP y juicio de expertos (ver src/modelo/ahp.py).
+pesos:
+  severidad_riesgo: 0.28
+  vulnerabilidad_territorial: 0.22
+  amenazas_externas: 0.15
+  exposicion_proyecto: 0.20
+  convergencia: 0.15
+
+# Umbrales de clasificacion del ICT (0-100)
+umbrales_criticidad:
+  bajo: 25
+  medio: 50
+  alto: 75
+  # >= alto se considera "critico"
+
+# Factor multiplicativo de severidad segun el estado de materializacion
+factores_estado:
+  latente: 1.0
+  proximo_a_materializarse: 1.3
+  materializado: 1.6
+
+# Umbral de precipitacion (mm, acumulado 14 dias) considerado amenaza climatica maxima
+amenazas_externas:
+  precipitacion_extrema_mm_14d: 80
+  ventana_dias: 14
+
+# Convergencia: numero de categorias distintas de amenaza que saturan el criterio
+convergencia:
+  categorias_para_saturar: 4
+
+# Reglas de escalamiento a crisis
+escalamiento:
+  ict_critico: 75
+  min_amenazas_convergentes: 3
+  incremento_tendencia_alerta: 10       # puntos ICT
+  ventana_tendencia_dias: 7
+  dias_vencimiento_accion_critico: 0    # accion vencida = dias restantes < 0
+  min_acciones_vencidas: 3              # se reporta como causa de escalamiento solo desde este numero
+
+# Radios de influencia por tipo de riesgo (metros), usados para las
+# funciones de decaimiento espacial (ver src/modelo/ict.py)
+radios_influencia_m:
+  social_comunidad: 3000
+  ambiental: 2000
+  seguridad_fisica: 5000
+  logistico_acceso: 4000
+  climatico: 8000
+  contractual: 1500
+  default: 2500
+
+# Agregacion de multiples riesgos dentro de la misma unidad territorial
+agregacion:
+  metodo: "max_mas_promedio"   # max(severidad) * 0.7 + promedio_ponderado * 0.3
+  peso_maximo: 0.7
+  peso_promedio: 0.3
+
+# Grid para la superficie de calor (grados decimales, ~2.2 km en esta latitud)
+grid:
+  resolucion_grados: 0.02
+
+# Kernel density (estimacion de densidad)
+kde:
+  bandwidth_m: 4000
+
+# Analisis de puntos calientes (Getis-Ord Gi* simplificado)
+hotspot:
+  k_vecinos: 8
+  z_score_significativo: 1.96   # 95% de confianza

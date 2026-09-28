@@ -1,0 +1,44 @@
+/* Explorar: solo layout (Ejemplo_1). Componentes en components.css (skill reto5-design). */
+
+.bento { align-items: stretch; }
+
+.hero-foot { display: flex; justify-content: space-between; margin-top: var(--s-5); font-size: var(--fs-12); color: rgba(255,255,255,.78); }
+
+.stat-row { display: flex; align-items: center; gap: var(--s-3); }
+.split { display: flex; gap: var(--s-5); margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--line); font-size: var(--fs-13); color: var(--ink-2); flex-wrap: wrap; }
+.split b { color: var(--ink); font-weight: 600; }
+
+.chart-card { display: flex; flex-direction: column; }
+.chart-card .card-head { flex-wrap: wrap; }
+.chart-box { position: relative; flex: 1; min-height: 250px; }
+.chart-box.sm { min-height: 150px; margin-top: var(--s-3); }
+
+.filtros { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--s-3); }
+.filtros select.field { min-width: 170px; }
+.buscar-field { position: relative; flex: 1; min-width: 200px; }
+.buscar-field [data-lucide], .buscar-field .lucide { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); }
+.buscar-field .field { width: 100%; padding-left: 38px; }
+#chip-paquete { cursor: pointer; }
+
+.registro { max-height: 470px; margin: 0 -8px; }
+.sev { display: inline-flex; align-items: baseline; gap: 6px; }
+.sev .pxi { font-size: var(--fs-11); color: var(--muted); }
+
+.lista-paquetes { max-height: 360px; overflow-y: auto; margin: 0 -8px; }
+.pq-row {
+  width: 100%; display: flex; align-items: center; gap: var(--s-3);
+  padding: 10px 8px; border: 0; background: transparent; border-radius: var(--r-sm);
+  cursor: pointer; text-align: left; color: var(--ink);
+}
+.pq-row:hover, .pq-row.sel { background: var(--surface-muted); }
+.pq-row .lvl { min-width: 60px; justify-content: center; }
+.pq-row .grow { flex: 1; min-width: 0; }
+.pq-row .t { font-weight: 500; font-size: var(--fs-13); }
+.pq-row .s { font-size: var(--fs-11); color: var(--muted); }
+.pq-row .alerta { color: var(--lvl-critico); }
+
+.estado-row { padding: 10px 0; }
+.estado-row + .estado-row { border-top: 1px solid var(--line); }
+.estado-row .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: var(--fs-13); }
+.estado-row .top b { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-18); }
+.estado-row .top .pct { color: var(--muted); font-size: var(--fs-12); margin-left: 6px; }

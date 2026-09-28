@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reto 5 · Mapa de riesgos multicriterio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="home.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="inicio"></header>
+
+  <main class="hero">
+    <section class="card hero-main">
+      <!-- Silueta aproximada de La Guajira (contorno proyectado a la latitud media del departamento) -->
+      <svg class="silueta" viewBox="0 0 612 505" aria-hidden="true" focusable="false">
+        <defs>
+          <pattern id="puntos-guajira" width="9" height="9" patternUnits="userSpaceOnUse">
+            <circle cx="4.5" cy="4.5" r="1.7"></circle>
+          </pattern>
+        </defs>
+        <path class="relleno" d="M34.1 295.3 L71.6 290.5 L92.7 288.2 L130.2 276.2 L158.3 254.7 L186.5 223.6 L224.0 206.9 L259.1 190.1 L296.6 168.6 L322.4 144.7 L341.2 111.2 L359.9 68.2 L381.0 75.3 L406.8 65.8 L423.2 49.0 L446.6 34.7 L477.1 6.0 L512.3 13.2 L540.4 32.3 L573.2 56.2 L606.0 92.1 L599.0 116.0 L575.5 139.9 L559.1 151.9 L505.2 180.6 L446.6 216.4 L369.3 271.4 L329.4 326.4 L294.3 367.1 L254.4 407.7 L207.6 450.8 L181.8 486.6 L160.7 498.6 L137.3 481.8 L106.8 446.0 L83.3 412.5 L59.9 391.0 L20.1 367.1 L6.0 343.2 L24.8 312.1 Z" fill="url(#puntos-guajira)"></path>
+        <path class="borde" d="M34.1 295.3 L71.6 290.5 L92.7 288.2 L130.2 276.2 L158.3 254.7 L186.5 223.6 L224.0 206.9 L259.1 190.1 L296.6 168.6 L322.4 144.7 L341.2 111.2 L359.9 68.2 L381.0 75.3 L406.8 65.8 L423.2 49.0 L446.6 34.7 L477.1 6.0 L512.3 13.2 L540.4 32.3 L573.2 56.2 L606.0 92.1 L599.0 116.0 L575.5 139.9 L559.1 151.9 L505.2 180.6 L446.6 216.4 L369.3 271.4 L329.4 326.4 L294.3 367.1 L254.4 407.7 L207.6 450.8 L181.8 486.6 L160.7 498.6 L137.3 481.8 L106.8 446.0 L83.3 412.5 L59.9 391.0 L20.1 367.1 L6.0 343.2 L24.8 312.1 Z"></path>
+        <g class="proyecto"><circle class="halo" cx="270.8" cy="151.9" r="16"></circle><circle class="punto" cx="270.8" cy="151.9" r="5.5"></circle></g>
+        <g class="proyecto"><circle class="halo" cx="341.2" cy="271.4" r="16"></circle><circle class="punto" cx="341.2" cy="271.4" r="5.5"></circle></g>
+        <g class="proyecto"><circle class="halo" cx="200.5" cy="367.1" r="16"></circle><circle class="punto" cx="200.5" cy="367.1" r="5.5"></circle></g>      </svg>
+      <div>
+        <span class="chip outline"><i data-lucide="sparkles"></i> Convocatoria Transforma la Energía · Reto 5</span>
+        <h1 class="hero-title">Riesgos territoriales,<br><span>en un solo mapa.</span></h1>
+        <p class="hero-sub">
+          Piloto del Índice de Criticidad Territorial (ICT) para los proyectos de
+          La Guajira. Cruza el registro de riesgos con comunidades, áreas protegidas
+          y clima en un modelo multicriterio explicable, con mapas de calor y
+          alertas tempranas por zona.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-arrow" href="mapa.html">Ver el mapa <span class="arrow"><i data-lucide="arrow-up-right"></i></span></a>
+          <a class="btn btn-outline" href="explorar.html"><i data-lucide="chart-column"></i> Explorar los datos</a>
+        </div>
+      </div>
+      <div class="partners">
+        <span class="muted">Desarrollado por</span>
+        <span class="logo-chip"><img src="img/logo-cenyt.jpeg" alt="CEN&amp;T Ingenieros Consultores"></span>
+        <span class="muted">para</span>
+        <span class="logo-chip"><img src="img/logo-ecopetrol.png" alt="Grupo Ecopetrol"></span>
+      </div>
+    </section>
+
+    <section class="hero-bento">
+      <article class="card card-green b-ict">
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Índice de criticidad</div>
+            <div class="card-sub">Promedio del portafolio</div>
+          </div>
+          <span class="icon-btn glass"><i data-lucide="radar"></i></span>
+        </div>
+        <div class="num xl" id="h-ict">-</div>
+        <div class="b-foot"><span id="h-paquetes">- paquetes</span><span>de 100</span></div>
+      </article>
+
+      <article class="card b-barras">
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Riesgos por categoría</div>
+            <div class="card-sub" id="h-riesgos">- registrados</div>
+          </div>
+          <a class="icon-btn" href="explorar.html" title="Explorar"><i data-lucide="arrow-up-right"></i></a>
+        </div>
+        <div class="mini-bars" id="h-barras"></div>
+      </article>
+
+      <article class="card card-night b-mapa">
+        <div class="rings" aria-hidden="true"></div>
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Mapa de calor</div>
+            <div class="card-sub">Satélite · zonas y alertas</div>
+          </div>
+        </div>
+        <a class="btn btn-lime sm btn-arrow" href="mapa.html">Abrir mapa <span class="arrow"><i data-lucide="arrow-up-right"></i></span></a>
+      </article>
+    </section>
+  </main>
+
+  <footer class="pie">Datos sintéticos · piloto de demostración. No representa proyectos, comunidades ni información real de Ecopetrol.</footer>
+</div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="home.js"></script>
+</body>
+</html>

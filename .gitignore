@@ -1,0 +1,20 @@
+# Entornos y cachés de Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+pytest-cache-files-*/
+
+# Datos y salidas generadas por el pipeline (iniciar.py los regenera)
+data/
+exports/
+
+# Logs y configuración local
+*.log
+.claude/settings.local.json
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store

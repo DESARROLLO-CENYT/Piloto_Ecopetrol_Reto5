@@ -1,0 +1,106 @@
+/*
+  Tokens v2 - Piloto Reto 5 (Ecopetrol / CEN&T)
+  Fuente de verdad: piloto/.claude/skills/reto5-design/assets/tokens.css
+  Copia viva:       piloto/app/static/tokens.css
+*/
+:root {
+  /* Lienzo y superficies (Ejemplo_1: blanco sobre gris) */
+  --canvas: #e6e9e6;
+  --shell: #f3f4f2;
+  --surface: #ffffff;
+  --surface-muted: #f4f5f3;
+  --line: #eaecea;
+
+  /* Texto */
+  --ink: #121814;
+  --ink-2: #4a524d;
+  --muted: #8a928d;
+
+  /* Verde de marca (escala tomada de Ejemplo_1, afin al verde Ecopetrol) */
+  --green-50: #eef7f1;
+  --green-100: #d9efe2;
+  --green-200: #b5dcc6;
+  --green-300: #8cc5a6;
+  --green-500: #27a06a;
+  --green-600: #178a58;
+  --green-700: #0f6e46;
+  --green-800: #0b5536;
+  --green-900: #083d27;
+
+  /* Acentos */
+  --lime: #cdf04a;
+  --lime-ink: #1c2606;
+  --navy: #1f3864;
+  --orange: #f2751f;
+
+  /* Oscuro: solo herramientas sobre el mapa (Ejemplo_3) */
+  --night: #141a17;
+  --night-2: #222a26;
+  --night-line: rgba(255, 255, 255, 0.12);
+  --night-ink: #f2f5f3;
+  --night-muted: #9aa49e;
+
+  /* Niveles del ICT */
+  --lvl-bajo: #3fb56b;
+  --lvl-medio: #f1c232;
+  --lvl-alto: #f28a30;
+  --lvl-critico: #e2483a;
+  --lvl-bajo-bg: #e6f6ec;
+  --lvl-medio-bg: #fdf5da;
+  --lvl-alto-bg: #fdeede;
+  --lvl-critico-bg: #fce6e3;
+  --lvl-medio-ink: #4d3c00;
+
+  /* Capas medallion (solo para identificar Bronce / Plata / Oro) */
+  --medal-bronce: #b8733a;
+  --medal-bronce-bg: #f8ece1;
+  --medal-plata: #6f7c86;
+  --medal-plata-bg: #eef1f3;
+  --medal-oro: #b98f12;
+  --medal-oro-bg: #fbf3d6;
+
+  /* Tipografia */
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fs-11: 0.6875rem;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-22: 1.375rem;
+  --fs-28: 1.75rem;
+  --fs-36: 2.25rem;
+  --fs-48: 3rem;
+  --fs-64: clamp(2.5rem, 4.6vw, 4rem);
+
+  /* Radios */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  /* Sombras: tarjetas casi planas; fuerte solo sobre el mapa */
+  --sh-card: 0 1px 2px rgba(18, 24, 20, 0.04);
+  --sh-float: 0 12px 32px rgba(18, 24, 20, 0.18);
+  --sh-pop: 0 24px 60px rgba(18, 24, 20, 0.24);
+
+  /* Espaciado */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 56px;
+
+  /* Medidas de control */
+  --h-ctrl: 40px;
+  --h-ctrl-sm: 32px;
+  --h-topbar: 64px;
+  --gap-shell: 14px;
+}

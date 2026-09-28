@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="mapa.css">
+</head>
+<body>
+<div class="shell fixed">
+  <header id="topbar" data-active="mapa"></header>
+
+  <div class="mapa-layout">
+    <aside class="card panel">
+      <div class="panel-top">
+        <div class="grow">
+          <div class="card-title">Gestión de riesgos</div>
+          <div class="card-sub" id="panel-resumen">La Guajira</div>
+        </div>
+        <button class="icon-btn sm ghost" id="btn-focus-buscar" title="Buscar paquete"><i data-lucide="search"></i></button>
+      </div>
+
+      <h1 class="panel-h1">Zonas de riesgo</h1>
+
+      <div class="seg light full" id="tabs" role="tablist">
+        <button class="on" data-tab="modelo" role="tab">Modelo</button>
+        <button data-tab="filtros" role="tab">Filtros</button>
+        <button data-tab="alertas" role="tab">Alertas <span class="badge-count" id="n-alertas">0</span></button>
+      </div>
+
+      <div class="panel-meta">
+        <span class="muted meta-lbl"><i data-lucide="calendar"></i> Corte</span>
+        <span class="chip white" id="fecha-corte">-</span>
+        <span class="grow"></span>
+        <span class="meta-lbl ink-2" title="Versión de parametros.yaml"><i data-lucide="settings-2"></i> Parámetros <b id="param-version"></b></span>
+      </div>
+
+      <div class="panel-body">
+        <section data-panel="modelo">
+          <div class="sec-head">
+            <div class="grow">
+              <div class="card-title">Pesos del modelo</div>
+              <div class="card-sub">Ajusta cada criterio y recalcula el ICT</div>
+            </div>
+            <span class="chip" id="suma-pesos">Σ 1.00</span>
+          </div>
+          <div id="sliders"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary sm" id="btn-recalcular"><i data-lucide="refresh-cw"></i> Recalcular</button>
+            <button class="btn btn-outline sm" id="btn-reset"><i data-lucide="rotate-ccw"></i> Restablecer</button>
+          </div>
+          <p class="nota" id="nota-pesos" hidden>Mostrando el ICT con pesos modificados. La tendencia y Getis-Ord corresponden al último corte del pipeline.</p>
+        </section>
+
+        <section data-panel="filtros" hidden>
+          <div class="sec-head">
+            <div class="grow">
+              <div class="card-title">Riesgos en el mapa</div>
+              <div class="card-sub" id="n-riesgos-visibles">-</div>
+            </div>
+            <label class="switch" title="Mostrar riesgos en el mapa"><input type="checkbox" id="toggle-riesgos"><span></span></label>
+          </div>
+          <span class="label">Categoría</span>
+          <div class="chips" id="f-categoria"></div>
+          <span class="label">Estado</span>
+          <div class="chips" id="f-estado"></div>
+          <span class="label">Tipo</span>
+          <div class="seg full" id="f-tipo">
+            <button class="on" data-v="">Todos</button>
+            <button data-v="amenaza">Amenazas</button>
+            <button data-v="oportunidad">Oportunidades</button>
+          </div>
+        </section>
+
+        <section data-panel="alertas" hidden>
+          <div id="lista-alertas"></div>
+        </section>
+
+        <section class="zonas">
+          <div class="sec-head">
+            <div class="grow">
+              <div class="card-title">Zonas prioritarias</div>
+              <div class="card-sub">Paquetes ordenados por ICT</div>
+            </div>
+          </div>
+          <table class="table compact">
+            <thead><tr><th>Zona</th><th>ICT</th><th>Tend.</th><th>Conf.</th></tr></thead>
+            <tbody id="tabla-zonas"></tbody>
+          </table>
+        </section>
+      </div>
+    </aside>
+
+    <div class="map-card" id="map-card">
+      <div id="mapa"></div>
+
+      <div class="map-overlay ov-tl">
+        <div class="map-search">
+          <i data-lucide="search"></i>
+          <input id="buscar" placeholder="Buscar paquete de trabajo" autocomplete="off">
+        </div>
+        <div class="resultados" id="resultados" hidden></div>
+        <div class="glass leyenda">
+          <span><span class="dot bajo"></span>Bajo</span>
+          <span><span class="dot medio"></span>Medio</span>
+          <span><span class="dot alto"></span>Alto</span>
+          <span><span class="dot critico"></span>Crítico</span>
+        </div>
+      </div>
+
+      <div class="map-overlay map-ctrls ov-tr">
+        <button class="map-btn" id="btn-base" title="Cambiar a mapa claro"><i data-lucide="map"></i></button>
+        <button class="map-btn" id="btn-capas" title="Capas"><i data-lucide="layers"></i></button>
+        <button class="map-btn" id="btn-centrar" title="Centrar en los proyectos"><i data-lucide="locate-fixed"></i></button>
+      </div>
+
+      <div class="map-overlay pop-dark capas" id="pop-capas" hidden>
+        <div class="ttl">Capas</div>
+        <div id="lista-capas"></div>
+      </div>
+
+      <div class="map-overlay map-zoom ov-br">
+        <button id="zoom-in" title="Acercar"><i data-lucide="plus"></i></button>
+        <button id="zoom-out" title="Alejar"><i data-lucide="minus"></i></button>
+      </div>
+
+      <div class="map-overlay ov-bottom">
+        <div class="carousel" id="carrusel"></div>
+      </div>
+
+      <div class="map-overlay pop-card detalle" id="detalle" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="mapa.js"></script>
+</body>
+</html>

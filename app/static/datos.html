@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Datos y modelo · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="datos.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="datos"></header>
+
+  <div class="page-head">
+    <h1>Datos y modelo, <span>cómo está construido el piloto</span></h1>
+    <div class="acciones">
+      <span class="chip white"><i data-lucide="settings-2"></i> Parámetros <b id="param-version">-</b></span>
+      <a class="btn btn-outline sm" href="explorar.html"><i data-lucide="chart-column"></i> Explorar datos</a>
+    </div>
+  </div>
+
+  <nav class="anclas" aria-label="Secciones de la página">
+    <a href="#arquitectura"><i data-lucide="workflow"></i> Arquitectura medallion</a>
+    <a href="#creados"><i data-lucide="sparkles"></i> Datos creados</a>
+    <a href="#catalogo"><i data-lucide="table-2"></i> Catálogo de tablas</a>
+    <a href="#modelo"><i data-lucide="radar"></i> El modelo ICT</a>
+  </nav>
+
+  <div class="bento" id="resumen">
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="layers-3"></i></div><div><div class="num md">3</div><div class="card-sub">Capas medallion</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="table-2"></i></div><div><div class="num md" id="s-tablas">-</div><div class="card-sub">Tablas en las tres capas</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="database"></i></div><div><div class="num md" id="s-filas">-</div><div class="card-sub">Registros en la capa Oro</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="dices"></i></div><div><div class="num md">42</div><div class="card-sub">Semilla aleatoria · reproducible</div></div></div>
+  </div>
+
+  <section class="card" id="arquitectura">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="workflow"></i></div>
+      <div class="grow">
+        <div class="card-title">Arquitectura medallion</div>
+        <div class="card-sub">Del Excel disperso al índice listo para el mapa, en tres capas con responsabilidades separadas</div>
+      </div>
+    </div>
+    <div class="flujo" id="flujo"></div>
+    <div class="nota-prod">
+      <span class="tile"><i data-lucide="server"></i></span>
+      <p><b>En producción</b> (propuesta): las capas viven en Azure Data Lake Storage Gen2 en formato Delta y los pasos
+        corren en Azure Databricks con Apache Sedona para los cruces espaciales. El piloto reproduce los mismos pasos con
+        archivos locales y Python / GeoPandas, así la lógica se puede migrar sin reescribirla.</p>
+    </div>
+  </section>
+
+  <div class="bento" id="creados">
+    <section class="card span-7">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="sparkles"></i></div>
+        <div class="grow">
+          <div class="card-title">Qué datos creamos</div>
+          <div class="card-sub">Todo es sintético: lo genera <span class="mono">src/generar_datos.py</span> sobre el marco geográfico de La Guajira</div>
+        </div>
+      </div>
+      <div class="grid-datos" id="grid-datos"></div>
+    </section>
+
+    <section class="card span-5">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="eraser"></i></div>
+        <div class="grow">
+          <div class="card-title">Imperfecciones a propósito</div>
+          <div class="card-sub">El registro se genera "sucio" para probar la limpieza como en un caso real</div>
+        </div>
+      </div>
+      <div id="imperfecciones"></div>
+      <div class="embudo" id="embudo"></div>
+    </section>
+  </div>
+
+  <section class="card" id="catalogo">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="table-2"></i></div>
+      <div class="grow">
+        <div class="card-title">Catálogo de tablas</div>
+        <div class="card-sub">Esquema leído en vivo de los archivos de cada capa: filas, geometría, columnas y tipos</div>
+      </div>
+      <div class="seg" id="seg-capa">
+        <button data-capa="bronze">Bronce</button>
+        <button data-capa="silver">Plata</button>
+        <button class="on" data-capa="gold">Oro</button>
+      </div>
+    </div>
+    <div class="catalogo">
+      <div class="cat-lista" id="cat-lista"></div>
+      <div class="cat-detalle" id="cat-detalle"></div>
+    </div>
+  </section>
+
+  <div class="page-head sub-head" id="modelo">
+    <h1>El modelo, <span>Índice de Criticidad Territorial</span></h1>
+  </div>
+
+  <div class="bento">
+    <section class="card card-green span-5 formula">
+      <div class="card-head">
+        <div class="grow">
+          <div class="card-title">Cómo se calcula</div>
+          <div class="card-sub">Suma ponderada de cinco criterios normalizados, por paquete de trabajo</div>
+        </div>
+        <span class="icon-btn glass"><i data-lucide="sigma"></i></span>
+      </div>
+      <div class="eq">ICT = 100 × Σ w<sub>k</sub> · C<sub>k</sub></div>
+      <ul class="pasos">
+        <li><b>C<sub>k</sub></b> es cada criterio llevado a 0–1 con min–max sobre los paquetes del portafolio.</li>
+        <li><b>w<sub>k</sub></b> son los pesos; suman 1 y viven en <span class="mono">parametros.yaml</span> (en producción se derivan con AHP y expertos).</li>
+        <li>El resultado va de 0 a 100 y cada punto se puede atribuir a un criterio: el modelo es explicable.</li>
+        <li>Para medir tendencia se recalcula el ICT de hace 7 días con los mismos límites de normalización.</li>
+      </ul>
+    </section>
+
+    <section class="card span-7">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="sliders-horizontal"></i></div>
+        <div class="grow">
+          <div class="card-title">Cinco criterios</div>
+          <div class="card-sub">Peso vigente, qué mide, cómo se calcula y de qué tabla sale</div>
+        </div>
+        <a class="icon-btn" href="mapa.html" title="Probar otros pesos en el mapa"><i data-lucide="arrow-up-right"></i></a>
+      </div>
+      <div id="criterios"></div>
+    </section>
+
+    <section class="card span-4">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="gauge"></i></div>
+        <div class="grow">
+          <div class="card-title">Niveles y ajustes</div>
+          <div class="card-sub">Umbrales sobre el ICT y reglas de severidad</div>
+        </div>
+      </div>
+      <div class="escala" id="escala"></div>
+      <div class="sub-titulo">Factor por estado del riesgo</div>
+      <div id="factores"></div>
+      <div class="sub-titulo">Varios riesgos en un paquete</div>
+      <div id="agregacion"></div>
+    </section>
+
+    <section class="card span-4">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="triangle-alert"></i></div>
+        <div class="grow">
+          <div class="card-title">Reglas de escalamiento</div>
+          <div class="card-sub">Cuándo una zona pasa a alerta de posible crisis</div>
+        </div>
+      </div>
+      <div id="reglas"></div>
+    </section>
+
+    <section class="card span-4">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="target"></i></div>
+        <div class="grow">
+          <div class="card-title">Ejemplo real</div>
+          <div class="card-sub" id="ej-sub">Cómo se compone el ICT del paquete más crítico</div>
+        </div>
+      </div>
+      <div class="ejemplo" id="ejemplo"></div>
+    </section>
+
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="layers"></i></div>
+        <div class="grow">
+          <div class="card-title">Salidas complementarias</div>
+          <div class="card-sub">Lo que acompaña al ICT en la capa Oro</div>
+        </div>
+      </div>
+      <div id="salidas"></div>
+    </section>
+
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="shield-check"></i></div>
+        <div class="grow">
+          <div class="card-title">Validación</div>
+          <div class="card-sub">Qué tan robusto es el resultado (<span class="mono">src/validacion.py</span>)</div>
+        </div>
+      </div>
+      <div class="val-grid" id="validacion"></div>
+      <div class="aviso"><i data-lucide="info"></i><span>El backtest es circular: los eventos sintéticos salen de las mismas variables que usa el modelo. Confirma que el mecanismo funciona, no que los pesos sean los correctos; eso requiere el histórico real de Ecopetrol.</span></div>
+    </section>
+  </div>
+
+  <footer class="pie muted">Datos sintéticos · piloto de demostración. No representa proyectos, comunidades ni información real de Ecopetrol.</footer>
+</div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="datos.js"></script>
+</body>
+</html>

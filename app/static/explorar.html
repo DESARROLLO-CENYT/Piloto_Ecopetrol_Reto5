@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explorar datos · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="explorar.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="explorar"></header>
+
+  <div class="page-head">
+    <h1>Explorar datos, <span>La Guajira</span></h1>
+    <div class="acciones">
+      <span class="chip white"><i data-lucide="calendar"></i> Corte <b id="fecha-corte">-</b></span>
+      <a class="btn btn-outline sm" href="mapa.html"><i data-lucide="map"></i> Ver mapa</a>
+    </div>
+  </div>
+
+  <div class="bento">
+    <div class="stack span-4">
+      <section class="card card-green">
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Índice de criticidad</div>
+            <div class="card-sub">Promedio del portafolio · escala 0 a 100</div>
+          </div>
+          <span class="icon-btn glass"><i data-lucide="radar"></i></span>
+        </div>
+        <div class="num xl" id="ict-prom">-</div>
+        <div class="hero-foot"><span id="ict-paquetes">-</span><span id="ict-escalamiento">-</span></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="card-icon"><i data-lucide="file-text"></i></div>
+          <div class="grow">
+            <div class="card-title">Riesgos registrados</div>
+            <div class="card-sub">Registro consolidado (capa Oro)</div>
+          </div>
+        </div>
+        <div class="stat-row"><div class="num lg" id="n-riesgos">-</div><span class="trend soft" id="trend-riesgos"></span></div>
+        <div class="split">
+          <span class="status"><span class="dot" style="background:var(--lvl-critico)"></span>Amenazas <b id="n-amenazas">-</b></span>
+          <span class="status"><span class="dot" style="background:var(--navy)"></span>Oportunidades <b id="n-oport">-</b></span>
+        </div>
+      </section>
+    </div>
+
+    <section class="card span-5 chart-card">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="chart-column"></i></div>
+        <div class="grow">
+          <div class="card-title">Riesgos por categoría</div>
+          <div class="card-sub">Clic en una barra para filtrar el registro</div>
+        </div>
+        <div class="seg" id="seg-tipo">
+          <button class="on" data-v="">Todos</button>
+          <button data-v="amenaza">Amenazas</button>
+          <button data-v="oportunidad">Oport.</button>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="chart-categoria"></canvas></div>
+    </section>
+
+    <section class="card span-3 chart-card">
+      <div class="card-head">
+        <div class="grow">
+          <div class="card-title">Identificados</div>
+          <div class="card-sub">Riesgos nuevos por semana</div>
+        </div>
+      </div>
+      <div class="stat-row"><div class="num md" id="n-semana">-</div><span class="trend" id="trend-semana"></span></div>
+      <div class="card-sub">en los últimos 7 días</div>
+      <div class="chart-box sm"><canvas id="chart-semanas"></canvas></div>
+    </section>
+
+    <section class="card span-8">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="table-2"></i></div>
+        <div class="grow">
+          <div class="card-title">Registro de riesgos</div>
+          <div class="card-sub" id="sub-registro">-</div>
+        </div>
+        <a class="icon-btn" href="mapa.html" title="Ver en el mapa"><i data-lucide="arrow-up-right"></i></a>
+      </div>
+      <div class="filtros">
+        <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="f-buscar" placeholder="Buscar ID o paquete"></div>
+        <select class="field" id="f-categoria"></select>
+        <select class="field" id="f-estado"></select>
+        <span class="chip on" id="chip-paquete" hidden></span>
+      </div>
+      <div class="table-wrap registro">
+        <table class="table" id="tabla-riesgos">
+          <thead><tr>
+            <th class="sortable" data-col="id_riesgo">Riesgo</th>
+            <th class="sortable" data-col="id_paquete_trabajo">Paquete</th>
+            <th class="sortable" data-col="fecha_identificacion">Identificado</th>
+            <th class="sortable sorted" data-col="severidad">Severidad ↓</th>
+            <th class="sortable" data-col="estado">Estado</th>
+            <th class="sortable" data-col="tipo">Tipo</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="stack span-4">
+      <section class="card">
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Paquetes prioritarios</div>
+            <div class="card-sub">Ordenados por ICT · clic para filtrar</div>
+          </div>
+          <a class="icon-btn" href="mapa.html" title="Ver en el mapa"><i data-lucide="arrow-up-right"></i></a>
+        </div>
+        <div class="lista-paquetes" id="lista-paquetes"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div class="grow">
+            <div class="card-title">Estado de los riesgos</div>
+            <div class="card-sub">Ciclo de materialización</div>
+          </div>
+        </div>
+        <div id="estados"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="explorar.js"></script>
+</body>
+</html>
