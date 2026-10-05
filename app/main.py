@@ -20,10 +20,11 @@ from fastapi.staticfiles import StaticFiles
 SRC = Path(__file__).resolve().parent.parent / "src"
 sys.path.insert(0, str(SRC))
 
-from config import ORO, cargar_parametros  # noqa: E402
+from comun.config import ORO, cargar_parametros  # noqa: E402
 from modelo import ict as m_ict  # noqa: E402
-import plata_a_oro as pipeline  # noqa: E402
+from oro import ict as pipeline  # noqa: E402
 from catalogo import construir_catalogo  # noqa: E402
+from clima_vivo import obtener_ahora  # noqa: E402
 
 app = FastAPI(title="Piloto Reto 5 - Mapa de riesgos (datos sinteticos)")
 
@@ -137,10 +138,12 @@ def obtener_riesgos(categoria: str | None = None, estado: str | None = None, tip
 
 @app.get("/api/capas/{nombre}")
 def obtener_capa(nombre: str):
-    permitidas = {"comunidades", "areas", "hidro", "vias", "proyectos"}
+    permitidas = {"comunidades", "areas", "hidro", "vias", "proyectos", "rios", "cuerpos_agua", "municipios", "limite_departamental", "red_vial"}
     if nombre not in permitidas:
         raise HTTPException(404, f"Capa desconocida. Disponibles: {sorted(permitidas)}")
     ruta = ORO / f"{nombre}.geojson"
+    if not ruta.exists():  # capas de datos abiertos: vacias hasta que se descargan
+        return {"type": "FeatureCollection", "features": []}
     return json.loads(ruta.read_text(encoding="utf-8"))
 
 
@@ -149,6 +152,30 @@ def obtener_alertas():
     ruta = ORO / "alertas.json"
     if not ruta.exists():
         return []
+    return json.loads(ruta.read_text(encoding="utf-8"))
+
+
+@app.get("/api/clima")
+def obtener_clima():
+    """Estaciones del IDEAM (datos abiertos) con lluvia acumulada. Vacio si aun no se hizo la ingesta."""
+    ruta = ORO / "clima_estaciones.geojson"
+    if not ruta.exists():
+        return {"type": "FeatureCollection", "features": [], "metadata": None}
+    return json.loads(ruta.read_text(encoding="utf-8"))
+
+
+@app.get("/api/clima/ahora")
+def clima_ahora(forzar: bool = False):
+    """Ultimas lecturas del IDEAM por estacion, consultadas en vivo (cache de 10 min) con respaldo local."""
+    return obtener_ahora(forzar)
+
+
+@app.get("/api/clima/radiacion")
+def clima_radiacion():
+    """Puntos de radiacion global media (promedios mensuales del IDEAM)."""
+    ruta = ORO / "clima_radiacion.geojson"
+    if not ruta.exists():
+        return {"type": "FeatureCollection", "features": []}
     return json.loads(ruta.read_text(encoding="utf-8"))
 
 

@@ -13,7 +13,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
-from config import BRONCE, CRS_GEOGRAFICO, CRS_METRICO, PLATA, asegurar_directorios
+from comun.config import BRONCE, CRS_GEOGRAFICO, CRS_METRICO, PLATA, asegurar_directorios
 
 CATEGORIAS_VALIDAS = {
     "social_comunidad", "ambiental", "seguridad_fisica",
@@ -40,7 +40,7 @@ def cargar_bronce():
     gdf_areas = gpd.read_file(BRONCE / "areas_protegidas.geojson")
     gdf_hidro = gpd.read_file(BRONCE / "hidrologia.geojson")
     gdf_vias = gpd.read_file(BRONCE / "vias.geojson")
-    df_clima = pd.read_csv(BRONCE / "clima_ideam.csv")
+    df_clima = pd.read_csv(BRONCE / "clima_sintetico.csv")
     return {
         "riesgos": df_riesgos, "paquetes": gdf_paquetes, "proyectos": gdf_proyectos,
         "comunidades": gdf_comunidades, "areas": gdf_areas, "hidro": gdf_hidro,
@@ -108,7 +108,7 @@ def main():
     gdf_riesgos.to_file(PLATA / "riesgos.geojson", driver="GeoJSON")
     for nombre in ["paquetes", "proyectos", "comunidades", "areas", "hidro", "vias"]:
         datos[nombre].to_file(PLATA / f"{nombre}.geojson", driver="GeoJSON")
-    datos["clima"].to_parquet(PLATA / "clima.parquet", index=False)
+    datos["clima"].to_parquet(PLATA / "clima_sintetico.parquet", index=False)
 
     reporte_df = pd.DataFrame([reporte])
     reporte_df.to_csv(PLATA / "reporte_calidad_bronce_a_plata.csv", index=False)

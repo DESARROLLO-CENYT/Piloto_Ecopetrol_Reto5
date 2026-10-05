@@ -192,6 +192,7 @@ button.chip:hover { border-color: var(--line); color: var(--ink); }
 .chip.outline { background: transparent; border-color: var(--line); }
 .chip.white { background: var(--surface); border-color: var(--line); }
 .chip.warn { background: #fff4d6; color: #6b4d00; }
+.chip.ok { background: var(--green-50); color: var(--green-700); }
 .chip [data-lucide], .chip .lucide { width: 14px; height: 14px; }
 
 /* ---------- Datos ---------- */

@@ -15,13 +15,12 @@ Paso 4 del piloto: validacion del modelo multicriterio.
 from __future__ import annotations
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
 
-from config import ORO, PLATA, cargar_parametros
+from comun.config import ORO, cargar_parametros
 from modelo import ict as m_ict
-from plata_a_oro import calcular_ict_para_fecha, cargar_plata
+from oro.ict import calcular_ict_para_fecha, cargar_plata
 
 
 def backtest_materializados(datos, tabla_ict: pd.DataFrame) -> pd.DataFrame:

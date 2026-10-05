@@ -26,6 +26,7 @@
   <nav class="anclas" aria-label="Secciones de la página">
     <a href="#arquitectura"><i data-lucide="workflow"></i> Arquitectura medallion</a>
     <a href="#creados"><i data-lucide="sparkles"></i> Datos creados</a>
+    <a href="#ideam"><i data-lucide="cloud-rain"></i> Clima real (IDEAM)</a>
     <a href="#catalogo"><i data-lucide="table-2"></i> Catálogo de tablas</a>
     <a href="#modelo"><i data-lucide="radar"></i> El modelo ICT</a>
   </nav>
@@ -60,7 +61,7 @@
         <div class="card-icon"><i data-lucide="sparkles"></i></div>
         <div class="grow">
           <div class="card-title">Qué datos creamos</div>
-          <div class="card-sub">Todo es sintético: lo genera <span class="mono">src/generar_datos.py</span> sobre el marco geográfico de La Guajira</div>
+          <div class="card-sub">Todo es sintético: lo genera <span class="mono">src/bronce/sinteticos.py</span> sobre el marco geográfico de La Guajira</div>
         </div>
       </div>
       <div class="grid-datos" id="grid-datos"></div>
@@ -78,6 +79,31 @@
       <div class="embudo" id="embudo"></div>
     </section>
   </div>
+
+  <section class="card" id="ideam">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="cloud-rain"></i></div>
+      <div class="grow">
+        <div class="card-title">Clima real: IDEAM, datos abiertos</div>
+        <div class="card-sub">Lo único real del piloto: lluvia, temperatura, humedad, viento, presión, nivel de río, radiación y normales de las estaciones del IDEAM en La Guajira, sin clave ni registro</div>
+      </div>
+      <span class="chip ok">Real</span>
+    </div>
+    <div class="ideam-grid">
+      <div>
+        <div class="sub-titulo" style="margin-top:0">Qué se trae y en qué formato</div>
+        <div id="ideam-hechos"></div>
+      </div>
+      <div>
+        <div class="sub-titulo" style="margin-top:0">Cómo se obtiene</div>
+        <div id="ideam-pasos"></div>
+        <div class="sub-titulo">Problemas encontrados en la fuente</div>
+        <div id="ideam-problemas"></div>
+        <div class="sub-titulo">Variables incorporadas</div>
+        <div id="ideam-vars"></div>
+      </div>
+    </div>
+  </section>
 
   <section class="card" id="catalogo">
     <div class="card-head">
@@ -185,7 +211,7 @@
         <div class="card-icon"><i data-lucide="shield-check"></i></div>
         <div class="grow">
           <div class="card-title">Validación</div>
-          <div class="card-sub">Qué tan robusto es el resultado (<span class="mono">src/validacion.py</span>)</div>
+          <div class="card-sub">Qué tan robusto es el resultado (<span class="mono">src/oro/validacion.py</span>)</div>
         </div>
       </div>
       <div class="val-grid" id="validacion"></div>

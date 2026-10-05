@@ -9,11 +9,15 @@ Hace, en orden y solo lo que haga falta:
      proyecto: si el proyecto esta en una carpeta de red, cada PC necesita su
      propio entorno, porque un entorno guarda rutas de la maquina que lo creo).
   2. Instala requirements.txt (solo la primera vez o si el archivo cambia).
-  3. Genera los datos (Pasos 1-4) si no existe la capa Oro.
-  4. Levanta la aplicacion y abre el navegador.
+  3. Genera los datos sinteticos y calcula el ICT si no existe la capa Oro.
+  4. Descarga los datos abiertos que falten (clima del IDEAM, vias de INVIAS e
+     IGAC, rios del IGAC, municipios del DANE; unos minutos, necesita internet).
+     Si falla, el piloto arranca igual con lo que haya.
+  5. Levanta la aplicacion y abre el navegador.
 
 Opciones:
-  --regenerar       vuelve a correr el pipeline aunque ya existan los datos
+  --regenerar       vuelve a correr el pipeline completo (incluidas las descargas)
+  --sin-ideam       no descarga datos abiertos (no necesita internet)
   --red             acepta conexiones de otros PC de la red local
   --puerto N        puerto del servidor (por defecto 8000)
   --sin-navegador   no abre el navegador
@@ -37,6 +41,13 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent
 REQUISITOS = RAIZ / "requirements.txt"
 ARCHIVO_ORO = RAIZ / "data" / "gold" / "paquetes_ict.geojson"
+# fuente del pipeline -> producto Oro que muestra que ya se descargó
+FUENTES_ABIERTAS = {
+    "ideam": RAIZ / "data" / "gold" / "clima_estaciones.geojson",
+    "invias,vias_igac": RAIZ / "data" / "gold" / "red_vial.geojson",   # las dos redes se unen en una sola capa
+    "hidrografia": RAIZ / "data" / "gold" / "rios.geojson",
+    "municipios": RAIZ / "data" / "gold" / "municipios.geojson",
+}
 
 
 def paso(msg: str) -> None:
@@ -105,6 +116,7 @@ def main() -> None:
     ap.add_argument("--regenerar", action="store_true", help="vuelve a generar los datos aunque existan")
     ap.add_argument("--red", action="store_true", help="permite abrir la app desde otros PC de la red")
     ap.add_argument("--puerto", type=int, default=8000)
+    ap.add_argument("--sin-ideam", action="store_true", help="no descarga datos abiertos (no necesita internet)")
     ap.add_argument("--sin-navegador", action="store_true")
     args = ap.parse_args()
 
@@ -115,10 +127,25 @@ def main() -> None:
     py = preparar_entorno()
 
     if args.regenerar or not ARCHIVO_ORO.exists():
-        paso("Generando datos sintéticos y calculando el ICT (pasos 1-4)")
-        ejecutar([py, "ejecutar_pipeline.py"], cwd=RAIZ)
+        paso("Generando los datos sintéticos y calculando el ICT (sin descargar nada)")
+        ejecutar([py, "ejecutar_pipeline.py", "--sin-red"], cwd=RAIZ)
     else:
-        paso("Datos ya generados (usa --regenerar para rehacerlos)")
+        paso("Datos sintéticos ya generados (usa --regenerar para rehacerlos)")
+
+    # Fuentes abiertas (sin clave): solo se descarga la que falte, o todas con --regenerar.
+    # ejecutar_pipeline.py --fuente X corre Bronce -> Plata -> Oro de X y de lo que depende de X.
+    if args.sin_ideam:
+        paso("Datos abiertos omitidos (--sin-ideam): el mapa abrirá sin clima, vías, ríos ni municipios")
+    else:
+        faltan = [fuente for fuente, archivo in FUENTES_ABIERTAS.items() if args.regenerar or not archivo.exists()]
+        if faltan:
+            paso(f"Descargando datos abiertos: {', '.join(faltan)} (unos minutos; necesita internet; ríos y vías de uso no comercial)")
+            subprocess.run([str(py), "ejecutar_pipeline.py", "--fuente", ",".join(faltan)], cwd=RAIZ)
+            for fuente, archivo in FUENTES_ABIERTAS.items():
+                if fuente in faltan and not archivo.exists():
+                    print(f"   No se pudo obtener «{fuente}». El piloto arranca igual; reintenta luego con --regenerar.")
+        else:
+            paso("Datos abiertos ya descargados (usa --regenerar para actualizarlos)")
 
     host = "0.0.0.0" if args.red else "127.0.0.1"
     url = f"http://127.0.0.1:{args.puerto}/"

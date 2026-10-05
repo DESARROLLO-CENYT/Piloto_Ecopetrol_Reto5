@@ -14,7 +14,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 
-from config import BBOX_GUAJIRA, CRS_GEOGRAFICO
+from comun.config import BBOX_GUAJIRA, CRS_GEOGRAFICO
 
 
 def generar_grid(resolucion_grados: float, bbox: dict = BBOX_GUAJIRA) -> gpd.GeoDataFrame:

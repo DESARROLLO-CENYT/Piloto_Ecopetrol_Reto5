@@ -3,8 +3,15 @@
 const D = { cat: null, params: null, capa: 'gold', sel: { gold: 'paquetes_ict.geojson' } };
 
 const ORDEN = [
-  'riesgos', 'paquetes_ict', 'paquetes', 'alertas', 'grid_calor', 'clima', 'comunidades',
-  'areas', 'hidro', 'vias', 'proyectos', 'reporte_calidad', 'validacion_backtest', 'validacion_sensibilidad',
+  'riesgos', 'paquetes_ict', 'paquetes', 'alertas', 'grid_calor', 'clima_estaciones', 'clima_sintetico',
+  'municipios', 'limite_departamental', 'dane_municipios', 'divipola_municipios', 'municipios_meta', 'municipios_reporte_calidad', 'municipios_reporte_cruces',
+  'rios', 'cuerpos_agua', 'igac_hidrografia', 'igac_drenaje_sencillo', 'igac_drenaje_doble', 'igac_cienagas',
+  'igac_embalses', 'igac_lagunas', 'hidrografia_meta', 'hidrografia_reporte_calidad', 'proveniencia',
+  'red_vial', 'red_vial_reporte_calidad', 'vias_igac', 'igac_vias', 'igac_vias_crudas', 'vias_igac_meta', 'vias_igac_reporte_calidad',
+  'invias_red_vial', 'invias_meta', 'invias_reporte_calidad',
+  'ideam_estaciones', 'ideam_precipitacion', 'ideam_precip_diaria', 'ideam_variables', 'ideam_variables_horaria', 'ideam_variables_diaria',
+  'ideam_ultimas_horas', 'ideam_radiacion', 'clima_radiacion', 'ideam_normales', 'ideam_meta', 'ideam_reporte_calidad',
+  'comunidades', 'areas', 'hidro', 'vias', 'proyectos', 'reporte_calidad', 'validacion_backtest', 'validacion_sensibilidad',
 ];
 const MEDAL = { bronze: 'bronce', silver: 'plata', gold: 'oro' };
 const NOMBRE_CAPA = { bronze: 'Bronce', silver: 'Plata', gold: 'Oro' };
@@ -31,37 +38,40 @@ function renderFlujo() {
   const tablas = (id) => capa(id).tablas;
   const filas = (id) => miles(tablas(id).reduce((s, t) => s + t.filas, 0));
   const archivos = (id) => tablas(id).map((t) => t.archivo);
+  const ide = D.cat.ideam || {};
+  const dupIdeam = ide.calidad?.duplicados_removidos;
 
   document.getElementById('flujo').innerHTML = [
-    etapa('', '<span class="chip white"><i data-lucide="sparkles"></i> Origen</span>', 'Datos sintéticos',
-      tablas('bronze').length, 'archivos', 'generar_datos.py', [
-        'Proyectos, paquetes, comunidades, áreas, hidrología y vías en GeoJSON',
-        'Registro de riesgos en Excel, como llega hoy',
-        'Clima diario tipo IDEAM en CSV',
-        'Semilla 42: siempre el mismo resultado',
+    etapa('', '<span class="chip white"><i data-lucide="sparkles"></i> Origen</span>', 'Dos orígenes',
+      2, 'fuentes de datos', 'src/bronce/*.py', [
+        '<b>Sintético</b>: proyectos, paquetes, comunidades, áreas, hidrología, vías y el registro de riesgos en Excel (semilla 42, siempre igual)',
+        '<b>Real</b>: clima del IDEAM, red vial de INVIAS, ríos del IGAC y municipios del DANE, todos de fuentes abiertas sin clave',
       ]),
     etapa('bronce', '<span class="medal bronce">Bronce</span>', 'Datos crudos',
       tablas('bronze').length, `tablas · ${filas('bronze')} filas`, 'sin transformar', [
-        'Se guardan tal cual llegan, en su formato original',
+        'Se guardan tal cual llegan, en su formato original; solo esta capa descarga de internet',
         `${cal.filas_bronce} filas en el registro de riesgos, con duplicados y vacíos`,
-        'Respaldo y trazabilidad de lo que entró',
+        ide.calidad ? `${miles(ide.calidad.lecturas_bronce)} lecturas del IDEAM, con duplicados y como texto` : 'Lecturas del IDEAM aún sin descargar',
       ], archivos('bronze')),
     etapa('plata', '<span class="medal plata">Plata</span>', 'Datos limpios',
-      tablas('silver').length, `tablas · ${filas('silver')} filas`, 'bronce_a_plata.py', [
-        'Normaliza categorías, estados y tipos',
-        `Quita ${cal.duplicados_removidos} duplicados`,
+      tablas('silver').length, `tablas · ${filas('silver')} filas`, 'src/plata/*.py · lee Bronce', [
+        'Normaliza categorías, estados y tipos; clasifica cada lectura del IDEAM por su sensor y unifica unidades',
+        `Quita ${cal.duplicados_removidos} duplicados del registro${dupIdeam != null ? ` y ${miles(dupIdeam)} de las lecturas del IDEAM` : ''}`,
         `Ubica ${cal.sin_coordenadas_originales} riesgos sin coordenadas en el centroide de su paquete`,
-        'Tipifica fechas y calcula severidad = probabilidad × impacto',
+        'Suma la lluvia por día y estación',
+        'Recorta al departamento, simplifica sin abrir huecos y une las dos redes viales sin duplicar kilómetros',
+        'Deja junto a cada fuente su proveniencia y su reporte de calidad',
       ], archivos('silver')),
     etapa('oro', '<span class="medal oro">Oro</span>', 'Listos para usar',
-      tablas('gold').length, `tablas · ${filas('gold')} filas`, 'plata_a_oro.py', [
+      tablas('gold').length, `tablas · ${filas('gold')} filas`, 'src/oro/*.py · lee solo Plata', [
         'Cinco criterios e ICT por paquete, con su contribución',
         'Reglas de escalamiento, tendencia y alertas',
-        'Superficie de calor (KDE) y Getis-Ord Gi*',
+        'Una ficha por estación del IDEAM con todas sus variables, lecturas de ahora y normales',
+        'Ríos, municipios con sus cifras y la red vial unificada para el mapa',
         'Backtest y análisis de sensibilidad',
       ], archivos('gold')),
     etapa('', '<span class="chip white"><i data-lucide="monitor"></i> Consumo</span>', 'Quién lo usa',
-      4, 'salidas', 'main.py · exportar_gis.py', [
+      4, 'salidas', 'app/main.py · src/consumo/', [
         'API FastAPI <span class="mono">/api/…</span>',
         '<a href="mapa.html">Mapa interactivo</a> y <a href="explorar.html">Explorar datos</a>',
         'GeoPackage para ArcGIS o QGIS',
@@ -74,8 +84,13 @@ function renderFlujo() {
 // Datos creados e imperfecciones
 // ---------------------------------------------------------------------------
 
+const ORIGEN_REAL = { ideam: 'IDEAM', invias: 'INVIAS', igac: 'IGAC', dane: 'DANE', invias_igac: 'INVIAS + IGAC' };
+const esReal = (dataset) => meta(dataset).origen in ORIGEN_REAL;
+
 function renderCreados() {
-  const tablas = [...capa('bronze').tablas].sort((a, b) => ORDEN.indexOf(a.dataset) - ORDEN.indexOf(b.dataset));
+  const tablas = [...capa('bronze').tablas]
+    .filter((t) => !esReal(t.dataset) && meta(t.dataset).origen !== 'meta')
+    .sort((a, b) => ORDEN.indexOf(a.dataset) - ORDEN.indexOf(b.dataset));
   document.getElementById('grid-datos').innerHTML = tablas.map((t) => {
     const m = meta(t.dataset);
     return `
@@ -111,6 +126,66 @@ function renderCreados() {
     <p class="nota">Salen ${cal.filas_bronce - cal.filas_plata} filas duplicadas y ningún riesgo se pierde por falta de ubicación
       (${cal.riesgos_sin_paquete_valido} descartados): los ${cal.sin_coordenadas_originales} sin coordenadas quedan marcados con
       <span class="mono">geolocalizacion_inferida</span> para que el reporte los distinga.</p>`;
+}
+
+// ---------------------------------------------------------------------------
+// Clima real: IDEAM
+// ---------------------------------------------------------------------------
+
+const TITULO_TABLA = { radiacion: 'Radiación global (promedios)', normales: 'Normales climatológicas', ultimas_horas: 'Últimas horas (casi en tiempo real)' };
+
+function renderIdeam() {
+  const ide = D.cat.ideam || {};
+  const el = document.getElementById('ideam-hechos');
+  if (!ide.meta) {
+    el.innerHTML = '<p class="nota-vacia">Aún no se descargó el clima del IDEAM. Ejecuta <span class="mono">python ejecutar_pipeline.py --fuente ideam</span> (necesita internet).</p>';
+    document.getElementById('ideam-pasos').innerHTML = '';
+    return;
+  }
+  const m = ide.meta, c = ide.calidad || {}, cat = ide.catalogo || {};
+  const kv = (k, v) => `<div class="kv" style="align-items:flex-start"><span class="k" style="min-width:150px">${k}</span><span class="v" style="text-align:right;font-weight:500">${v}</span></div>`;
+  const dias = Math.round((new Date(m.hasta) - new Date(m.desde)) / 86400000);
+  el.innerHTML = [
+    kv('Fuente', 'IDEAM · portal datos.gov.co (API Socrata), sin clave'),
+    kv('Conjuntos', `${Object.keys(m.variables || {}).length + 1} conjuntos de lecturas (uno por variable) + catálogo <span class="mono">hp9r-jxuu</span>, radiación, normales y el flujo de últimas horas`),
+    kv('Licencia', 'Creative Commons BY-SA 4.0 (quien redistribuya datos derivados debe conservar esa licencia)'),
+    kv('Variables', `Lluvia, ${Object.keys(m.variables || {}).length} más de la tabla de abajo, radiación y normales`),
+    kv('Granularidad temporal', 'Una lectura cada ~10 minutos (lluvia, viento) o cada hora (temperatura, humedad, presión, nivel); en Plata, un valor por día; además, las últimas ~12 horas casi en tiempo real'),
+    kv('Granularidad espacial', `Puntos: estaciones fijas. ${cat.estaciones ?? '-'} en el catálogo de La Guajira, ${m.estaciones_sondeadas} candidatas sondeadas, <b>${m.estaciones_con_datos_recientes} reportando</b>`),
+    kv('Ventana', `${dias} días, hasta la lectura más reciente (${ui.fecha(m.hasta.slice(0, 10) + 'T12:00:00')}); el IDEAM actualiza a diario`),
+    kv('Volumen', `${miles(m.lecturas)} lecturas crudas → ${miles(c.lecturas_plata ?? 0)} sin duplicados → ${c.estaciones_con_lluvia_diaria ?? '-'} estaciones con lluvia diaria`),
+    kv('Formato', 'JSON (API) → Parquet en Bronce → GeoJSON en Oro'),
+    kv('Descargado', ui.fecha(m.descargado_en)),
+  ].join('');
+
+  document.getElementById('ideam-pasos').innerHTML = [
+    ['Catálogo', `Se pide el catálogo de estaciones de La Guajira (${cat.estaciones ?? '-'} filas en un solo pedido).`],
+    ['Sondeo', `A cada estación candidata se le pide su última lectura de los últimos 60 días, para saber cuáles reportan.`],
+    ['Descarga', `De las ${m.estaciones_descargadas} que reportan se bajan las lecturas crudas, estación por estación y en bloques de 4 días.`],
+    ['Limpieza', 'Plata clasifica cada lectura por su sensor, quita duplicados y valores imposibles, unifica unidades, suma la lluvia por día y promedia el viento como vector.'],
+    ['En vivo', 'El backend consulta el flujo de últimas horas del IDEAM (cada 10 minutos como máximo) y, si no hay internet, usa el último respaldo.'],
+  ].map(([t, s], i) => `<div class="regla"><span class="n">${i + 1}</span><div><div class="t">${t}</div><div class="s">${s}</div></div></div>`).join('');
+
+  const prob = [
+    ['copy-x', `${miles(c.duplicados_removidos ?? 0)} lecturas duplicadas (${((c.duplicados_removidos / Math.max(c.lecturas_bronce, 1)) * 100).toFixed(1)}%): varias estaciones traen dos sensores para la misma lluvia (0240 y 0257 GPRS). Sumarlas inflaría los totales.`],
+    ['map-pin-off', 'La columna de ubicación trae latitud y longitud invertidas; se usan las columnas latitud y longitud.'],
+    ['timer-off', 'Las consultas agregadas sobre todo el histórico (165 millones de filas) se agotan; solo funcionan filtradas por estación y fecha.'],
+    ['droplets', `El conjunto de humedad trae sobre todo <b>humedad del suelo</b>, no del aire (${miles(c.var_reasignadas_por_sensor ?? 0)} lecturas reclasificadas); la humedad del aire solo tiene serie de 30 días en 1 estación, en las demás solo hay las últimas horas.`],
+    ['ban', `${miles(c.ult_fuera_de_rango ?? 0)} lecturas de las últimas horas fuera del rango físico, casi todas el valor centinela 999 o 1000 del viento, descartadas. Unidades mezcladas (hPA/hPa, mt/m, GN/deg) unificadas.`],
+    ['gauge', `Cobertura desigual: ${m.estaciones_con_datos_recientes} de ${m.estaciones_sondeadas} estaciones activas reportan, y algunas con huecos (se marcan con borde punteado en el mapa).`],
+  ];
+  document.getElementById('ideam-problemas').innerHTML = prob.map(([ic, t]) => `
+    <div class="imp"><span class="tile"><i data-lucide="${ic}"></i></span><span class="grow" style="font-size:var(--fs-12);line-height:1.5">${t}</span></div>`).join('');
+
+  const vs = Object.values(m.variables || {});
+  const fila = (t, ds, n, l) => `<tr><td>${t}</td><td class="mono">${ds}</td><td class="num-c">${n}</td><td class="num-c">${l}</td></tr>`;
+  document.getElementById('ideam-vars').innerHTML = `
+    <table class="tabla-mini"><thead><tr><th>Variable</th><th>Conjunto</th><th>Estaciones</th><th>Lecturas</th></tr></thead><tbody>
+    ${fila('Lluvia', 's54a-sgyg', m.estaciones_con_datos_recientes, miles(m.lecturas))}
+    ${vs.map((v) => fila(v.titulo, v.dataset, v.estaciones_con_datos, miles(v.lecturas))).join('')}
+    ${Object.entries(m.tablas || {}).map(([k, v]) => fila(TITULO_TABLA[k] || k, v.dataset || '', '-', miles(v.filas ?? v.lecturas ?? 0))).join('')}
+    </tbody></table>
+    <p class="nota-vacia" style="margin-top:8px">Nivel del mar: el conjunto existe (<span class="mono">ia8x-22em</span>) pero no tiene estaciones en La Guajira.</p>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +226,7 @@ function renderDetalleTabla(t) {
     </div>
     <div class="meta-chips">
       <span class="medal ${MEDAL[D.capa]}">${NOMBRE_CAPA[D.capa]}</span>
+      ${esReal(t.dataset) ? `<span class="chip ok">Real · ${ORIGEN_REAL[meta(t.dataset).origen]}</span>` : meta(t.dataset).origen === 'meta' ? '<span class="chip white">Metadatos</span>' : '<span class="chip warn">Sintético</span>'}
       <span class="chip">${t.formato}</span>
       ${t.geometria ? `<span class="chip"><i data-lucide="map-pin"></i> ${t.geometria}</span>` : ''}
       <span class="chip">${miles(t.filas)} filas</span>
@@ -323,6 +399,7 @@ function renderEjemplo(paquetes, info) {
 
   renderFlujo();
   renderCreados();
+  renderIdeam();
   renderCatalogo();
   renderModelo(paquetes.features.map((f) => f.properties));
   ui.icons();

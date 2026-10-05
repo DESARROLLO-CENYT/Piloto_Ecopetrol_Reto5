@@ -13,7 +13,7 @@ import json
 import geopandas as gpd
 import pandas as pd
 
-from config import CRS_GEOGRAFICO, CRS_METRICO, ORO, PLATA, asegurar_directorios, cargar_parametros
+from comun.config import CRS_GEOGRAFICO, CRS_METRICO, ORO, PLATA, asegurar_directorios, cargar_parametros
 from modelo import ict as m_ict
 from modelo import espacial as m_esp
 
@@ -27,7 +27,7 @@ def cargar_plata():
         "areas": gpd.read_file(PLATA / "areas.geojson"),
         "hidro": gpd.read_file(PLATA / "hidro.geojson"),
         "vias": gpd.read_file(PLATA / "vias.geojson"),
-        "clima": pd.read_parquet(PLATA / "clima.parquet"),
+        "clima": pd.read_parquet(PLATA / "clima_sintetico.parquet"),
     }
 
 

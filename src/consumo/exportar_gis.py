@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import geopandas as gpd
 
-from config import EXPORTS, ORO, asegurar_directorios
+from comun.config import EXPORTS, ORO, asegurar_directorios
 
 CAPAS = {
     "paquetes_ict": "paquetes_ict.geojson",

@@ -20,79 +20,114 @@
     <aside class="card panel">
       <div class="panel-top">
         <div class="grow">
-          <div class="card-title">Gestión de riesgos</div>
-          <div class="card-sub" id="panel-resumen">La Guajira</div>
+          <div class="card-title">Mapa de La Guajira</div>
+          <div class="card-sub">Activa las capas que quieras: se dibujan una sobre otra</div>
         </div>
-        <button class="icon-btn sm ghost" id="btn-focus-buscar" title="Buscar paquete"><i data-lucide="search"></i></button>
       </div>
 
-      <h1 class="panel-h1">Zonas de riesgo</h1>
-
-      <div class="seg light full" id="tabs" role="tablist">
-        <button class="on" data-tab="modelo" role="tab">Modelo</button>
-        <button data-tab="filtros" role="tab">Filtros</button>
-        <button data-tab="alertas" role="tab">Alertas <span class="badge-count" id="n-alertas">0</span></button>
-      </div>
-
-      <div class="panel-meta">
-        <span class="muted meta-lbl"><i data-lucide="calendar"></i> Corte</span>
-        <span class="chip white" id="fecha-corte">-</span>
-        <span class="grow"></span>
-        <span class="meta-lbl ink-2" title="Versión de parametros.yaml"><i data-lucide="settings-2"></i> Parámetros <b id="param-version"></b></span>
-      </div>
-
-      <div class="panel-body">
-        <section data-panel="modelo">
-          <div class="sec-head">
+      <div class="capas">
+        <section class="capa" id="capa-proyectos">
+          <div class="capa-head">
+            <span class="tile" style="background:var(--green-50);color:var(--green-700)"><i data-lucide="hexagon"></i></span>
             <div class="grow">
-              <div class="card-title">Pesos del modelo</div>
-              <div class="card-sub">Ajusta cada criterio y recalcula el ICT</div>
+              <div class="t">Proyectos <span class="chip warn">Sintético</span></div>
+              <div class="s" id="sub-proyectos">-</div>
             </div>
-            <span class="chip" id="suma-pesos">Σ 1.00</span>
+            <label class="switch"><input type="checkbox" data-capa="proyectos" checked><span></span></label>
           </div>
-          <div id="sliders"></div>
-          <div class="btn-row">
-            <button class="btn btn-primary sm" id="btn-recalcular"><i data-lucide="refresh-cw"></i> Recalcular</button>
-            <button class="btn btn-outline sm" id="btn-reset"><i data-lucide="rotate-ccw"></i> Restablecer</button>
-          </div>
-          <p class="nota" id="nota-pesos" hidden>Mostrando el ICT con pesos modificados. La tendencia y Getis-Ord corresponden al último corte del pipeline.</p>
-        </section>
-
-        <section data-panel="filtros" hidden>
-          <div class="sec-head">
-            <div class="grow">
-              <div class="card-title">Riesgos en el mapa</div>
-              <div class="card-sub" id="n-riesgos-visibles">-</div>
-            </div>
-            <label class="switch" title="Mostrar riesgos en el mapa"><input type="checkbox" id="toggle-riesgos"><span></span></label>
-          </div>
-          <span class="label">Categoría</span>
-          <div class="chips" id="f-categoria"></div>
-          <span class="label">Estado</span>
-          <div class="chips" id="f-estado"></div>
-          <span class="label">Tipo</span>
-          <div class="seg full" id="f-tipo">
-            <button class="on" data-v="">Todos</button>
-            <button data-v="amenaza">Amenazas</button>
-            <button data-v="oportunidad">Oportunidades</button>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-dash"></span> Límite del proyecto</div>
+            <div class="leyenda-fila"><span class="lg-circ"></span> Paquete de trabajo</div>
           </div>
         </section>
 
-        <section data-panel="alertas" hidden>
-          <div id="lista-alertas"></div>
+        <section class="capa" id="capa-municipios">
+          <div class="capa-head">
+            <span class="tile" style="background:#eef1ee;color:#44504a"><i data-lucide="map-pinned"></i></span>
+            <div class="grow">
+              <div class="t">Municipios <span class="chip ok">DANE · real</span></div>
+              <div class="s" id="sub-municipios">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="municipios" checked><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-mpio"></span> Límite municipal</div>
+            <div class="leyenda-fila"><span class="lg-mpio lg-mpio-dep"></span> Límite de La Guajira</div>
+            <details class="lista-mpios" id="lista-mpios">
+              <summary><span>Elegir municipios</span><span class="cuenta" id="cuenta-mpios">15 de 15</span></summary>
+              <div class="lista-acciones">
+                <button class="link-btn" id="mpios-todos">Mostrar todos</button>
+                <button class="link-btn" id="mpios-ninguno">Quitar todos</button>
+              </div>
+              <div class="lista-filas" id="lista-filas"></div>
+            </details>
+            <p class="fuente" id="fuente-municipios"></p>
+          </div>
         </section>
 
-        <section class="zonas">
-          <div class="sec-head">
+        <section class="capa off" id="capa-vias">
+          <div class="capa-head">
+            <span class="tile" style="background:#ffe9d2;color:#b45309"><i data-lucide="route"></i></span>
             <div class="grow">
-              <div class="card-title">Zonas prioritarias</div>
-              <div class="card-sub">Paquetes ordenados por ICT</div>
+              <div class="t">Vías <span class="chip ok">INVIAS + IGAC · real</span></div>
+              <div class="s" id="sub-vias">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="vias"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="lista-filas lista-vias" id="leyenda-vias"></div>
+            <p class="fuente" id="fuente-vias"></p>
+          </div>
+        </section>
+
+        <section class="capa off" id="capa-rios">
+          <div class="capa-head">
+            <span class="tile" style="background:#e3f2fb;color:#1f6f99"><i data-lucide="waves"></i></span>
+            <div class="grow">
+              <div class="t">Ríos y agua <span class="chip ok">IGAC · real</span></div>
+              <div class="s" id="sub-rios">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="rios"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-rio"></span> Cauce permanente</div>
+            <div class="leyenda-fila"><span class="lg-rio lg-rio-i"></span> Cauce intermitente</div>
+            <div class="leyenda-fila"><span class="lg-agua"></span> Río ancho, ciénaga, laguna, embalse</div>
+            <p class="fuente" id="fuente-rios"></p>
+          </div>
+        </section>
+
+        <section class="capa off" id="capa-riesgos">
+          <div class="capa-head">
+            <span class="tile" style="background:var(--lvl-critico-bg);color:var(--lvl-critico)"><i data-lucide="triangle-alert"></i></span>
+            <div class="grow">
+              <div class="t">Riesgos <span class="chip warn">Sintético</span></div>
+              <div class="s" id="sub-riesgos">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="riesgos"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="seg full" id="f-tipo">
+              <button class="on" data-v="">Todos</button>
+              <button data-v="amenaza">Amenazas</button>
+              <button data-v="oportunidad">Oportunidades</button>
+            </div>
+            <div class="chips" id="f-categoria"></div>
+          </div>
+        </section>
+
+        <section class="grupo-clima" id="grupo-clima">
+          <div class="capa-head">
+            <span class="tile" style="background:#e3f2fb;color:#1f6f99"><i data-lucide="cloud-sun"></i></span>
+            <div class="grow">
+              <div class="t">Clima <span class="chip ok">IDEAM · real</span></div>
+              <div class="s" id="sub-clima">-</div>
             </div>
           </div>
-          <table class="table compact">
-            <thead><tr><th>Zona</th><th>ICT</th><th>Tend.</th><th>Conf.</th></tr></thead>
-            <tbody id="tabla-zonas"></tbody>
-          </table>
+          <div class="estado-vivo" id="estado-vivo"></div>
+          <p class="fuente">Cada variable es su propia capa: enciende las que quieras y se ponen una junto a otra en cada estación.</p>
+          <div class="capas-var" id="clima-capas"></div>
+          <p class="fuente" id="fuente-clima"></p>
         </section>
       </div>
     </aside>
@@ -100,38 +135,20 @@
     <div class="map-card" id="map-card">
       <div id="mapa"></div>
 
-      <div class="map-overlay ov-tl">
-        <div class="map-search">
-          <i data-lucide="search"></i>
-          <input id="buscar" placeholder="Buscar paquete de trabajo" autocomplete="off">
-        </div>
-        <div class="resultados" id="resultados" hidden></div>
-        <div class="glass leyenda">
-          <span><span class="dot bajo"></span>Bajo</span>
-          <span><span class="dot medio"></span>Medio</span>
-          <span><span class="dot alto"></span>Alto</span>
-          <span><span class="dot critico"></span>Crítico</span>
+      <div class="map-overlay ov-tl base-switch">
+        <div class="seg" id="seg-base">
+          <button class="on" data-base="satelite"><i data-lucide="satellite"></i> Satélite</button>
+          <button data-base="calles"><i data-lucide="map"></i> Mapa</button>
         </div>
       </div>
 
       <div class="map-overlay map-ctrls ov-tr">
-        <button class="map-btn" id="btn-base" title="Cambiar a mapa claro"><i data-lucide="map"></i></button>
-        <button class="map-btn" id="btn-capas" title="Capas"><i data-lucide="layers"></i></button>
-        <button class="map-btn" id="btn-centrar" title="Centrar en los proyectos"><i data-lucide="locate-fixed"></i></button>
-      </div>
-
-      <div class="map-overlay pop-dark capas" id="pop-capas" hidden>
-        <div class="ttl">Capas</div>
-        <div id="lista-capas"></div>
+        <button class="map-btn" id="btn-centrar" title="Centrar en La Guajira"><i data-lucide="locate-fixed"></i></button>
       </div>
 
       <div class="map-overlay map-zoom ov-br">
         <button id="zoom-in" title="Acercar"><i data-lucide="plus"></i></button>
         <button id="zoom-out" title="Alejar"><i data-lucide="minus"></i></button>
-      </div>
-
-      <div class="map-overlay ov-bottom">
-        <div class="carousel" id="carrusel"></div>
       </div>
 
       <div class="map-overlay pop-card detalle" id="detalle" hidden></div>
@@ -140,7 +157,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="ui.js"></script>

@@ -116,7 +116,7 @@ a `static/`; asi la skill sigue siendo la fuente de verdad.
 - **Tabla**: `.table` (cabeceras en minuscula gris, sin bordes, fila hover como banda redondeada), `.cell-main` (tile de icono + titulo + subtitulo).
 - **Listas**: `.list-item` (tile + titulo/sub + ↗, como "Plant Stress" de Ejemplo_3).
 - **Formularios**: `.field` (select/input en pill gris), `.range` (slider con relleno verde, usar `--val`), `.switch`.
-- **Mapa**: `.map-card`, `.map-ctrls` + `.map-btn` (oscuros cuadrados), `.map-search`, `.glass` / `.glass-dark`, `.pop-card` (tarjeta de alerta/detalle), `.map-tag` (tooltip permanente de Leaflet como tag blanco), `.carousel` + `.alert-card`.
+- **Mapa**: `.map-card`, `.map-ctrls` + `.map-btn` (oscuros cuadrados), `.map-zoom`, `.map-search`, `.glass` / `.glass-dark`, `.pop-card` (tarjeta de detalle), `.map-tag` (tooltip permanente de Leaflet como tag blanco), `.carousel` + `.alert-card`. Chips de origen: `.chip.warn` (sintetico) y `.chip.ok` (real).
 
 Snippets listos para copiar en `references/components.md`.
 
@@ -138,29 +138,53 @@ shell
 El aviso de datos sinteticos vive como `.chip.warn` en la topbar de todas
 las paginas; no uses banners de ancho completo.
 
-### Mapa (`mapa.html`) - basado en Ejemplo_3
+### Mapa (`mapa.html`) - version simple, basada en Ejemplo_3 y Ejemplo_2
 ```
 shell (alto fijo 100vh, sin scroll de pagina)
  ├ topbar (Mapa activo)
- └ fila: panel 360px | map-card (flex 1)
-     panel: titulo pequeno + sub · H1 "Zonas de riesgo" · .seg
-            [Modelo | Filtros | Alertas] · fila chip-fecha + "Parametros" ·
-            contenido del tab · seccion "Zonas prioritarias" (tabla con .lvl)
-     map-card, capas flotantes:
-       arriba-izq: .map-search + fila glass de leyenda
-       arriba-der: .map-ctrls (base satelital/clara, capas, recentrar)
-       abajo-der:  .map-ctrls zoom (+/−)
-       abajo:      .carousel de .alert-card (la seleccionada en verde)
-       derecha:    .pop-card de detalle (gauge ICT, pill navy con la causa,
-                   radar criterios vs promedio, filas de parametros,
-                   [Cerrar] [Ver en datos])
+ └ fila: panel 350px | map-card (flex 1)
+     panel: titulo + sub · una .capa por cada capa (tile de icono, titulo,
+            chip de origen, switch) con su cuerpo plegable: leyenda, filtros
+            o rampa
+     map-card, flotantes: arriba-izq .base-switch con .seg [Satelite | Mapa]
+            · arriba-der 1 .map-btn (centrar) · abajo-der
+            .map-zoom · derecha .pop-card de detalle (estacion / paquete /
+            riesgo, con grafico Chart.js en la de estacion)
 ```
-Leaflet: `zoomControl:false`, sin `L.control.layers`; los controles son
-HTML propio encima del mapa que llaman a la API de Leaflet. Base por defecto
-satelital de Esri + etiquetas de referencia; alternativa CARTO Positron.
-Paquetes con borde blanco 2px, relleno del color de nivel al 40-50%, y
-etiqueta permanente `.map-tag`. Heat con gradiente de niveles (ver
-references). Nunca OSM estandar ni el control de capas de Leaflet.
+Reglas de este mapa:
+- **Sin claves, siempre.** Bases: satelite Esri (`World_Imagery` + etiquetas
+  `World_Boundaries_and_Places`) y calles OpenStreetMap estandar
+  (`tile.openstreetmap.org`, con atribucion). Nada de proveedores con token.
+- **Capas apilables**, cada una con su interruptor y su panel de Leaflet
+  (`createPane`) para controlar el orden: proyectos abajo, riesgos encima,
+  estaciones (marcadores) arriba. Cada capa lleva un chip de **origen**:
+  `.chip.warn` "Sintetico" o `.chip.ok` "IDEAM · real". Mezclar datos reales
+  y sinteticos sin etiquetarlos confunde: no lo omitas.
+- Controles propios en HTML (`zoomControl:false`, sin `L.control.layers`).
+- Los marcadores de estacion son pastillas (`L.divIcon`) con el valor dentro,
+  como los avatares de Ejemplo_2; borde punteado = dato incompleto.
+- Cada variable de clima es **su propia capa** (tarjeta `.capa-var` con
+  interruptor, agrupadas bajo `#grupo-clima`; solo lluvia arranca encendida) y
+  se apilan: con una sola variable, una pastilla por estacion; con dos o mas,
+  una **ficha** por estacion (`.ficha`, celdas `.fc-c` coloreadas con la misma
+  rampa) que `colocarFichas()` reparte en pantalla sin solaparse, con linea
+  guia a su estacion. Nunca pongas pastillas de varias variables lado a lado:
+  se pisan con las estaciones vecinas. Variables: lluvia, temperatura, viento, humedad, humedad del suelo,
+  presion, nivel del rio y radiacion. Cada una con su rampa de 5 clases y sus
+  cortes en `VISTAS` de `mapa.js`; presion y nivel van de un solo color porque
+  su valor depende de la altitud o del cauce y una escala comun enganaria.
+  Lluvia usa azules secuenciales (los colores de nivel del ICT no se reutilizan).
+- Valor mostrado: lectura en vivo (`/api/clima/ahora`) > ultimas horas (Oro) >
+  ultima de la ventana. Un indicador `.estado-vivo` con `.dot.vivo` dice si es
+  en vivo, respaldo o solo la ventana de 30 dias.
+- Viento: la pastilla lleva una flecha (`.flecha`) girada hacia donde va el
+  viento (la direccion IDEAM es de donde viene). Sin dato suficiente: "s/d".
+- Tarjeta de estacion: rejilla `.ahora-grid` de botones `.ahora-c` (una por
+  variable, elige la serie del grafico), grafico Chart.js (barras para lluvia,
+  linea con minimo/maximo para el resto) y "Contexto climatico" con las
+  normales del mes.
+- El modelo (ICT, pesos, alertas) ya no vive en el mapa. Si vuelve, entra
+  como una capa mas, no como un panel que ocupe la pantalla.
 
 ### Explorar (`explorar.html`) - basado en Ejemplo_1
 ```
