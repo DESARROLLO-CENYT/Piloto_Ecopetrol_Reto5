@@ -85,7 +85,7 @@
       <div class="card-icon"><i data-lucide="cloud-rain"></i></div>
       <div class="grow">
         <div class="card-title">Clima real: IDEAM, datos abiertos</div>
-        <div class="card-sub">Lo único real del piloto: lluvia, temperatura, humedad, viento, presión, nivel de río, radiación y normales de las estaciones del IDEAM en La Guajira, sin clave ni registro</div>
+        <div class="card-sub">Una de las fuentes reales del piloto: lluvia, temperatura, humedad, viento, presión, nivel de río, radiación y normales de las estaciones del IDEAM en La Guajira, sin clave ni registro</div>
       </div>
       <span class="chip ok">Real</span>
     </div>
@@ -139,10 +139,10 @@
       </div>
       <div class="eq">ICT = 100 × Σ w<sub>k</sub> · C<sub>k</sub></div>
       <ul class="pasos">
-        <li><b>C<sub>k</sub></b> es cada criterio llevado a 0–1 con min–max sobre los paquetes del portafolio.</li>
-        <li><b>w<sub>k</sub></b> son los pesos; suman 1 y viven en <span class="mono">parametros.yaml</span> (en producción se derivan con AHP y expertos).</li>
+        <li><b>C<sub>k</sub></b> es cada criterio llevado a 0–1 contra un tope fijo (por ejemplo, 80 mm de lluvia en 14 días = 1), no contra los demás paquetes: el ICT de un paquete no cambia si se agrega otro.</li>
+        <li><b>w<sub>k</sub></b> son los pesos; suman 1, viven en <span class="mono">parametros.yaml</span> y se ajustan (también con AHP) en la vista Ajustar.</li>
         <li>El resultado va de 0 a 100 y cada punto se puede atribuir a un criterio: el modelo es explicable.</li>
-        <li>Para medir tendencia se recalcula el ICT de hace 7 días con los mismos límites de normalización.</li>
+        <li>Para medir tendencia se recalcula el ICT de hace 7 días con la misma escala fija.</li>
       </ul>
     </section>
 
@@ -215,11 +215,11 @@
         </div>
       </div>
       <div class="val-grid" id="validacion"></div>
-      <div class="aviso"><i data-lucide="info"></i><span>El backtest es circular: los eventos sintéticos salen de las mismas variables que usa el modelo. Confirma que el mecanismo funciona, no que los pesos sean los correctos; eso requiere el histórico real de Ecopetrol.</span></div>
+      <div class="aviso"><i data-lucide="info"></i><span>La prueba de consistencia es circular: los riesgos materializados entran al ICT y luego se comparan con él. Confirma que el mecanismo funciona, no que los pesos sean los correctos; eso requiere el histórico real de Ecopetrol. El acierto de la IA se mide sobre texto sintético: el real se sabrá con el registro de Ecopetrol.</span></div>
     </section>
   </div>
 
-  <footer class="pie muted">Datos sintéticos · piloto de demostración. No representa proyectos, comunidades ni información real de Ecopetrol.</footer>
+  <footer class="pie muted">Piloto de demostración: el registro de riesgos y los proyectos son sintéticos; el territorio es real (datos abiertos). No representa información de Ecopetrol.</footer>
 </div>
 
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

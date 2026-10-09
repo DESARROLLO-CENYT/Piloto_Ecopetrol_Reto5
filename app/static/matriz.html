@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz RAM · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="matriz.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="ram"></header>
+
+  <div class="page-head">
+    <h1>Matriz RAM, <span>ajústala a tu criterio</span></h1>
+    <div class="acciones">
+      <span class="chip white" id="chip-version"><i data-lucide="badge-check"></i> -</span>
+      <a class="btn btn-outline sm" href="explorar.html"><i data-lucide="chart-column"></i> Ver en Explorar</a>
+    </div>
+  </div>
+
+  <div class="barra-acciones card" id="barra">
+    <div class="grow">
+      <div class="t" id="estado-edicion">Sin cambios</div>
+      <div class="s" id="estado-sub">Haz clic en una celda para cambiar su nivel. Los cambios se guardan aparte: la matriz oficial de Ecopetrol no se toca.</div>
+    </div>
+    <input class="field" id="f-autor" placeholder="Quién (opcional)" maxlength="80">
+    <input class="field nota" id="f-nota" placeholder="Por qué el cambio (opcional)" maxlength="300">
+    <button class="btn btn-outline sm" id="b-descartar" disabled><i data-lucide="undo-2"></i> Descartar</button>
+    <button class="btn btn-outline sm" id="b-oficial"><i data-lucide="rotate-ccw"></i> Volver a la oficial</button>
+    <button class="btn btn-dark sm" id="b-guardar" disabled><i data-lucide="save"></i> Guardar</button>
+    <button class="btn btn-primary sm" id="b-recalcular"><i data-lucide="refresh-cw"></i> Guardar y recalcular</button>
+  </div>
+  <div class="aviso" id="aviso" hidden></div>
+
+  <div class="bento">
+    <section class="card span-7">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="grid-3x3"></i></div>
+        <div class="grow">
+          <div class="card-title">Matriz</div>
+          <div class="card-sub">Fila = consecuencia (0 a 5) · columna = probabilidad (A a E) · el punto marca lo que difiere de la oficial</div>
+        </div>
+      </div>
+      <table class="m-editable" id="matriz"></table>
+      <div class="selector" id="selector" hidden></div>
+      <div class="advertencias" id="advertencias"></div>
+    </section>
+
+    <section class="card span-5">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="activity"></i></div>
+        <div class="grow">
+          <div class="card-title">Qué cambiaría en el registro</div>
+          <div class="card-sub">Amenazas abiertas, nivel con controles (residual) · se calcula aquí mismo, antes de guardar</div>
+        </div>
+      </div>
+      <div class="efecto" id="efecto"></div>
+    </section>
+
+    <section class="card span-7">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="list-checks"></i></div>
+        <div class="grow">
+          <div class="card-title">Niveles y decisiones</div>
+          <div class="card-sub">Qué exige cada nivel, quién aprueba y su puntaje en la severidad del ICT</div>
+        </div>
+      </div>
+      <div class="niveles" id="niveles"></div>
+    </section>
+
+    <section class="card span-5">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="dices"></i></div>
+        <div class="grow">
+          <div class="card-title">Probabilidad</div>
+          <div class="card-sub">Qué significa cada letra (se basa en el historial)</div>
+        </div>
+      </div>
+      <div class="probabilidades" id="probabilidades"></div>
+      <div class="card-head" style="margin-top:var(--s-5)">
+        <div class="card-icon"><i data-lucide="siren"></i></div>
+        <div class="grow">
+          <div class="card-title">Escalamiento</div>
+          <div class="card-sub">Cuándo un paquete pasa a posible crisis por la RAM</div>
+        </div>
+      </div>
+      <label class="regla-sw"><span class="switch"><input type="checkbox" id="esc-vh"><span></span></span><span>Una amenaza <b>VH</b> sin materializar escala el paquete</span></label>
+      <label class="regla-sw"><span class="switch"><input type="checkbox" id="esc-h"><span></span></span><span>Una amenaza <b>H</b> en un paquete de ruta crítica escala el paquete</span></label>
+    </section>
+
+    <section class="card span-12">
+      <details class="consecuencias">
+        <summary>
+          <span class="card-icon"><i data-lucide="ruler"></i></span>
+          <span class="grow"><span class="card-title">Escalas de consecuencia</span><span class="card-sub">Qué significa cada nivel, de 0 a 5, en cada dimensión · clic para desplegar y editar</span></span>
+        </summary>
+        <div class="tabla-cons" id="consecuencias"></div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="matriz.js"></script>
+</body>
+</html>

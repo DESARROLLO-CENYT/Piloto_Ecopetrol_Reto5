@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riesgo de ejecución · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="ejecucion.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="ejecucion"></header>
+
+  <div class="page-head">
+    <h1>Riesgo de ejecución, <span>cuánto atraso y sobrecosto pueden traer los riesgos</span></h1>
+    <div class="acciones">
+      <span class="chip white" id="chip-supuestos"><i data-lucide="sliders-horizontal"></i> -</span>
+      <a class="btn btn-outline sm" href="#modelo"><i data-lucide="sigma"></i> Cómo se calcula</a>
+    </div>
+  </div>
+
+  <div class="aviso" id="aviso" hidden></div>
+
+  <div class="bento" id="proyectos"></div>
+
+  <div class="bento" style="margin-top:var(--gap-shell)">
+    <section class="card span-8">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="hexagon"></i></div>
+        <div class="grow">
+          <div class="card-title">Paquetes de trabajo</div>
+          <div class="card-sub" id="sub-paquetes">-</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table" id="tabla-paquetes">
+          <thead><tr>
+            <th>Paquete</th><th title="Meses que le faltan">Faltan</th><th title="Días de holgura (0 en ruta crítica)">Holgura</th>
+            <th title="Atraso esperado: ya consumido (gris) + por venir (naranja); y el P90">Atraso</th><th title="Sobrecosto P90">Sobrecosto P90</th>
+            <th title="Índice de riesgo de ejecución: probabilidad de pasar la holgura + la tolerancia">IRE</th><th>Riesgo principal</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card span-4" id="detalle">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="search"></i></div>
+        <div class="grow">
+          <div class="card-title" id="det-titulo">Por qué</div>
+          <div class="card-sub" id="det-sub">Los riesgos que más atraso aportan</div>
+        </div>
+      </div>
+      <div id="det-cuerpo"></div>
+    </section>
+
+    <section class="card span-12" id="escenarios">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="flask-conical"></i></div>
+        <div class="grow">
+          <div class="card-title">Escenarios: ¿y si...?</div>
+          <div class="card-sub">Se simula al momento con las mismas entradas; no guarda nada</div>
+        </div>
+        <button class="btn btn-outline sm" id="b-reset-esc"><i data-lucide="rotate-ccw"></i> Volver a lo actual</button>
+      </div>
+      <div class="esc-grid">
+        <div class="esc-ctrls" id="esc-ctrls"></div>
+        <div class="esc-res" id="esc-res"></div>
+      </div>
+    </section>
+
+    <section class="card span-12" id="modelo">
+      <details class="supuestos">
+        <summary>
+          <span class="card-icon"><i data-lucide="sigma"></i></span>
+          <span class="grow"><span class="card-title">Cómo se calcula y supuestos del modelo</span>
+            <span class="card-sub">La fórmula, de dónde sale cada número y los supuestos que puedes ajustar · clic para desplegar</span></span>
+        </summary>
+        <div class="formula" id="formula"></div>
+        <div class="sup-grid" id="sup"></div>
+        <div class="sup-acciones">
+          <input class="field" id="f-autor" placeholder="Quién (opcional)" maxlength="80">
+          <input class="field nota" id="f-nota" placeholder="Por qué el cambio (opcional)" maxlength="300">
+          <button class="btn btn-outline sm" id="b-probar"><i data-lucide="play"></i> Probar sin guardar</button>
+          <button class="btn btn-outline sm" id="b-base"><i data-lucide="rotate-ccw"></i> Volver a los supuestos base</button>
+          <button class="btn btn-primary sm" id="b-guardar"><i data-lucide="save"></i> Guardar y recalcular</button>
+        </div>
+        <div class="advertencias" id="advertencias"></div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="ejecucion.js"></script>
+</body>
+</html>

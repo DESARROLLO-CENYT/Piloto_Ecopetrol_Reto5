@@ -18,3 +18,9 @@ exports/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Parametros editados desde la aplicacion (cada instalacion guarda los suyos; la base versionada es parametros.yaml)
+ram_personalizada.yaml
+ejecucion_personalizada.yaml
+modelo_personalizado.yaml
+historial_parametros.jsonl

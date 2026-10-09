@@ -16,6 +16,21 @@ const ui = (() => {
     return r.json();
   }
 
+  // Llamadas que cambian datos (matriz RAM, supuestos, modelo, actualizar alertas). Desde el mismo equipo pasan sin
+  // clave; desde otro equipo de la red el servidor pide la clave de edicion (RETO5_CLAVE_EDICION) y se pregunta una vez.
+  async function escribir(url, opts = {}) {
+    const leer = () => { try { return sessionStorage.getItem('reto5-clave') || ''; } catch (e) { return ''; } };
+    const llamar = (clave) => fetch(url, { ...opts, headers: { ...(opts.headers || {}), ...(clave ? { 'X-Clave-Edicion': clave } : {}) } });
+    let r = await llamar(leer());
+    if (r.status === 401) {
+      const clave = window.prompt('Para editar desde otro equipo se necesita la clave de edición de la aplicación:');
+      if (!clave) return r;
+      try { sessionStorage.setItem('reto5-clave', clave); } catch (e) { /* sin almacenamiento: se pregunta de nuevo */ }
+      r = await llamar(clave);
+    }
+    return r;
+  }
+
   // 35.4 -> "35<span class=dec>.4</span>" (decimales en gris, como Ejemplo_1)
   function num(v, dec = 1) {
     if (v == null || Number.isNaN(Number(v))) return '-';
@@ -46,22 +61,33 @@ const ui = (() => {
     materializado: { label: 'Materializado', lvl: 'critico' },
   };
 
+  // Matriz RAM de Ecopetrol: colores del formato ECP-DRI-F-045 (verde, amarillo claro, amarillo, naranja, rojo)
+  const RAM = {
+    N: { nombre: 'Ninguno', bg: '#5cbf6b', fg: '#0f3d1a' },
+    L: { nombre: 'Bajo', bg: '#fbeea6', fg: '#5c4a00' },
+    M: { nombre: 'Medio', bg: '#f6c945', fg: '#4d3b00' },
+    H: { nombre: 'Alto', bg: '#f07d1a', fg: '#ffffff' },
+    VH: { nombre: 'Muy alto', bg: '#d7191c', fg: '#ffffff' },
+  };
+  const DIM_RAM = { PE: 'Personas', EC: 'Económica', MA: 'Ambiental', CL: 'Clientes', IM: 'Imagen' };
+  const ramChip = (nivel) => (nivel ? `<span class="ram-chip" style="background:${RAM[nivel].bg};color:${RAM[nivel].fg}" title="RAM ${RAM[nivel].nombre}">${nivel}</span>` : '<span class="ram-chip vacio">-</span>');
+
   const CRITERIOS = {
     severidad_riesgo: 'Severidad',
     vulnerabilidad_territorial: 'Vulnerabilidad',
-    amenazas_externas: 'Clima',
+    amenazas_externas: 'Amenazas externas',
     exposicion_proyecto: 'Exposición',
     convergencia: 'Convergencia',
   };
 
-  // "Paquete 3 - Proyecto Sintetico Norte" -> "Paquete 3 · Norte"
+  // "Paquete 3 - Proyecto 1" -> "Paquete 3 · Proyecto 1" (ficha) y "Proy. 1 · P3" (etiqueta del mapa)
   const nombreCorto = (nombre) => {
-    const m = /Paquete (\d+) - Proyecto Sintetico (\w+)/.exec(nombre || '');
-    return m ? `Paquete ${m[1]} · ${m[2]}` : nombre;
+    const m = /Paquete (\d+) - Proyecto (\d+)/.exec(nombre || '');
+    return m ? `Paquete ${m[1]} · Proyecto ${m[2]}` : nombre;
   };
   const tagCorto = (nombre) => {
-    const m = /Paquete (\d+) - Proyecto Sintetico (\w+)/.exec(nombre || '');
-    return m ? `${m[2]} · P${m[1]}` : nombre;
+    const m = /Paquete (\d+) - Proyecto (\d+)/.exec(nombre || '');
+    return m ? `Proy. ${m[2]} · P${m[1]}` : nombre;
   };
 
   // Patron rayado diagonal para barras (Ejemplo_1)
@@ -149,7 +175,11 @@ const ui = (() => {
       ['inicio', 'index.html', 'house', 'Inicio'],
       ['mapa', 'mapa.html', 'map', 'Mapa'],
       ['explorar', 'explorar.html', 'chart-column', 'Explorar'],
-      ['datos', 'datos.html', 'database', 'Datos y modelo'],
+      ['ram', 'matriz.html', 'grid-3x3', 'Matriz RAM'],
+      ['ejecucion', 'ejecucion.html', 'timer', 'Ejecución'],
+      ['modelo', 'modelo.html', 'sliders-horizontal', 'Ajustar'],
+      ['datos', 'datos.html', 'database', 'Datos'],
+      ['flujo', 'flujo.html', 'workflow', 'Flujo'],
     ];
     el.className = 'topbar';
     el.innerHTML = `
@@ -178,7 +208,7 @@ const ui = (() => {
   icons();
 
   return {
-    css, alpha, icons, json, num, fecha, NIVEL, nivelColor, CATEGORIA, cat, ESTADO, CRITERIOS,
+    css, alpha, icons, json, escribir, num, fecha, NIVEL, nivelColor, CATEGORIA, cat, ESTADO, CRITERIOS, RAM, DIM_RAM, ramChip,
     nombreCorto, tagCorto, hatch, bubblePlugin, tooltip,
   };
 })();

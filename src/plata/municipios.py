@@ -1,4 +1,4 @@
-"""Limites municipales de La Guajira (DANE MGN): Bronce -> Plata.
+"""Limites municipales de La Guajira (DANE MGN 2024): Bronce -> Plata.
 
 Entradas (Bronce): data/bronze/dane_municipios.geojson, divipola_municipios.csv y municipios_meta.json.
 Salidas (Plata):   data/silver/municipios.geojson, reporte_calidad_municipios.csv, proveniencia_municipios.json.
@@ -40,7 +40,8 @@ def _vertices(gdf) -> int:
 
 def limpiar(bruto: gpd.GeoDataFrame, divipola: pd.DataFrame) -> tuple[gpd.GeoDataFrame, dict]:
     rep: dict = {"municipios_bronce": int(len(bruto)), "vertices_bronce": _vertices(bruto)}
-    g = bruto.copy()
+    # el MGN 2024 del DANE trae los campos en minusculas; el de 2005 (Esri) en mayusculas
+    g = bruto.rename(columns={c: c.upper() for c in bruto.columns if c != "geometry"})
     rep["geometrias_invalidas"] = int((~g.is_valid).sum())
     g["geometry"] = g.geometry.make_valid()
 
@@ -59,7 +60,9 @@ def limpiar(bruto: gpd.GeoDataFrame, divipola: pd.DataFrame) -> tuple[gpd.GeoDat
     g["geometry"] = shapely.coverage_simplify(g.geometry.values, TOLERANCIA_GRADOS)
     g = g.to_crs(CRS_METRICO)
     g["area_km2"] = (g.area / 1e6).round(1)
-    rep["diferencia_maxima_de_area_km2"] = round(float((g["area_km2"] - g["MPIO_NAREA"] / 1e6).abs().max()), 1)
+    oficial = g["MPIO_NAREA"].astype(float)
+    oficial = oficial / 1e6 if oficial.median() > 1e5 else oficial      # 2005 en m2; 2024 ya en km2
+    rep["diferencia_maxima_de_area_km2"] = round(float((g["area_km2"] - oficial).abs().max()), 1)
     union = g.union_all()
     rep["partes_del_departamento"] = int(len(getattr(union, "geoms", [union])))
     rep["huecos_entre_municipios"] = int(sum(len(p.interiors) for p in getattr(union, "geoms", [union])))

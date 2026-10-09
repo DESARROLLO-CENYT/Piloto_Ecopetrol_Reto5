@@ -57,7 +57,8 @@ def test_las_estaciones_del_clima_simulado_caen_en_tierra():
 def test_cada_riesgo_con_coordenadas_cae_dentro_de_su_paquete():
     proy, paq = s.generar_proyectos_y_paquetes()
     com, areas = s.generar_comunidades(), s.generar_areas_protegidas()
-    riesgos = s.generar_registro_riesgos(paq, com, areas).dropna(subset=["lat", "lon"])
+    riesgos, _clave = s.generar_registro_riesgos(paq, com, areas)
+    riesgos = riesgos.dropna(subset=["lat", "lon"])
     geom = paq.set_index("id_paquete").geometry
     puntos = gpd.GeoSeries.from_xy(riesgos["lon"], riesgos["lat"], crs=4326)
     assert all(geom[i].contains(p) for i, p in zip(riesgos["id_paquete_trabajo"], puntos))

@@ -47,6 +47,9 @@ FUENTES_ABIERTAS = {
     "invias,vias_igac": RAIZ / "data" / "gold" / "red_vial.geojson",   # las dos redes se unen en una sola capa
     "hidrografia": RAIZ / "data" / "gold" / "rios.geojson",
     "municipios": RAIZ / "data" / "gold" / "municipios.geojson",
+    "chirps": RAIZ / "data" / "gold" / "lluvia_chirps.json",
+    "social,seguridad,emergencias": RAIZ / "data" / "gold" / "indicadores_municipio.json",
+    "resguardos,runap": RAIZ / "data" / "gold" / "resguardos.geojson",
 }
 
 
@@ -101,6 +104,22 @@ def ip_local() -> str:
         return socket.gethostbyname(socket.gethostname())
 
 
+def puerto_ocupado(host: str, puerto: int) -> bool:
+    """True si otro programa ya escucha en ese puerto, por ejemplo un piloto anterior que sigue abierto.
+
+    Sin esta comprobacion, uvicorn falla al arrancar pero el navegador se abre igual sobre el servidor viejo, y
+    parece que los cambios no funcionan.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if os.name != "nt":  # en Linux/Mac evita un falso "ocupado" justo despues de cerrar el anterior
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((host, puerto))
+        except OSError:
+            return True
+    return False
+
+
 def abrir_cuando_responda(url: str) -> None:
     for _ in range(120):
         try:
@@ -124,6 +143,13 @@ def main() -> None:
         sys.exit(f"Se necesita Python 3.11 o superior (recomendado 3.12); este es {sys.version.split()[0]}.")
 
     print(f"Piloto Reto 5 · proyecto en {RAIZ}")
+    host = "0.0.0.0" if args.red else "127.0.0.1"
+    if puerto_ocupado(host, args.puerto):
+        sys.exit(
+            f"\nEl puerto {args.puerto} ya está en uso: lo más probable es que siga abierto un piloto anterior.\n"
+            f"   Ciérralo con Ctrl+C en su ventana y vuelve a correr este comando,\n"
+            f"   o abre este en otro puerto:  py -3.12 iniciar.py --puerto {args.puerto + 1}"
+        )
     py = preparar_entorno()
 
     if args.regenerar or not ARCHIVO_ORO.exists():
@@ -147,7 +173,6 @@ def main() -> None:
         else:
             paso("Datos abiertos ya descargados (usa --regenerar para actualizarlos)")
 
-    host = "0.0.0.0" if args.red else "127.0.0.1"
     url = f"http://127.0.0.1:{args.puerto}/"
     paso(f"Aplicación en {url}")
     if args.red:

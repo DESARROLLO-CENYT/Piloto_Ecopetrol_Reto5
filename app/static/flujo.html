@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flujo de la aplicación · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="flujo.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="flujo"></header>
+
+  <div class="page-head">
+    <h1>Flujo de la aplicación, <span>de la fuente al tablero</span></h1>
+    <div class="acciones">
+      <span class="chip white"><i data-lucide="clock-3"></i> Última corrida <b id="ultima">-</b></span>
+      <a class="btn btn-outline sm" href="datos.html"><i data-lucide="table-2"></i> Catálogo de tablas</a>
+    </div>
+  </div>
+
+  <nav class="anclas" aria-label="Secciones de la página">
+    <a href="#recorrido"><i data-lucide="route"></i> Recorrido</a>
+    <a href="#pipeline"><i data-lucide="git-fork"></i> Pipeline paso a paso</a>
+    <a href="#fuentes"><i data-lucide="satellite-dish"></i> Fuentes</a>
+    <a href="#modelos"><i data-lucide="sigma"></i> Modelos</a>
+    <a href="#ciclo"><i data-lucide="alarm-clock"></i> Ciclo diario</a>
+    <a href="#tecnologias"><i data-lucide="boxes"></i> Tecnologías</a>
+    <a href="#calidad"><i data-lucide="shield-check"></i> Calidad y seguridad</a>
+  </nav>
+
+  <div class="bento" id="resumen">
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="landmark"></i></div><div><div class="num md" id="s-entidades">12</div><div class="card-sub">Entidades públicas como fuente</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="workflow"></i></div><div><div class="num md" id="s-pasos">-</div><div class="card-sub">Pasos del pipeline, <span id="s-artefactos">-</span> artefactos</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="flask-conical"></i></div><div><div class="num md" id="s-pruebas">-</div><div class="card-sub">Pruebas automáticas en <span id="s-arch-pruebas">-</span> archivos</div></div></div>
+    <div class="card span-3 stat"><div class="card-icon"><i data-lucide="shield-check"></i></div><div><div class="num md" id="s-auditoria">-</div><div class="card-sub" id="s-auditoria-sub">Comprobaciones de auditoría</div></div></div>
+  </div>
+
+  <section class="card" id="recorrido">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="route"></i></div>
+      <div class="grow">
+        <div class="card-title">El recorrido de un dato</div>
+        <div class="card-sub">Seis etapas, de la fuente pública al tablero del gerente. Cada una con lo que hace, con qué lo hace y qué entrega a la siguiente</div>
+      </div>
+    </div>
+    <div class="riel" id="riel"></div>
+    <div class="etapas" id="etapas"></div>
+  </section>
+
+  <section class="card" id="pipeline">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="git-fork"></i></div>
+      <div class="grow">
+        <div class="card-title">El pipeline paso a paso</div>
+        <div class="card-sub">Grafo vivo de <span class="mono">src/pipeline.py</span>: cada paso declara qué lee y qué escribe, y el orden sale de esas dependencias. Toca un paso para ver de dónde viene y a dónde llega</div>
+      </div>
+      <div class="leyenda-dag">
+        <span><i class="ld red"></i> descarga de internet</span>
+        <span><i class="ld obl"></i> obligatorio</span>
+      </div>
+    </div>
+    <div class="dag-wrap">
+      <div class="dag" id="dag">
+        <svg class="dag-svg" id="dag-svg" aria-hidden="true"></svg>
+        <div class="dag-cols" id="dag-cols"></div>
+      </div>
+      <aside class="dag-detalle" id="dag-detalle" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section class="card" id="fuentes">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="satellite-dish"></i></div>
+      <div class="grow">
+        <div class="card-title">Fuentes de datos</div>
+        <div class="card-sub">Doce entidades públicas en once descargas automáticas, más el registro de riesgos. Licencia y fecha leídas de los metadatos que deja cada descarga</div>
+      </div>
+      <span class="chip ok">Real</span><span class="chip warn">Sintético</span>
+    </div>
+    <div class="grid-fuentes" id="grid-fuentes"></div>
+  </section>
+
+  <div class="page-head sub-head" id="modelos">
+    <h1>Los modelos, <span>qué entra, cómo se calcula y qué sale</span></h1>
+  </div>
+  <div class="bento" id="grid-modelos"></div>
+
+  <section class="card" id="ciclo">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="alarm-clock"></i></div>
+      <div class="grow">
+        <div class="card-title">Ciclo diario de alertas</div>
+        <div class="card-sub">Cada mañana, sin intervención: descarga, recálculo, comparación con el día anterior y aviso</div>
+      </div>
+      <span class="chip white" id="ciclo-estado">-</span>
+    </div>
+    <div class="ciclo" id="ciclo-pasos"></div>
+    <div class="ciclo-pie" id="ciclo-pie"></div>
+  </section>
+
+  <section class="card" id="tecnologias">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="boxes"></i></div>
+      <div class="grow">
+        <div class="card-title">Tecnologías y herramientas</div>
+        <div class="card-sub">Versiones fijadas en <span class="mono">requirements.txt</span>: lo que se instala es lo que corre. Todo es de código abierto y sin claves</div>
+      </div>
+    </div>
+    <div class="grid-tec" id="grid-tec"></div>
+  </section>
+
+  <div class="bento" id="calidad">
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="shield-check"></i></div>
+        <div class="grow">
+          <div class="card-title">Calidad y trazabilidad</div>
+          <div class="card-sub" id="aud-sub">Última auditoría del pipeline</div>
+        </div>
+      </div>
+      <div id="auditoria"></div>
+      <div class="sub-titulo">La traza de un dato</div>
+      <div class="traza" id="traza"></div>
+    </section>
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="lock-keyhole"></i></div>
+        <div class="grow">
+          <div class="card-title">Ciberseguridad</div>
+          <div class="card-sub">Lo que ya aplica el piloto y la arquitectura propuesta para producción (Anexo 1 del reto)</div>
+        </div>
+      </div>
+      <div id="seguridad"></div>
+    </section>
+  </div>
+
+  <section class="card" id="produccion">
+    <div class="card-head">
+      <div class="card-icon"><i data-lucide="cloud"></i></div>
+      <div class="grow">
+        <div class="card-title">Del piloto a producción</div>
+        <div class="card-sub">La misma lógica, sin reescribirla: cada pieza del piloto tiene su equivalente en la nube de Ecopetrol</div>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="table" id="tabla-prod"></table></div>
+  </section>
+
+  <footer class="pie muted">Piloto de demostración: el registro de riesgos y los proyectos son sintéticos; el territorio es real (datos abiertos). No representa información de Ecopetrol.</footer>
+</div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="flujo.js"></script>
+</body>
+</html>

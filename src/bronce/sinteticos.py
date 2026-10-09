@@ -9,6 +9,11 @@ de Ecopetrol ni de ninguna comunidad.
 El registro de riesgos se genera deliberadamente "sucio" (duplicados, nulos,
 texto inconsistente, ~12% sin coordenadas) para poder probar el paso
 Bronce -> Plata sobre un caso realista.
+
+Cada riesgo trae la calificacion de la matriz RAM de Ecopetrol: consecuencia potencial de 0 a 5 en
+Personas, Economica, Ambiental, Clientes e Imagen (segun la categoria), probabilidad inherente de A a E
+y la residual con los controles. La probabilidad llega escrita de varias formas ('C', 'c',
+'C - Ha ocurrido en la empresa', '3'), como en un Excel real.
 """
 from __future__ import annotations
 
@@ -22,6 +27,7 @@ from shapely.geometry import Point, LineString
 
 from comun.config import BRONCE, CRS_GEOGRAFICO, SEMILLA_ALEATORIA, asegurar_directorios
 from comun.marco_guajira import centro_factible_mas_cercano, punto_en_tierra, tierra_interior
+from bronce import textos_sinteticos
 
 rng = np.random.default_rng(SEMILLA_ALEATORIA)
 random.seed(SEMILLA_ALEATORIA)
@@ -32,6 +38,59 @@ CATEGORIAS_RIESGO = [
 ]
 ESTADOS = ["latente", "proximo_a_materializarse", "materializado"]
 TIPOS = ["amenaza", "oportunidad"]
+
+# Matriz RAM: consecuencia potencial de 0 a 5 por dimension segun la categoria del riesgo (rango min-max).
+# La primera dimension es la principal de esa categoria; en los paquetes "calientes" sube un nivel.
+DIMENSIONES_RAM = {"PE": "cons_personas", "EC": "cons_economica", "MA": "cons_ambiental", "CL": "cons_clientes", "IM": "cons_imagen"}
+PERFIL_RAM = {
+    "social_comunidad": {"IM": (2, 4), "CL": (0, 3), "EC": (1, 3), "PE": (0, 2), "MA": (0, 1)},
+    "ambiental": {"MA": (1, 4), "IM": (1, 3), "EC": (0, 3), "PE": (0, 1), "CL": (0, 1)},
+    "seguridad_fisica": {"PE": (1, 4), "EC": (1, 3), "IM": (1, 3), "MA": (0, 1), "CL": (0, 1)},
+    "logistico_acceso": {"EC": (1, 4), "CL": (1, 3), "PE": (0, 2), "IM": (0, 2), "MA": (0, 1)},
+    "climatico": {"EC": (1, 4), "PE": (0, 3), "MA": (0, 3), "CL": (0, 2), "IM": (0, 1)},
+    "contractual": {"EC": (1, 4), "CL": (1, 3), "IM": (0, 2), "PE": (0, 0), "MA": (0, 0)},
+}
+PESOS_PROB = {"normal": [0.12, 0.28, 0.30, 0.20, 0.10], "caliente": [0.0, 0.05, 0.20, 0.40, 0.35]}   # A..E
+CONTROLES = {
+    "social_comunidad": "Mesa de diálogo y plan de relacionamiento con la comunidad",
+    "ambiental": "Plan de manejo ambiental, kit antiderrames e inspecciones",
+    "seguridad_fisica": "Esquema de seguridad, rutas autorizadas y reporte de novedades",
+    "logistico_acceso": "Rutas alternas, inventario de reserva y monitoreo de vías",
+    "climatico": "Alertas tempranas IDEAM, obras de drenaje y plan de contingencia",
+    "contractual": "Seguimiento de hitos, pólizas y comité de contratos",
+}
+TEXTO_PROB = {"A": "A - No ha ocurrido en la industria", "B": "B - Ha ocurrido en la industria", "C": "C - Ha ocurrido en la empresa",
+              "D": "D - Sucede varias veces al año en la empresa", "E": "E - Sucede varias veces al año en la unidad"}
+
+
+def calificacion_ram(categoria: str, caliente: bool) -> dict:
+    """Consecuencias potenciales por dimension (0-5), probabilidad inherente y residual (A-E). Los controles bajan la
+    probabilidad 0, 1 o 2 letras (no se modela la reduccion de la consecuencia)."""
+    perfil = PERFIL_RAM[categoria]
+    principal = next(iter(perfil))
+    cons = {}
+    for dim, (lo, hi) in perfil.items():
+        c = int(rng.integers(lo, hi + 1))
+        if caliente and dim == principal:
+            c = min(5, c + 1)
+        cons[DIMENSIONES_RAM[dim]] = c
+    letras = "ABCDE"
+    prob = letras[int(rng.choice(5, p=PESOS_PROB["caliente" if caliente else "normal"]))]
+    baja = int(rng.choice(3, p=[0.3, 0.5, 0.2]))
+    residual = letras[max(0, letras.index(prob) - baja)]
+    return {**cons, "probabilidad": prob, "probabilidad_residual": residual, "controles": CONTROLES[categoria]}
+
+
+def _ensuciar_probabilidad(letra: str) -> str:
+    """Como llega en un Excel real: 'C', 'c', 'C - Ha ocurrido en la empresa' o el numero de la columna."""
+    r = rng.random()
+    if r < 0.15:
+        return letra.lower()
+    if r < 0.30:
+        return TEXTO_PROB[letra]
+    if r < 0.36:
+        return str("ABCDE".index(letra) + 1)
+    return letra
 
 
 MARGEN_COSTA = 0.02     # grados (~2 km): los puntos sinteticos quedan al menos a esta distancia de la costa y la frontera
@@ -68,7 +127,7 @@ def _escala_que_cabe() -> float:
 def generar_proyectos_y_paquetes(n_proyectos=3, paquetes_por_proyecto=(4, 6)):
     """3 proyectos ficticios con 4-6 paquetes de trabajo (poligonos) cada uno, TODOS dentro de tierra firme de La Guajira."""
     proyectos, paquetes = [], []
-    nombres_proyecto = ["Proyecto Sintetico Norte", "Proyecto Sintetico Centro", "Proyecto Sintetico Sur"]
+    nombres_proyecto = [f"Proyecto {i + 1}" for i in range(n_proyectos)]    # 1 al norte, 2 al centro, 3 al sur
     escala = _escala_que_cabe()
     ancho_proy, alto_proy, radio = ANCHO_PROYECTO * escala, ALTO_PROYECTO * escala, RADIO_PROYECTO * escala
 
@@ -228,7 +287,9 @@ def _ensuciar_texto(valor, prob=0.35):
 
 
 def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_historico=180, n_riesgos=200):
+    """Registro de riesgos sucio a proposito y la clave de evaluacion de las categorias (ver textos_sinteticos)."""
     filas = []
+    categorias_reales, tipos = [], []
     ids_paquete = gdf_paquetes["id_paquete"].tolist()
 
     # Zonas "calientes" plantadas: 3 paquetes reciben muchos riesgos severos
@@ -247,8 +308,9 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
         categoria = random.choice(CATEGORIAS_RIESGO)
         tipo = "oportunidad" if rng.random() < 0.18 else "amenaza"
 
-        probabilidad = int(rng.integers(3, 6)) if (es_caliente and tipo == "amenaza") else int(rng.integers(1, 6))
-        impacto = int(rng.integers(3, 6)) if (es_caliente and tipo == "amenaza") else int(rng.integers(1, 6))
+        ram = calificacion_ram(categoria, es_caliente and tipo == "amenaza")
+        categorias_reales.append(categoria)
+        tipos.append(tipo)
 
         estado = random.choices(ESTADOS, weights=[0.55, 0.25, 0.20])[0]
         dias_atras = int(rng.integers(1, dias_historico))
@@ -276,8 +338,10 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
             "causa": f"Causa sintetica asociada a {categoria}",
             "categoria": _ensuciar_texto(categoria),
             "tipo": tipo,
-            "probabilidad": probabilidad,
-            "impacto": impacto,
+            **{k: ram[k] for k in DIMENSIONES_RAM.values()},
+            "probabilidad": _ensuciar_probabilidad(ram["probabilidad"]),
+            "probabilidad_residual": _ensuciar_probabilidad(ram["probabilidad_residual"]),
+            "controles": ram["controles"],
             "estado": _ensuciar_texto(estado),
             "id_proyecto": paquete["id_proyecto"],
             "id_paquete_trabajo": id_paquete,
@@ -292,6 +356,8 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
         filas.append(fila)
 
     df = pd.DataFrame(filas)
+    # texto libre realista (descripcion, causa, accion) y ~8 % sin categoria legible, con su propio generador aleatorio
+    df, clave = textos_sinteticos.redactar(df, categorias_reales, tipos, SEMILLA_ALEATORIA + 11)
 
     # --- Ensuciar el dataset a proposito ---
     n = len(df)
@@ -301,7 +367,8 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
     df.loc[idx_sin_coord, ["lat", "lon"]] = np.nan
 
     # 2) Nulos dispersos en campos opcionales
-    for col, frac in [("causa", 0.05), ("fecha_ejecucion_accion", 0.08), ("id_evento_riesgo", 0.03)]:
+    # (una dimension RAM sin calificar: el evaluador la dejo en blanco)
+    for col, frac in [("causa", 0.05), ("fecha_ejecucion_accion", 0.08), ("id_evento_riesgo", 0.03), ("cons_clientes", 0.04)]:
         idx = rng.choice(n, size=int(n * frac), replace=False)
         df.loc[idx, col] = None
 
@@ -312,7 +379,31 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
     duplicados["categoria"] = duplicados["categoria"].apply(lambda v: _ensuciar_texto(str(v), prob=0.8))
     df = pd.concat([df, duplicados], ignore_index=True)
 
-    return df
+    return df, clave
+
+
+def generar_cronograma(gdf_paquetes):
+    """Cronograma y costo de parada de cada paquete (SINTETICO), para el modelo de riesgo de ejecucion.
+
+    Usa su propio generador aleatorio (semilla + 7) para no alterar el resto de los datos sinteticos. Los paquetes de
+    ruta critica no tienen holgura: todo su atraso pasa al proyecto.
+    """
+    r = np.random.default_rng(SEMILLA_ALEATORIA + 7)
+    filas = []
+    for _, p in gdf_paquetes.iterrows():
+        duracion = int(r.integers(8, 25))                       # meses
+        avance = round(float(r.uniform(0.1, 0.7)), 2)
+        critico = bool(p["ruta_critica"])
+        filas.append({
+            "id_paquete": p["id_paquete"],
+            "duracion_meses": duracion,
+            "avance": avance,
+            "meses_restantes": round(duracion * (1 - avance), 1),
+            "holgura_dias": 0 if critico else int(r.integers(10, 46)),
+            "costo_dia_parada_usd": int(r.integers(15, 91)) * 1000,   # equipos, personal y contratistas en espera
+            "presupuesto_usd": int(r.integers(8, 61)) * 1_000_000,
+        })
+    return pd.DataFrame(filas)
 
 
 def main():
@@ -324,7 +415,8 @@ def main():
     gdf_hidro = generar_hidrologia()
     gdf_vias = generar_vias()
     df_clima = generar_clima()
-    df_riesgos = generar_registro_riesgos(gdf_paq, gdf_com, gdf_areas)
+    df_riesgos, clave = generar_registro_riesgos(gdf_paq, gdf_com, gdf_areas)
+    df_cronograma = generar_cronograma(gdf_paq)
 
     gdf_proy.to_file(BRONCE / "proyectos.geojson", driver="GeoJSON")
     gdf_paq.to_file(BRONCE / "paquetes_trabajo.geojson", driver="GeoJSON")
@@ -334,6 +426,8 @@ def main():
     gdf_vias.to_file(BRONCE / "vias.geojson", driver="GeoJSON")
     df_clima.to_csv(BRONCE / "clima_sintetico.csv", index=False)
     df_riesgos.to_excel(BRONCE / "registro_riesgos.xlsx", index=False)
+    clave.to_csv(BRONCE / "clave_categorias_sinteticas.csv", index=False)
+    df_cronograma.to_csv(BRONCE / "cronograma_paquetes.csv", index=False)
 
     print("Datos sinteticos generados en:", BRONCE)
     print(f"  proyectos:        {len(gdf_proy)}")
@@ -343,6 +437,7 @@ def main():
     print(f"  hidrologia:       {len(gdf_hidro)}")
     print(f"  vias:             {len(gdf_vias)}")
     print(f"  registros clima:  {len(df_clima)}")
+    print(f"  cronograma:       {len(df_cronograma)} paquetes")
     print(f"  riesgos (con duplicados y nulos a proposito): {len(df_riesgos)}")
     print(f"    sin coordenadas: {df_riesgos['lat'].isna().sum()} ({df_riesgos['lat'].isna().mean():.1%})")
 

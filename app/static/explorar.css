@@ -21,8 +21,34 @@
 #chip-paquete { cursor: pointer; }
 
 .registro { max-height: 470px; margin: 0 -8px; }
-.sev { display: inline-flex; align-items: baseline; gap: 6px; }
+.sev { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sev b { font-variant-numeric: tabular-nums; }
 .sev .pxi { font-size: var(--fs-11); color: var(--muted); }
+#chip-ram { cursor: pointer; }
+
+/* Matriz RAM: la matriz a la izquierda, que hacer en cada nivel a la derecha */
+.ram-card .card-head { flex-wrap: wrap; }
+.ram-cuerpo { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s-6); align-items: start; }
+.ram-matriz { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.ram-matriz th { font-size: var(--fs-11); font-weight: 600; color: var(--muted); padding: 2px 4px; cursor: help; }
+.ram-matriz thead th { text-align: center; line-height: 1.2; }
+.ram-matriz thead th small { display: block; font-weight: 400; font-size: 10px; }
+.ram-matriz tbody th { text-align: right; width: 34px; font-family: var(--font-display); font-size: var(--fs-15); color: var(--ink-2); }
+.ram-matriz td { height: 44px; border-radius: 8px; text-align: center; position: relative; cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.ram-matriz td:hover { transform: scale(1.04); box-shadow: 0 2px 8px rgba(18,24,20,.18); }
+.ram-matriz td .niv { position: absolute; top: 3px; left: 6px; font-size: 10px; font-weight: 700; opacity: .65; }
+.ram-matriz td .n { font-family: var(--font-display); font-size: var(--fs-18); font-weight: 600; }
+.ram-matriz td.vacia .n { opacity: 0; }
+.ram-matriz td.sel { outline: 3px solid var(--ink); outline-offset: 1px; }
+.ram-eje { font-size: var(--fs-11); color: var(--muted); text-align: center; }
+.ram-pie, .ram-fuente { font-size: var(--fs-11); color: var(--muted); margin: var(--s-2) 0 0; line-height: 1.45; }
+.ram-niveles { display: flex; flex-direction: column; gap: 6px; }
+.ram-nivel { display: grid; grid-template-columns: 38px 1fr auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; }
+.ram-nivel .t { font-weight: 600; font-size: var(--fs-13); }
+.ram-nivel .d { grid-column: 2 / -1; font-size: var(--fs-11); color: var(--muted); line-height: 1.35; }
+.ram-nivel .n { font-family: var(--font-display); font-size: var(--fs-18); font-weight: 600; }
+.ram-nivel .ram-chip { grid-row: span 2; }
+@media (max-width: 900px) { .ram-cuerpo { grid-template-columns: 1fr; } }
 
 .lista-paquetes { max-height: 360px; overflow-y: auto; margin: 0 -8px; }
 .pq-row {
@@ -42,3 +68,15 @@
 .estado-row .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: var(--fs-13); }
 .estado-row .top b { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-18); }
 .estado-row .top .pct { color: var(--muted); font-size: var(--fs-12); margin-left: 6px; }
+
+/* IA del registro */
+.ia-marca { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 0 6px; height: 17px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; background: #ede9fe; color: #5b21b6; vertical-align: middle; cursor: help; }
+.ia-marca svg { width: 10px; height: 10px; }
+.ia-marca.revisar { background: var(--lvl-medio-bg); color: var(--lvl-medio-ink); }
+#f-ia svg { width: 13px; height: 13px; }
+
+/* Accion de tratamiento en el registro: texto en dos lineas como maximo, fecha y estado debajo */
+.table td.accion { white-space: normal; min-width: 190px; max-width: 260px; }
+.acc-t { font-size: var(--fs-12); color: var(--ink-2); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.acc-s { display: flex; align-items: center; gap: 6px; font-size: var(--fs-11); color: var(--muted); margin-top: 3px; white-space: nowrap; }

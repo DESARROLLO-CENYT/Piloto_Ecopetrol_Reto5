@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajustar el modelo · Reto 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="modelo.css">
+</head>
+<body>
+<div class="shell">
+  <header id="topbar" data-active="modelo"></header>
+
+  <div class="page-head">
+    <h1>Ajustar el modelo, <span>pesos, umbrales y reglas del ICT</span></h1>
+    <div class="acciones">
+      <span class="chip white" id="chip-version"><i data-lucide="git-branch"></i> -</span>
+      <a class="btn btn-outline sm" href="datos.html#modelo"><i data-lucide="sigma"></i> Cómo se calcula</a>
+    </div>
+  </div>
+
+  <div class="aviso" id="aviso" hidden></div>
+
+  <div class="bento">
+    <section class="card span-7">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="scale"></i></div>
+        <div class="grow">
+          <div class="card-title">Pesos de los criterios</div>
+          <div class="card-sub">Cuánto aporta cada criterio al ICT; se reparten para sumar 100 %</div>
+        </div>
+        <div class="seg" id="seg-pesos">
+          <button class="on" data-v="directo">Directo</button>
+          <button data-v="ahp">Por pares (AHP)</button>
+        </div>
+      </div>
+      <div id="pesos-directo"></div>
+      <div id="pesos-ahp" hidden>
+        <p class="nota">Compara cada par de criterios con la escala de Saaty: 1 = igual de importantes, 3 = moderadamente más, 5 = mucho más,
+          7 = muchísimo más, 9 = extremadamente más. El método deriva los pesos y la razón de consistencia (debe ser 0,10 o menos).</p>
+        <div id="ahp-pares"></div>
+        <div class="ahp-pie">
+          <button class="btn btn-outline sm" id="b-ahp"><i data-lucide="calculator"></i> Calcular pesos</button>
+          <div id="ahp-res"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card span-5">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="eye"></i></div>
+        <div class="grow">
+          <div class="card-title">Vista previa</div>
+          <div class="card-sub" id="sub-previa">Se recalcula al momento, sin guardar</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table" id="tabla-previa">
+          <thead><tr><th>Paquete</th><th>ICT</th><th>Nivel</th><th title="Escala a crisis">Escala</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="sliders-horizontal"></i></div>
+        <div class="grow">
+          <div class="card-title">Umbrales y reglas de escalamiento</div>
+          <div class="card-sub">Cuándo un paquete es bajo, medio, alto o crítico, y cuándo escala a crisis</div>
+        </div>
+      </div>
+      <div id="umbrales"></div>
+      <div id="reglas"></div>
+    </section>
+
+    <section class="card span-6">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="map"></i></div>
+        <div class="grow">
+          <div class="card-title">Territorio real y estado de los riesgos</div>
+          <div class="card-sub">Peso de cada componente dentro de su criterio y desde cuánto un valor es "el máximo"</div>
+        </div>
+      </div>
+      <div id="componentes"></div>
+    </section>
+
+    <section class="card span-12">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="history"></i></div>
+        <div class="grow">
+          <div class="card-title">Guardar y versiones</div>
+          <div class="card-sub">Lo guardado reemplaza a la base de parametros.yaml (que no se toca) y queda en el historial con quién, cuándo y por qué</div>
+        </div>
+      </div>
+      <div class="guardar">
+        <input class="field" id="f-autor" placeholder="Quién (opcional)" maxlength="80">
+        <input class="field nota" id="f-nota" placeholder="Por qué el cambio (opcional)" maxlength="300">
+        <button class="btn btn-outline sm" id="b-deshacer"><i data-lucide="undo-2"></i> Deshacer cambios</button>
+        <button class="btn btn-outline sm" id="b-base"><i data-lucide="rotate-ccw"></i> Volver a la base</button>
+        <button class="btn btn-primary sm" id="b-guardar"><i data-lucide="save"></i> Guardar y recalcular</button>
+      </div>
+      <div class="advertencias" id="advertencias"></div>
+      <div class="table-wrap">
+        <table class="table" id="tabla-historial">
+          <thead><tr><th>Fecha</th><th>Qué</th><th>Acción</th><th>Quién</th><th>Por qué</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="ui.js"></script>
+<script src="modelo.js"></script>
+</body>
+</html>

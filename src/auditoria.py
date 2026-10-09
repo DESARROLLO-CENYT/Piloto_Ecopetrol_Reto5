@@ -93,6 +93,10 @@ def _estricto(texto: str):
     return json.loads(texto, parse_constant=rechazar)
 
 
+# productos que pueden estar vacios un dia cualquiera sin que sea un error
+PUEDEN_ESTAR_VACIOS = {"puntos_crisis.geojson", "zonas_intervencion.geojson"}
+
+
 def revisar_archivo(ruta: Path) -> dict:
     """Lee un archivo segun su formato y devuelve {estado, detalle, filas}."""
     capa = ruta.parent.name           # bronze | silver | gold | exports
@@ -103,6 +107,8 @@ def revisar_archivo(ruta: Path) -> dict:
             if capa == "gold":
                 _estricto(texto)      # sin NaN ni Infinity: romperian la API
             gdf = gpd.read_file(ruta)
+            if gdf.empty and ruta.name in PUEDEN_ESTAR_VACIOS:
+                return {"estado": OK, "detalle": "sin filas: hoy ningun paquete escala a crisis", "filas": 0}
             if gdf.empty:
                 return {"estado": ERROR, "detalle": "sin filas", "filas": 0}
             if estricto:
@@ -114,6 +120,13 @@ def revisar_archivo(ruta: Path) -> dict:
                 if invalidas:
                     return {"estado": ERROR, "detalle": f"{invalidas} geometrias invalidas", "filas": len(gdf)}
             return {"estado": OK, "detalle": "", "filas": len(gdf)}
+        if ruta.suffix == ".tif":
+            import rasterio
+            with rasterio.open(ruta) as r:
+                n = r.width * r.height
+                if r.crs is None or r.crs.to_epsg() != 4326:
+                    return {"estado": ERROR, "detalle": f"CRS {r.crs} (se esperaba EPSG:4326)", "filas": n}
+            return {"estado": OK if n else ERROR, "detalle": "" if n else "sin celdas", "filas": n}
         if ruta.suffix == ".parquet":
             n = len(pd.read_parquet(ruta))
         elif ruta.suffix == ".csv":
@@ -153,8 +166,10 @@ def artefactos() -> list[dict]:
 
 def trazabilidad() -> list[dict]:
     out = []
-    for nombre in ("clima_estaciones", "rios", "cuerpos_agua", "municipios", "limite_departamental", "red_vial"):
-        ruta = ORO / f"{nombre}.geojson"
+    for nombre in ("clima_estaciones.geojson", "rios.geojson", "cuerpos_agua.geojson", "municipios.geojson", "limite_departamental.geojson",
+                   "red_vial.geojson", "resguardos.geojson", "areas_protegidas_runap.geojson", "lluvia_chirps.json", "indicadores_municipio.json"):
+        ruta = ORO / nombre
+        nombre = nombre.rsplit(".", 1)[0]
         if not ruta.exists():
             continue
         meta = json.loads(ruta.read_text(encoding="utf-8")).get("metadata") or {}
@@ -162,7 +177,7 @@ def trazabilidad() -> list[dict]:
         licencia = meta.get("licencia") or meta.get("fuentes")
         fecha = meta.get("descargado_en") or "descargada el" in json.dumps(meta.get("fuentes", {}))
         faltan = [k for k, v in (("fuente", origen), ("licencia", licencia), ("fecha de descarga", fecha)) if not v]
-        out.append(fila("trazabilidad", f"gold/{nombre}.geojson", "dice su fuente, licencia y fecha", ERROR if faltan else OK, f"falta: {', '.join(faltan)}" if faltan else ""))
+        out.append(fila("trazabilidad", f"gold/{ruta.name}", "dice su fuente, licencia y fecha", ERROR if faltan else OK, f"falta: {', '.join(faltan)}" if faltan else ""))
     return out
 
 
@@ -213,6 +228,17 @@ def conciliacion() -> list[dict]:
     if r:
         out.append(_cuadra("riesgos sinteticos", "filas Bronce - duplicados = filas Plata", r["filas_bronce"] - r["duplicados_removidos"], r["filas_plata"]))
         out.append(_cuadra("riesgos sinteticos", "las filas de Plata estan en el archivo", r["filas_plata"], _filas(PLATA / "riesgos.geojson")))
+        if "ram_sin_clasificar" in r:
+            out.append(_cuadra("matriz RAM", "todo riesgo queda ubicado en la matriz (sin probabilidad legible = 0)", 0, r["ram_sin_clasificar"]))
+            riesgos = gpd.read_file(PLATA / "riesgos.geojson")
+            abiertas = int(((riesgos["tipo"] == "amenaza") & (riesgos["estado"] != "materializado") & riesgos["nivel_residual"].notna()).sum())
+            paq = ORO / "paquetes_ict.geojson"
+            if paq.exists():
+                p = gpd.read_file(paq)
+                cols = [f"ram_{n}" for n in ("N", "L", "M", "H", "VH")]
+                if set(cols) <= set(p.columns):
+                    out.append(_cuadra("matriz RAM", "Oro: amenazas abiertas por nivel en los paquetes = las de Plata", abiertas, int(p[cols].sum().sum())))
+    out += conciliacion_ict()
     r = _reporte("reporte_calidad_invias.csv")
     if r:
         out.append(_cuadra("invias", "tramos Bronce - sin geometria - repetidos = tramos Plata", r["tramos_bronce"] - r["sin_geometria"] - r["repetidos_removidos"], r["tramos_plata"]))
@@ -230,6 +256,19 @@ def conciliacion() -> list[dict]:
     if r:
         out.append(_cuadra("municipios", "municipios Bronce = Plata = Oro", r["municipios_bronce"], _filas(ORO / "municipios.geojson")))
         out.append(_cuadra("municipios", "los municipios cubren un solo territorio sin huecos nuevos", 1, r["partes_del_departamento"]))
+    r = _reporte("reporte_calidad_chirps.csv")
+    if r:
+        out.append(_cuadra("chirps", "meses en Bronce = meses en Plata", r["meses_bronce"], r["meses_plata"]))
+        out.append(_cuadra("chirps", "una fila por zona (15 municipios + departamento) y mes", r["zonas"] * r["meses_plata"], r["filas_plata"]))
+        if (ORO / "lluvia_chirps.json").exists():
+            o = json.loads((ORO / "lluvia_chirps.json").read_text(encoding="utf-8"))
+            out.append(_cuadra("chirps", "Oro tiene los 15 municipios con una cifra por mes visible", 15 * len(o["metadata"]["meses"]),
+                               sum(len(z["mm"]) for z in o["municipios"].values())))
+    out += conciliacion_social()
+    cob = ORO / "cobertura_paquetes.csv"
+    if cob.exists() and (PLATA / "paquetes.geojson").exists():
+        out.append(_cuadra("cobertura", "cada paquete de Plata tiene su cobertura de estaciones",
+                           len(gpd.read_file(PLATA / "paquetes.geojson")), pd.read_csv(cob)["id_paquete"].nunique()))
     r = _reporte("reporte_calidad_red_vial.csv")
     if r:
         out.append(_cuadra("red vial", "km INVIAS + km IGAC - repetidos - astillas = km de la red (+-1 km)",
@@ -240,6 +279,95 @@ def conciliacion() -> list[dict]:
         if mun.exists():
             km_mun = gpd.read_file(mun)["km_vias"].sum() if "km_vias" in gpd.read_file(mun) else None
             out.append(_cuadra("red vial", "la suma de km por municipio es la de la red (+-0,5 %)", r["km_red"], km_mun, r["km_red"] * 0.005))
+    return out
+
+
+def conciliacion_ict() -> list[dict]:
+    """El ICT cuadra: suma de aportes, escalas, puntos de crisis y alertas."""
+    out = []
+    paq = ORO / "paquetes_ict.geojson"
+    if not paq.exists() or not (PLATA / "paquetes.geojson").exists():
+        return out
+    p = gpd.read_file(paq)
+    criterios = ["severidad_riesgo", "exposicion_proyecto", "vulnerabilidad_territorial", "amenazas_externas", "convergencia"]
+    out.append(_cuadra("ict", "un paquete en Oro por cada paquete de Plata", len(gpd.read_file(PLATA / "paquetes.geojson")), len(p)))
+    suma = p[[f"{c}_contrib" for c in criterios]].sum(axis=1)
+    out.append(_cuadra("ict", "el ICT es la suma de los aportes de los 5 criterios (+-0,3 por paquete)", 0.0,
+                       float((p["ICT"] - suma).abs().max()), 0.3))
+    fuera = int(((p[criterios] < 0) | (p[criterios] > 1)).sum().sum())
+    out.append(_cuadra("ict", "los 5 criterios estan en su escala fija de 0 a 1", 0, fuera))
+    out.append(_cuadra("ict", "ICT entre 0 y 100 y confianza entre 0 y 1", 0,
+                       int(((p["ICT"] < 0) | (p["ICT"] > 100) | (p["indice_confianza"] < 0) | (p["indice_confianza"] > 1)).sum())))
+    if "municipio" in p:
+        out.append(_cuadra("ict", "cada paquete tiene el municipio real que lo contiene", 0, int(p["municipio"].isna().sum())))
+    pc = ORO / "puntos_crisis.geojson"
+    if pc.exists():
+        puntos = gpd.read_file(pc)
+        escalados = set(p.loc[p["escalamiento"].astype(bool), "id_paquete"])
+        out.append(_cuadra("ict", "todo punto de crisis es de un paquete en escalamiento", 0,
+                           int((~puntos["id_paquete"].isin(escalados)).sum()) if len(puntos) else 0))
+        out.append(_cuadra("ict", "puntos de crisis en el mapa = los que cuenta cada paquete", int(p["puntos_crisis"].sum()), len(puntos)))
+    al = ORO / "alertas.json"
+    if al.exists():
+        alertas = json.loads(al.read_text(encoding="utf-8"))
+        esperadas = int((p["escalamiento"].astype(bool) | p["tendencia_alerta"].astype(bool)).sum())
+        out.append(_cuadra("ict", "una alerta por paquete en escalamiento o con tendencia al alza", esperadas, len(alertas)))
+    return out
+
+
+def conciliacion_social() -> list[dict]:
+    """Censo, resguardos, areas protegidas, seguridad, emergencias y contexto de los paquetes."""
+    out = []
+    indicadores = ORO / "indicadores_municipio.json"
+    oro = json.loads(indicadores.read_text(encoding="utf-8")) if indicadores.exists() else None
+    r = _reporte("reporte_calidad_social.csv")
+    if r:
+        out.append(_cuadra("social", "un registro del censo 2018 por municipio (15) y uno del departamento", 16, _filas(PLATA / "indicadores_censo2018.parquet")))
+        out.append(_cuadra("social", "los 13 indicadores del censo llegaron", 0, r["indicadores_sin_tabla"]))
+        out.append(_cuadra("social", "IRCA: filas Bronce = filas Plata (sin municipios desconocidos)", r["irca_bronce"] - r["irca_municipio_desconocido"], r["irca_plata"]))
+    for fuente, archivo, oro_archivo in (("resguardos", "resguardos.geojson", "resguardos.geojson"),
+                                         ("runap", "areas_protegidas_runap.geojson", "areas_protegidas_runap.geojson")):
+        r = _reporte(f"reporte_calidad_{fuente}.csv")
+        if r:
+            clave = "resguardos" if fuente == "resguardos" else "areas"
+            out.append(_cuadra(fuente, "Bronce - sin geometria - fuera de La Guajira = Plata",
+                               r[f"{clave}_bronce"] - r["sin_geometria"] - r["fuera_de_la_guajira"], r[f"{clave}_plata"]))
+            out.append(_cuadra(fuente, "Oro tiene los mismos objetos que Plata", r[f"{clave}_plata"], _filas(ORO / oro_archivo)))
+    r = _reporte("reporte_calidad_seguridad.csv")
+    if r:
+        out.append(_cuadra("seguridad", "registros Bronce - fecha invalida - otro municipio - cantidad invalida = registros Plata",
+                           r["filas_bronce"] - r["fecha_invalida"] - r["municipio_desconocido"] - r["cantidad_invalida"], r["registros_plata"]))
+        out.append(_cuadra("seguridad", "las filas de Bronce son las que dice el reporte", r["filas_bronce"],
+                           sum(len(pd.read_parquet(p)) for p in BRONCE.glob("mindefensa_*.parquet"))))
+        if oro and "seguridad" in oro.get("departamento", {}):
+            seg = pd.read_parquet(PLATA / "seguridad_municipio_mensual.parquet")
+            visibles = seg[pd.to_datetime(seg["mes"]).dt.strftime("%Y-%m").isin(oro["metadata"]["meses"])]
+            out.append(_cuadra("seguridad", "Oro: víctimas del departamento en los meses visibles = suma de Plata",
+                               int(visibles["victimas"].sum()), sum(sum(v) for v in oro["departamento"]["seguridad"]["serie"].values())))
+    r = _reporte("reporte_calidad_emergencias.csv")
+    if r:
+        out.append(_cuadra("emergencias", "filas Bronce - repetidas - fecha invalida - municipio desconocido = emergencias Plata",
+                           r["filas_bronce"] - r["duplicados_removidos"] - r["fecha_invalida"] - r["municipio_desconocido"], r["emergencias_plata"]))
+        if oro and "emergencias" in oro.get("departamento", {}):
+            out.append(_cuadra("emergencias", "Oro: total del departamento = emergencias de Plata", r["emergencias_plata"], oro["departamento"]["emergencias"]["total"]))
+    ej = ORO / "ejecucion_paquetes.csv"
+    if ej.exists() and (PLATA / "paquetes.geojson").exists():
+        pq, rg = pd.read_csv(ej), pd.read_csv(ORO / "ejecucion_riesgos.csv")
+        out.append(_cuadra("ejecucion", "una fila de riesgo de ejecucion por paquete de Plata", len(gpd.read_file(PLATA / "paquetes.geojson")), len(pq)))
+        riesgos = gpd.read_file(PLATA / "riesgos.geojson")
+        out.append(_cuadra("ejecucion", "cada amenaza calificada de Plata entra al modelo",
+                           int(((riesgos["tipo"] == "amenaza") & riesgos["probabilidad_residual"].notna()).sum()), len(rg)))
+        # la simulacion (Monte Carlo) debe reproducir el valor esperado analitico: sum(lambda * T * dias medios), antes de
+        # aplicar el solapamiento (que es una transformacion por escenario)
+        col = "atraso_sin_solapamiento_media" if "atraso_sin_solapamiento_media" in pq else "atraso_media"
+        simulado = float((pq[col] - pq["atraso_consumido"]).sum())
+        analitico = float(rg["atraso_esperado"].sum())
+        out.append(_cuadra("ejecucion", "atraso esperado simulado = analitico (+-5 % + 1 dia)", analitico, simulado, analitico * 0.05 + 1))
+        out.append(_cuadra("ejecucion", "atraso consumido de los paquetes = el de las amenazas materializadas (+-0,1 dia)",
+                           float(rg["consumido_dias"].sum()), float(pq["atraso_consumido"].sum()), 0.1 * len(pq)))
+    ctx = ORO / "contexto_paquetes.csv"
+    if ctx.exists() and (PLATA / "paquetes.geojson").exists():
+        out.append(_cuadra("contexto", "una fila de contexto por paquete de Plata", len(gpd.read_file(PLATA / "paquetes.geojson")), _filas(ctx)))
     return out
 
 

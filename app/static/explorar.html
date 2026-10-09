@@ -81,6 +81,28 @@
       <div class="chart-box sm"><canvas id="chart-semanas"></canvas></div>
     </section>
 
+    <section class="card span-12 ram-card">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="grid-3x3"></i></div>
+        <div class="grow">
+          <div class="card-title">Matriz RAM de Ecopetrol</div>
+          <div class="card-sub" id="sub-ram">Amenazas abiertas en cada celda · clic en una celda para filtrar el registro</div>
+        </div>
+        <div class="seg" id="seg-ram">
+          <button class="on" data-v="residual" title="Con los controles actuales">Residual</button>
+          <button data-v="inherente" title="Sin controles">Inherente</button>
+        </div>
+      </div>
+      <div class="ram-cuerpo">
+        <div class="ram-izq">
+          <table class="ram-matriz" id="ram-matriz"></table>
+          <p class="ram-pie">Consecuencia de 0 a 5 en la dimensión que manda (Personas, Económica, Ambiental, Clientes o Imagen) · probabilidad de A a E según el historial. Pasa el cursor por los encabezados para ver las escalas.</p>
+        </div>
+        <div class="ram-niveles" id="ram-niveles"></div>
+      </div>
+      <p class="ram-fuente" id="ram-fuente"></p>
+    </section>
+
     <section class="card span-8">
       <div class="card-head">
         <div class="card-icon"><i data-lucide="table-2"></i></div>
@@ -91,10 +113,13 @@
         <a class="icon-btn" href="mapa.html" title="Ver en el mapa"><i data-lucide="arrow-up-right"></i></a>
       </div>
       <div class="filtros">
-        <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="f-buscar" placeholder="Buscar ID o paquete"></div>
+        <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="f-buscar" placeholder="Buscar ID, paquete o texto"></div>
         <select class="field" id="f-categoria"></select>
         <select class="field" id="f-estado"></select>
+        <select class="field" id="f-accion" title="Estado de la acción de tratamiento: vencida si su fecha ya pasó y el riesgo sigue abierto. Para escalar un paquete a crisis el modelo cuenta solo las de amenazas"></select>
+        <button class="chip" id="f-ia" title="Riesgos que la IA asignó o que pide revisar: categoría contradicha por el texto o municipio lejano al paquete"><i data-lucide="sparkles"></i> IA: <span id="n-ia">-</span></button>
         <span class="chip on" id="chip-paquete" hidden></span>
+        <span class="chip on" id="chip-ram" hidden></span>
       </div>
       <div class="table-wrap registro">
         <table class="table" id="tabla-riesgos">
@@ -102,8 +127,9 @@
             <th class="sortable" data-col="id_riesgo">Riesgo</th>
             <th class="sortable" data-col="id_paquete_trabajo">Paquete</th>
             <th class="sortable" data-col="fecha_identificacion">Identificado</th>
-            <th class="sortable sorted" data-col="severidad">Severidad ↓</th>
+            <th class="sortable sorted" data-col="puntaje_ram" title="Matriz RAM: nivel residual (con controles) y el inherente (sin controles)">RAM ↓</th>
             <th class="sortable" data-col="estado">Estado</th>
+            <th class="sortable" data-col="fecha_ejecucion_accion" title="Acción de tratamiento, su fecha y su estado">Acción</th>
             <th class="sortable" data-col="tipo">Tipo</th>
           </tr></thead>
           <tbody></tbody>

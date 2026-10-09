@@ -3,8 +3,14 @@
 const D = { cat: null, params: null, capa: 'gold', sel: { gold: 'paquetes_ict.geojson' } };
 
 const ORDEN = [
-  'riesgos', 'paquetes_ict', 'paquetes', 'alertas', 'grid_calor', 'clima_estaciones', 'clima_sintetico',
-  'municipios', 'limite_departamental', 'dane_municipios', 'divipola_municipios', 'municipios_meta', 'municipios_reporte_calidad', 'municipios_reporte_cruces',
+  'riesgos', 'paquetes_ict', 'paquetes', 'alertas', 'puntos_crisis', 'zonas_intervencion', 'grid_calor', 'clima_estaciones', 'clima_sintetico',
+  'ejecucion_proyectos', 'ejecucion_paquetes', 'ejecucion_riesgos', 'ejecucion_resumen', 'cronograma',
+  'contexto_paquetes', 'indicadores_municipio', 'indicadores_censo2018', 'irca_anual', 'dane_censo2018', 'ins_irca', 'art_pdet', 'social_meta', 'social_reporte_calidad',
+  'resguardos', 'ant_resguardos', 'mininterior_resguardos_poblacion', 'resguardos_meta', 'resguardos_reporte_calidad',
+  'areas_protegidas', 'runap_crudo', 'runap_meta', 'runap_reporte_calidad',
+  'seguridad_municipio_mensual', 'mindefensa_delitos', 'seguridad_meta', 'seguridad_reporte_calidad',
+  'emergencias', 'ungrd_emergencias', 'emergencias_meta', 'emergencias_reporte_calidad',
+  'cobertura_estaciones', 'cobertura_paquetes', 'lluvia_chirps', 'chirps_municipio_mensual', 'chirps_meta', 'chirps_reporte_calidad', 'municipios', 'limite_departamental', 'dane_municipios', 'divipola_municipios', 'municipios_meta', 'municipios_reporte_calidad', 'municipios_reporte_cruces',
   'rios', 'cuerpos_agua', 'igac_hidrografia', 'igac_drenaje_sencillo', 'igac_drenaje_doble', 'igac_cienagas',
   'igac_embalses', 'igac_lagunas', 'hidrografia_meta', 'hidrografia_reporte_calidad', 'proveniencia',
   'red_vial', 'red_vial_reporte_calidad', 'vias_igac', 'igac_vias', 'igac_vias_crudas', 'vias_igac_meta', 'vias_igac_reporte_calidad',
@@ -44,8 +50,8 @@ function renderFlujo() {
   document.getElementById('flujo').innerHTML = [
     etapa('', '<span class="chip white"><i data-lucide="sparkles"></i> Origen</span>', 'Dos orígenes',
       2, 'fuentes de datos', 'src/bronce/*.py', [
-        '<b>Sintético</b>: proyectos, paquetes, comunidades, áreas, hidrología, vías y el registro de riesgos en Excel (semilla 42, siempre igual)',
-        '<b>Real</b>: clima del IDEAM, red vial de INVIAS, ríos del IGAC y municipios del DANE, todos de fuentes abiertas sin clave',
+        '<b>Sintético</b>: proyectos, paquetes, su cronograma y el registro de riesgos en Excel con texto libre (semilla 42, siempre igual)',
+        '<b>Real</b>: clima (IDEAM, CHIRPS), vías (INVIAS, IGAC), ríos (IGAC), municipios y censo (DANE), resguardos (ANT), áreas protegidas (RUNAP), delitos (MinDefensa) y emergencias (UNGRD), de fuentes abiertas sin clave',
       ]),
     etapa('bronce', '<span class="medal bronce">Bronce</span>', 'Datos crudos',
       tablas('bronze').length, `tablas · ${filas('bronze')} filas`, 'sin transformar', [
@@ -58,24 +64,26 @@ function renderFlujo() {
         'Normaliza categorías, estados y tipos; clasifica cada lectura del IDEAM por su sensor y unifica unidades',
         `Quita ${cal.duplicados_removidos} duplicados del registro${dupIdeam != null ? ` y ${miles(dupIdeam)} de las lecturas del IDEAM` : ''}`,
         `Ubica ${cal.sin_coordenadas_originales} riesgos sin coordenadas en el centroide de su paquete`,
+        cal.ia_exactitud_validacion_cruzada != null ? `IA sobre el texto: asigna ${cal.ia_categorias_asignadas} categorías faltantes y marca ${(cal.ia_categoria_por_revisar || 0) + (cal.ia_ubicacion_por_revisar || 0)} riesgos para revisar` : 'IA sobre el texto del registro',
         'Suma la lluvia por día y estación',
         'Recorta al departamento, simplifica sin abrir huecos y une las dos redes viales sin duplicar kilómetros',
         'Deja junto a cada fuente su proveniencia y su reporte de calidad',
       ], archivos('silver')),
     etapa('oro', '<span class="medal oro">Oro</span>', 'Listos para usar',
       tablas('gold').length, `tablas · ${filas('gold')} filas`, 'src/oro/*.py · lee solo Plata', [
-        'Cinco criterios e ICT por paquete, con su contribución',
-        'Reglas de escalamiento, tendencia y alertas',
+        'ICT por paquete y por celda: cinco criterios con el territorio real, su contribución y su confianza',
+        'Escalamiento a crisis, puntos de crisis, zonas de intervención, tendencia y alertas',
+        'Riesgo de ejecución: días de atraso y USD de sobrecosto (Monte Carlo)',
         'Una ficha por estación del IDEAM con todas sus variables, lecturas de ahora y normales',
         'Ríos, municipios con sus cifras y la red vial unificada para el mapa',
-        'Backtest y análisis de sensibilidad',
+        'Prueba de consistencia y análisis de sensibilidad',
       ], archivos('gold')),
     etapa('', '<span class="chip white"><i data-lucide="monitor"></i> Consumo</span>', 'Quién lo usa',
       4, 'salidas', 'app/main.py · src/consumo/', [
         'API FastAPI <span class="mono">/api/…</span>',
         '<a href="mapa.html">Mapa interactivo</a> y <a href="explorar.html">Explorar datos</a>',
-        'GeoPackage para ArcGIS o QGIS',
-        'Alertas para el equipo de riesgos',
+        'GeoPackage para ArcGIS o QGIS, con el origen de cada capa',
+        'Boletín diario de alertas (archivo, Teams o correo)',
       ]),
   ].join('');
 }
@@ -84,7 +92,8 @@ function renderFlujo() {
 // Datos creados e imperfecciones
 // ---------------------------------------------------------------------------
 
-const ORIGEN_REAL = { ideam: 'IDEAM', invias: 'INVIAS', igac: 'IGAC', dane: 'DANE', invias_igac: 'INVIAS + IGAC' };
+const ORIGEN_REAL = { ideam: 'IDEAM', invias: 'INVIAS', igac: 'IGAC', dane: 'DANE', invias_igac: 'INVIAS + IGAC', chirps: 'CHIRPS',
+  social: 'DANE · INS · ART', ant: 'ANT', runap: 'RUNAP', mindefensa: 'MinDefensa', ungrd: 'UNGRD', varias: 'Varias fuentes' };
 const esReal = (dataset) => meta(dataset).origen in ORIGEN_REAL;
 
 function renderCreados() {
@@ -113,6 +122,9 @@ function renderCreados() {
     ['map-pin-off', 'Riesgos reportados sin coordenadas', cal.sin_coordenadas_originales],
     ['case-sensitive', 'Categorías y estados escritos distinto (mayúsculas, espacios, guiones)', '~35%'],
     ['circle-slash', 'Vacíos en causa, fecha de la acción e ID de evento', nulos],
+    ['sparkles', 'Riesgos sin categoría (los clasifica la IA leyendo el texto)', cal.ia_riesgos_sin_categoria ?? '-'],
+    ['shuffle', 'Riesgos con la categoría equivocada (la IA marca los que el texto contradice)', cal.ia_categorias_mal_sembradas ?? cal.ia_categoria_por_revisar ?? '-'],
+    ['map', 'Riesgos que mencionan un municipio lejano a su paquete', cal.ia_ubicaciones_sembradas ?? cal.ia_ubicacion_por_revisar ?? '-'],
     ['flame', 'Paquetes "calientes" plantados con riesgos más graves', 3],
     ['cloud-lightning', 'Evento de lluvia extrema al final de la serie de clima', 1],
   ];
@@ -266,33 +278,43 @@ document.querySelectorAll('#seg-capa button').forEach((b) => b.addEventListener(
 // Modelo
 // ---------------------------------------------------------------------------
 
+const NOMBRE_COMP = {
+  etnico: 'territorio étnico', pobreza: 'pobreza', ambiental: 'áreas protegidas', acceso: 'acceso',
+  lluvia_reciente: 'lluvia reciente', anomalia_lluvia: 'lluvia anómala', emergencias: 'emergencias', seguridad: 'delitos',
+};
+const pesosComp = (comp) => Object.entries(comp || {}).map(([k, w]) => `${NOMBRE_COMP[k] || k} ${pct(w)}`).join(', ');
+
 function infoCriterios(p) {
-  const r = p.radios_influencia_m;
+  const c = p.criterios || {};
+  const v = c.vulnerabilidad_territorial || {};
+  const e = c.amenazas_externas || {};
+  const x = c.exposicion_proyecto || {};
+  const cv = c.convergencia || {};
   return {
     severidad_riesgo: {
-      icon: 'flame', nombre: 'Severidad del riesgo', mide: 'Qué tan graves son las amenazas del paquete.',
-      calc: `probabilidad × impacto × factor de estado; se combina el máximo (${pct(p.agregacion.peso_maximo)}) con el promedio ponderado (${pct(p.agregacion.peso_promedio)}).`,
-      fuentes: ['Registro de riesgos'],
+      icon: 'flame', nombre: 'Severidad del riesgo', mide: 'Qué tan graves son las amenazas que alcanzan el paquete, según la matriz RAM de Ecopetrol.',
+      calc: `nivel RAM residual (N=1 ... VH=5) × factor de estado; el máximo (${pct(p.agregacion.peso_maximo)}) más el promedio ponderado (${pct(p.agregacion.peso_promedio)}), sobre el peor caso posible (VH materializado = 1). Las amenazas de paquetes vecinos cuentan según su radio de influencia.`,
+      fuentes: ['Registro de riesgos', 'Matriz RAM'],
     },
     vulnerabilidad_territorial: {
-      icon: 'users', nombre: 'Vulnerabilidad territorial', mide: 'Qué tan sensible es el entorno del paquete.',
-      calc: `mitad cercanía a comunidades (radio ${miles(r.social_comunidad)} m, × conflictividad) y mitad cercanía a áreas protegidas (radio ${miles(r.ambiental)} m, × sensibilidad).`,
-      fuentes: ['Comunidades', 'Áreas protegidas'],
+      icon: 'users', nombre: 'Vulnerabilidad territorial', mide: 'Qué tan sensible es el territorio real del paquete.',
+      calc: `${pesosComp(v.componentes)}: fracción en resguardo (colindante a menos de ${v.radio_resguardo_km} km cuenta la mitad), IPM del municipio, cercanía a áreas protegidas (hasta ${v.radio_area_protegida_km} km) y vías cercanas solo transitables en tiempo seco (${v.radio_vias_km} km).`,
+      fuentes: ['ANT', 'DANE censo 2018', 'RUNAP', 'INVIAS + IGAC'],
     },
     exposicion_proyecto: {
-      icon: 'route', nombre: 'Exposición del proyecto', mide: 'Qué tanto pesa el paquete dentro del proyecto.',
-      calc: '60% si está en ruta crítica + 40% cantidad de riesgos que recibe (normalizada).',
-      fuentes: ['Paquetes', 'Registro de riesgos'],
+      icon: 'route', nombre: 'Exposición del proyecto', mide: 'Qué tanto pesa el paquete en el cronograma y cuántas amenazas abiertas lo alcanzan.',
+      calc: `${pct(x.peso_ruta_critica)} si está en ruta crítica + ${pct(1 - x.peso_ruta_critica)} según las amenazas abiertas que lo alcanzan (${x.amenazas_para_saturar} o más = 1).`,
+      fuentes: ['Cronograma', 'Registro de riesgos'],
     },
     amenazas_externas: {
-      icon: 'cloud-rain', nombre: 'Amenazas externas (clima)', mide: 'Presión climática reciente sobre la zona.',
-      calc: `lluvia acumulada ${p.amenazas_externas.ventana_dias} días en la estación más cercana; ${p.amenazas_externas.precipitacion_extrema_mm_14d} mm o más cuenta como 1.`,
-      fuentes: ['Clima'],
+      icon: 'cloud-rain', nombre: 'Amenazas externas', mide: 'Presión del entorno: lluvia, emergencias y delitos.',
+      calc: `${pesosComp(e.componentes)}: lluvia de ${e.ventana_dias} días en la estación del IDEAM más cercana (${e.lluvia_mm_para_saturar} mm = 1), desviación de la lluvia frente a lo normal (CHIRPS), emergencias por año (${e.emergencias_por_ano_para_saturar} = 1) y delitos contra proyectos (${e.delitos_100k_para_saturar} por 100.000 = 1).`,
+      fuentes: ['IDEAM', 'CHIRPS', 'UNGRD', 'MinDefensa'],
     },
     convergencia: {
-      icon: 'git-merge', nombre: 'Convergencia de amenazas', mide: 'Cuántos tipos de amenaza coinciden en el paquete.',
-      calc: `categorías distintas de amenaza ÷ ${p.convergencia.categorias_para_saturar} (satura en 1).`,
-      fuentes: ['Registro de riesgos'],
+      icon: 'git-merge', nombre: 'Convergencia de amenazas', mide: 'Cuántas amenazas distintas coinciden en el paquete.',
+      calc: `categorías de amenaza abiertas con nivel RAM ${cv.nivel_minimo_registro} o más que lo alcanzan, más factores del territorio de ${cv.umbral_factor_territorio} o más; ${cv.amenazas_para_saturar} o más = 1.`,
+      fuentes: ['Registro de riesgos', 'Territorio real'],
     },
   };
 }
@@ -336,30 +358,42 @@ function renderModelo(paquetes) {
   const e = p.escalamiento;
   const reglas = [
     [`ICT de ${e.ict_critico} o más`, 'La zona es crítica por sí sola.'],
-    [`${e.min_amenazas_convergentes}+ categorías de amenaza juntas`, `Solo cuenta si el ICT es al menos ${u.medio} (medio-alto).`],
-    [`${e.min_acciones_vencidas}+ acciones de tratamiento vencidas`, `Acciones con fecha pasada en riesgos activos; también exige ICT de ${u.medio} o más.`],
+    ['Una amenaza RAM muy alta (VH) sin materializar', 'Intolerable según la RAM de Ecopetrol: escala el paquete sin importar el ICT.'],
+    ['Una amenaza RAM alta (H) en ruta crítica', 'La RAM exige que decida la gerencia; en un paquete de ruta crítica escala.'],
+    ['Una amenaza alta que alcanza un territorio sensible', `Riesgo ${(e.niveles_area_sensible || ['H', 'VH']).join(' o ')} cuya área de influencia toca un resguardo indígena (ANT) o un área protegida (RUNAP) reales.`],
+    [`${e.min_amenazas_convergentes}+ amenazas convergen`, `Categorías del registro más factores del territorio; solo cuenta con un ICT de ${u.medio} o más.`],
+    [`${e.min_acciones_vencidas}+ acciones de tratamiento vencidas`, `En riesgos activos; también exige un ICT de ${u.medio} o más.`],
     [`Sube ${e.incremento_tendencia_alerta}+ puntos en ${e.ventana_tendencia_dias} días`, 'Alerta de tendencia, aunque el nivel todavía no sea alto.'],
   ];
   document.getElementById('reglas').innerHTML = reglas.map(([t, s], i) => `
     <div class="regla"><span class="n">${i + 1}</span><div><div class="t">${t}</div><div class="s">${s}</div></div></div>`).join('') +
-    '<p class="regla-nota">Las reglas 2 y 3 exigen un ICT medio para que una coincidencia aislada en una zona tranquila no dispare una alerta.</p>';
+    '<p class="regla-nota">Las reglas 5 y 6 exigen un ICT alto para que una coincidencia aislada en una zona tranquila no dispare una alerta. Cada regla se ubica en el mapa: en la amenaza que la dispara o en el centro del paquete, con su zona de intervención.</p>';
 
   renderEjemplo(paquetes, info);
 
   document.getElementById('salidas').innerHTML = [
-    ['Índice de oportunidad', 'Mismo cálculo de severidad, sobre los riesgos positivos; 0 a 100. Se muestra aparte, no se resta del ICT.'],
-    ['Índice de confianza', 'Fracción de los cinco criterios con dato para el paquete: distingue una zona segura de una zona sin información.'],
-    ['Getis-Ord Gi*', `Puntos calientes con los ${p.hotspot.k_vecinos} paquetes vecinos; |z| ≥ ${p.hotspot.z_score_significativo} es significativo al 95%.`],
-    ['Mapa de calor (KDE)', `Kernel gaussiano con banda de ${miles(p.kde.bandwidth_m)} m sobre una grilla de ${p.grid.resolucion_grados}° (~2 km), ponderado por severidad.`],
-    ['Tendencia', `ICT de hace ${e.ventana_tendencia_dias} días calculado con los mismos límites de normalización, para que el cambio sea real y no un reescalado.`],
+    ['Matriz RAM', `Cada riesgo se califica de 0 a 5 en Personas, Económica, Ambiental, Clientes e Imagen y de A a E en probabilidad; el cruce da N, L, M, H o VH y manda la peor dimensión. Se publica sin controles (inherente) y con controles (residual); el ICT usa el residual. Fuente: ${p.ram?.fuente || 'instructivo ECP-DRI-I-007'}.`],
+    ['Sugerencias del territorio', 'Para cada paquete, la probabilidad y la consecuencia que sugieren los delitos, las emergencias, los resguardos y las áreas protegidas reales, y las amenazas calificadas por debajo de esa evidencia.'],
+    ['Índice de oportunidad', 'Mismo cálculo de severidad (nivel RAM del beneficio), sobre los riesgos positivos; 0 a 100. Se muestra aparte, no se resta del ICT.'],
+    ['Índice de confianza', 'Qué fracción de la información del modelo está disponible y al día, ponderada por el peso de cada criterio: distingue una zona tranquila de una zona sin información. Un dato faltante no se imputa.'],
+    ['Escala fija', 'Cada criterio vale de 0 a 1 contra un tope definido en parametros.yaml, no contra los demás paquetes: el ICT de un paquete no cambia porque se agregue otro.'],
+    ['Getis-Ord Gi*', `Puntos calientes sobre las celdas de la grilla del área de estudio (${p.hotspot.k_vecinos} vecinas por celda); z ≥ ${p.hotspot.z_score_significativo} es un conglomerado significativo al 95 %. No se aplica a los 14 paquetes: con tan pocas unidades nada sería significativo.`],
+    ['Mapa de calor (KDE)', `Kernel gaussiano con banda de ${miles(p.kde.bandwidth_m)} m sobre una grilla de ${p.grid.resolucion_grados}° (~2 km): amenazas ponderadas por nivel RAM y estado; aparte, las oportunidades.`],
+    ['Puntos de crisis', 'Donde un evento podría escalar: la amenaza que dispara la regla (o el centro del paquete), con el radio de influencia de su categoría como zona de intervención prioritaria.'],
+    ['Alertas', 'Una por paquete en escalamiento o con el ICT al alza: causas, puntos de crisis, qué exige la RAM y quién decide.'],
+    ['Tendencia', `ICT de hace ${e.ventana_tendencia_dias} días con la misma escala fija: el cambio viene de los riesgos y de la lluvia, no de un reescalado.`],
   ].map(([k, v]) => `<div class="kv" style="align-items:flex-start"><span class="k" style="min-width:150px;color:var(--ink);font-weight:600">${k}</span><span class="ink-2" style="font-size:var(--fs-12);line-height:1.5">${v}</span></div>`).join('');
 
   const v = D.cat.validacion;
   const nombreCrit = (k) => info[k]?.nombre || k;
   document.getElementById('validacion').innerHTML = [
-    v.backtest ? [v.backtest.spearman.toFixed(2), 'Correlación de Spearman entre el ICT y los riesgos ya materializados'] : null,
+    v.backtest ? [v.backtest.spearman.toFixed(2), 'Prueba de consistencia (circular, no es validación): correlación entre el ICT y los riesgos ya materializados'] : null,
     v.backtest ? [pct(v.backtest.precision_top), `De los ${v.backtest.top_k} paquetes con mayor ICT tienen al menos un riesgo materializado`] : null,
     v.sensibilidad ? [v.sensibilidad.spearman_min.toFixed(2), `Correlación mínima del ranking al mover cada peso ±20% (más sensible: ${nombreCrit(v.sensibilidad.criterio_mas_sensible).toLowerCase()})`] : null,
+    D.cat.calidad?.ia_exactitud_validacion_cruzada != null ? [pct(D.cat.calidad.ia_exactitud_validacion_cruzada), 'Acierto de la IA al clasificar riesgos que no vio (validación cruzada en 5 partes)'] : null,
+    D.cat.calidad?.ia_exactitud_sin_categoria != null ? [pct(D.cat.calidad.ia_exactitud_sin_categoria), `Acierto de la IA en los ${D.cat.calidad.ia_categorias_asignadas} riesgos que llegaron sin categoría (contra la clave sintética)`] : null,
+    D.cat.calidad?.ia_categorias_mal_sembradas ? [`${D.cat.calidad.ia_categorias_mal_detectadas}/${D.cat.calidad.ia_categorias_mal_sembradas}`, `Categorías equivocadas que la IA detecta, con ${D.cat.calidad.ia_categorias_falsas_alarmas} falsas alarmas (contra la clave sintética)`] : null,
+    D.cat.calidad?.ia_ubicaciones_sembradas ? [`${D.cat.calidad.ia_ubicaciones_detectadas}/${D.cat.calidad.ia_ubicaciones_sembradas}`, `Ubicaciones dudosas que la IA detecta, con ${D.cat.calidad.ia_ubicaciones_falsas_alarmas} falsas alarmas (contra la clave sintética)`] : null,
   ].filter(Boolean).map(([n, l]) => `<div class="val"><div class="num">${n}</div><div class="l">${l}</div></div>`).join('');
 }
 

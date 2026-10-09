@@ -36,8 +36,52 @@
             <label class="switch"><input type="checkbox" data-capa="proyectos" checked><span></span></label>
           </div>
           <div class="capa-body">
+            <div class="seg full" id="f-color-paquete">
+              <button class="on" data-v="ict" title="Índice de Criticidad Territorial: registro de riesgos + territorio real">Criticidad (ICT)</button>
+              <button data-v="ejecucion" title="Probabilidad de pasar la holgura más la tolerancia de atraso">Ejecución (IRE)</button>
+              <button data-v="ninguno">Sin color</button>
+            </div>
+            <div class="leyenda-niveles" id="leyenda-paquetes"></div>
             <div class="leyenda-fila"><span class="lg-dash"></span> Límite del proyecto</div>
-            <div class="leyenda-fila"><span class="lg-circ"></span> Paquete de trabajo</div>
+            <p class="fuente" id="nota-paquetes"></p>
+          </div>
+        </section>
+
+        <section class="capa" id="capa-crisis">
+          <div class="capa-head">
+            <span class="tile" style="background:var(--lvl-critico-bg);color:var(--lvl-critico)"><i data-lucide="siren"></i></span>
+            <div class="grow">
+              <div class="t">Escalamiento a crisis <span class="chip white">Calculado</span></div>
+              <div class="s" id="sub-crisis">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="crisis" checked><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-pc critica"></span> Donde un riesgo puede escalar · prioridad crítica</div>
+            <div class="leyenda-fila"><span class="lg-pc alta"></span> Prioridad alta</div>
+            <div class="leyenda-fila"><span class="lg-pc alta paquete"></span> Causa del paquete entero (ICT, convergencia, acciones vencidas)</div>
+            <div class="leyenda-fila"><span class="lg-zona"></span> Zona de intervención prioritaria (área de influencia)</div>
+            <p class="fuente" id="nota-crisis"></p>
+          </div>
+        </section>
+
+        <section class="capa" id="capa-calor">
+          <div class="capa-head">
+            <span class="tile" style="background:#fff1e6;color:#c2410c"><i data-lucide="flame"></i></span>
+            <div class="grow">
+              <div class="t">Mapa de calor <span class="chip white">Calculado</span></div>
+              <div class="s" id="sub-calor">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="calor" checked><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="seg full" id="f-calor">
+              <button class="on" data-v="ict" title="ICT calculado en cada celda: registro + territorio real">Criticidad</button>
+              <button data-v="amenazas" title="Densidad de las amenazas del registro">Amenazas</button>
+              <button data-v="oportunidades" title="Densidad de las oportunidades del registro">Oportunidades</button>
+            </div>
+            <div class="rampa" id="rampa-calor"></div>
+            <p class="fuente" id="nota-calor"></p>
           </div>
         </section>
 
@@ -62,6 +106,54 @@
               <div class="lista-filas" id="lista-filas"></div>
             </details>
             <p class="fuente" id="fuente-municipios"></p>
+          </div>
+        </section>
+
+        <section class="capa off" id="capa-social">
+          <div class="capa-head">
+            <span class="tile" style="background:#fdeee6;color:#b4471a"><i data-lucide="users"></i></span>
+            <div class="grow">
+              <div class="t">Indicadores sociales <span class="chip ok">DANE · MinDefensa · UNGRD · real</span></div>
+              <div class="s" id="sub-social">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="social"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <select class="field sel-social" id="f-social" aria-label="Indicador"></select>
+            <div class="rampa" id="rampa-social"></div>
+            <p class="fuente" id="nota-social"></p>
+          </div>
+        </section>
+
+        <section class="capa off" id="capa-resguardos">
+          <div class="capa-head">
+            <span class="tile" style="background:#f1e9fe;color:#6d28d9"><i data-lucide="tent"></i></span>
+            <div class="grow">
+              <div class="t">Resguardos indígenas <span class="chip ok">ANT · real</span></div>
+              <div class="s" id="sub-resguardos">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="resguardos"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-area lg-resguardo"></span> Resguardo formalizado</div>
+            <p class="fuente" id="fuente-resguardos"></p>
+          </div>
+        </section>
+
+        <section class="capa off" id="capa-areas">
+          <div class="capa-head">
+            <span class="tile" style="background:#e3f5e9;color:#15803d"><i data-lucide="trees"></i></span>
+            <div class="grow">
+              <div class="t">Áreas protegidas <span class="chip ok">RUNAP · real</span></div>
+              <div class="s" id="sub-areas">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="areas"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="leyenda-fila"><span class="lg-area lg-ap-nacional"></span> Nacional (Parques Nacionales)</div>
+            <div class="leyenda-fila"><span class="lg-area lg-ap-regional"></span> Regional (corporación autónoma)</div>
+            <div class="leyenda-fila"><span class="lg-area lg-ap-privada"></span> Reserva de la sociedad civil</div>
+            <p class="fuente" id="fuente-areas"></p>
           </div>
         </section>
 
@@ -116,18 +208,57 @@
           </div>
         </section>
 
-        <section class="grupo-clima" id="grupo-clima">
+        <section class="capa off" id="capa-cobertura">
+          <div class="capa-head">
+            <span class="tile" style="background:#e3f2fb;color:#1f6f99"><i data-lucide="radar"></i></span>
+            <div class="grow">
+              <div class="t">Cobertura de estaciones <span class="chip white">Calculado</span></div>
+              <div class="s" id="sub-cobertura">-</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-capa="cobertura"><span></span></label>
+          </div>
+          <div class="capa-body">
+            <div class="chips" id="f-cob-var"></div>
+            <div class="seg full" id="f-cob-modo">
+              <button class="on" data-v="cercana">Área más cercana</button>
+              <button data-v="radio">Radio de influencia</button>
+            </div>
+            <div class="rampa" id="rampa-cob"></div>
+            <p class="fuente" id="nota-cob"></p>
+          </div>
+        </section>
+
+        <section class="grupo-clima plegado" id="grupo-clima">
           <div class="capa-head">
             <span class="tile" style="background:#e3f2fb;color:#1f6f99"><i data-lucide="cloud-sun"></i></span>
             <div class="grow">
               <div class="t">Clima <span class="chip ok">IDEAM · real</span></div>
               <div class="s" id="sub-clima">-</div>
+              <div class="s encendidas" id="clima-encendidas" hidden></div>
             </div>
+            <button class="icon-btn sm ghost plegar" id="clima-plegar" aria-expanded="false" aria-controls="clima-cuerpo" title="Desplegar las variables del clima"><i data-lucide="chevron-up"></i></button>
           </div>
+          <div class="grupo-cuerpo" id="clima-cuerpo">
           <div class="estado-vivo" id="estado-vivo"></div>
           <p class="fuente">Cada variable es su propia capa: enciende las que quieras y se ponen una junto a otra en cada estación.</p>
           <div class="capas-var" id="clima-capas"></div>
+          <section class="capa capa-var off" id="capa-chirps">
+            <div class="capa-head">
+              <span class="tile" style="background:#dbeafe;color:#1f6fd0"><i data-lucide="satellite-dish"></i></span>
+              <div class="grow"><div class="t">Lluvia por municipio <span class="chip ok">CHIRPS · real</span></div><div class="s" id="sub-chirps">-</div></div>
+              <label class="switch"><input type="checkbox" data-capa="chirps"><span></span></label>
+            </div>
+            <div class="capa-body">
+              <div class="seg full" id="f-chirps-modo">
+                <button class="on" data-v="mm">mm del mes</button>
+                <button data-v="anomalia">Frente a lo normal</button>
+              </div>
+              <div class="rampa" id="rampa-chirps"></div>
+              <p class="fuente" id="nota-chirps"></p>
+            </div>
+          </section>
           <p class="fuente" id="fuente-clima"></p>
+          </div>
         </section>
       </div>
     </aside>
@@ -144,6 +275,7 @@
 
       <div class="map-overlay map-ctrls ov-tr">
         <button class="map-btn" id="btn-centrar" title="Centrar en La Guajira"><i data-lucide="locate-fixed"></i></button>
+        <button class="map-btn" id="btn-alertas" title="Alertas tempranas"><i data-lucide="bell"></i><span class="map-badge" id="n-alertas" hidden></span></button>
       </div>
 
       <div class="map-overlay map-zoom ov-br">
@@ -152,6 +284,19 @@
       </div>
 
       <div class="map-overlay pop-card detalle" id="detalle" hidden></div>
+
+      <div class="map-overlay barra-tiempo" id="barra-tiempo">
+        <div class="seg" id="t-modo">
+          <button class="on" data-v="diario" title="Estaciones del IDEAM: un valor por día de los últimos 30 días">Días</button>
+          <button data-v="mensual" title="Lluvia CHIRPS por municipio: un valor por mes de los últimos años">Meses</button>
+        </div>
+        <button class="t-play" id="t-play" title="Reproducir"><i data-lucide="play"></i></button>
+        <div class="t-centro">
+          <input type="range" id="t-slider" min="0" max="0" step="1" value="0" aria-label="Fecha">
+          <div class="t-pie"><span id="t-desde"></span><span class="t-nota" id="t-nota"></span><span id="t-hasta"></span></div>
+        </div>
+        <div class="t-fecha" id="t-fecha">Ahora</div>
+      </div>
     </div>
   </div>
 </div>

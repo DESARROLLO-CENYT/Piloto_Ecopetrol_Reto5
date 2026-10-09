@@ -1,0 +1,63 @@
+/* Ajustar el modelo. Componentes en components.css (skill reto5-design). */
+
+.bento { align-items: start; }
+.aviso { margin: 0 0 var(--gap-shell); padding: 10px 14px; border-radius: 12px; font-size: var(--fs-13); display: flex; align-items: center; gap: 8px; }
+.aviso svg { width: 16px; height: 16px; flex-shrink: 0; }
+.aviso.ok { background: var(--lvl-bajo-bg); color: #1d5a33; }
+.aviso.info { background: #e3f2fb; color: #1f5f86; }
+.aviso.error { background: var(--lvl-critico-bg); color: #8f1f15; }
+.nota { font-size: var(--fs-12); color: var(--muted); line-height: 1.5; margin: 0 0 var(--s-3); }
+
+/* pesos */
+.peso-fila { display: grid; grid-template-columns: 210px 1fr 64px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.peso-fila:last-child { border-bottom: 0; }
+.peso-fila .n { font-size: var(--fs-13); font-weight: 600; }
+.peso-fila .n small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-11); }
+.peso-fila .v { font-family: var(--font-display); font-size: 20px; font-weight: 500; text-align: right; }
+.peso-fila .v small { font-size: var(--fs-11); color: var(--muted); }
+.peso-fila.cambio .v { color: #8a5a00; }
+.ahp-par { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-12); }
+.ahp-par .der { text-align: right; }
+.ahp-par .field { height: 32px; font-size: var(--fs-12); }
+.ahp-pie { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); flex-wrap: wrap; }
+.ahp-res { font-size: var(--fs-12); }
+
+/* vista previa */
+#tabla-previa td { white-space: nowrap; }
+.delta { font-size: var(--fs-11); margin-left: 4px; }
+.delta.sube { color: #a3261a; }
+.delta.baja { color: #1d7a42; }
+.flecha { color: var(--muted); margin: 0 3px; }
+.escala-si { color: var(--lvl-critico); }
+.escala-no { color: var(--muted); }
+
+/* umbrales, reglas y componentes */
+.bloque-t { font-size: var(--fs-12); font-weight: 700; margin: var(--s-3) 0 var(--s-2); }
+.bloque-t:first-child { margin-top: 0; }
+.campo { display: grid; grid-template-columns: 1fr 96px; gap: 10px; align-items: center; font-size: var(--fs-12); color: var(--ink-2); margin-bottom: 6px; }
+.campo small { display: block; color: var(--muted); font-size: var(--fs-11); }
+.campo .field { height: 34px; border-radius: 10px; padding: 0 10px; font-size: var(--fs-13); background-image: none; }
+.campo .field.cambio { border-color: var(--lvl-medio); background: var(--lvl-medio-bg); }
+.campo.sw { grid-template-columns: 1fr auto; }
+.escala-ict { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 4px 0 10px; }
+.escala-ict span { display: block; height: 100%; }
+
+/* guardar */
+.guardar { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--s-3); }
+.guardar .field { height: 36px; width: 180px; }
+.guardar .field.nota { flex: 1; min-width: 220px; }
+.advertencias { font-size: var(--fs-12); color: #8a5a00; margin-bottom: var(--s-2); }
+#tabla-historial td { font-size: var(--fs-12); }
+
+@media (max-width: 600px) {
+  .card-head { flex-wrap: wrap; }
+  .card-head .seg { width: 100%; }
+  .card-head .seg button { flex: 1; }
+}
+
+@media (max-width: 900px) {
+  .peso-fila { grid-template-columns: 1fr 60px; }
+  .peso-fila .range { grid-column: 1 / -1; }
+  .ahp-par { grid-template-columns: 1fr; }
+  .ahp-par .der { text-align: left; }
+}

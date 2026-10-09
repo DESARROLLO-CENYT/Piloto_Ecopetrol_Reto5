@@ -1,7 +1,7 @@
 # Parametros del modelo multicriterio (ICT).
 # Editable sin tocar codigo. Version de referencia para reproducibilidad.
-version: "0.1.0-piloto"
-fecha_actualizacion: "2026-09-28"
+version: "0.2.0-piloto"
+fecha_actualizacion: "2026-10-08"
 autor: "piloto"
 
 # Pesos por criterio (deben sumar 1.0). Obtenidos aqui por defecto/uniforme;
@@ -20,29 +20,134 @@ umbrales_criticidad:
   alto: 75
   # >= alto se considera "critico"
 
+# Matriz de Valoracion de Riesgos (RAM) de Ecopetrol, segun el instructivo publico ECP-DRI-I-007 (version 01, 2008).
+# Cada riesgo se califica de 0 a 5 en cinco dimensiones de consecuencia y de A a E en probabilidad; el cruce da el nivel.
+# Manda la dimension con la peor clasificacion. Si Ecopetrol entrega la version vigente (otros umbrales, otros niveles),
+# se actualiza aqui sin tocar codigo.
+ram:
+  fuente: "Ecopetrol, instructivo ECP-DRI-I-007 Uso de la Matriz de Valoración de Riesgos - RAM, versión 01 (31-mar-2008)"
+  dimensiones:
+    PE: Personas
+    EC: Económica
+    MA: Ambiental
+    CL: Clientes
+    IM: Imagen
+  probabilidades:
+    A: "No ha ocurrido en la industria"
+    B: "Ha ocurrido en la industria"
+    C: "Ha ocurrido en la empresa"
+    D: "Sucede varias veces al año en la empresa"
+    E: "Sucede varias veces al año en la unidad"
+  # Que significa cada nivel de consecuencia en cada dimension (tablas 5 a 9 del instructivo)
+  consecuencias:
+    PE: {5: "Una o más fatalidades", 4: "Incapacidad permanente (parcial o total)", 3: "Incapacidad temporal (> 1 día)", 2: "Lesión menor sin incapacidad", 1: "Lesión leve (primeros auxilios)", 0: "Ninguna lesión"}
+    EC: {5: "Catastrófica: más de USD 10 M", 4: "Grave: USD 1 M a 10 M", 3: "Severa: USD 100 mil a 1 M", 2: "Importante: USD 10 mil a 100 mil", 1: "Marginal: menos de USD 10 mil", 0: "Ninguna"}
+    MA: {5: "Contaminación irreparable", 4: "Contaminación mayor", 3: "Contaminación localizada", 2: "Efecto menor", 1: "Efecto leve", 0: "Ningún efecto"}
+    CL: {5: "Veto como proveedor", 4: "Pérdida de participación en el mercado", 3: "Pérdida de clientes o desabastecimiento", 2: "Quejas o reclamos", 1: "Incumplir especificaciones", 0: "Ningún impacto"}
+    IM: {5: "Internacional", 4: "Nacional", 3: "Regional", 2: "Local", 1: "Interna", 0: "Ningún impacto"}
+  # fila = consecuencia (0 a 5), columnas = probabilidad A, B, C, D, E
+  matriz:
+    5: [M, M, H, H, VH]
+    4: [L, M, M, H, H]
+    3: [N, L, M, M, H]
+    2: [N, N, L, L, M]
+    1: [N, N, N, L, L]
+    0: [N, N, N, N, N]
+  niveles:            # puntaje: para agregar en el ICT (practica comun: N=1 ... VH=5; no lo fija el instructivo)
+    N: {nombre: Ninguno, puntaje: 1, decision: "Riesgo muy bajo: usar los controles establecidos", aprueba: "Responsable de la tarea"}
+    L: {nombre: Bajo, puntaje: 2, decision: "Gestionar mejoras a los controles (procedimientos, listas de chequeo)", aprueba: "Responsable de la tarea (Tres Qués)"}
+    M: {nombre: Medio, puntaje: 3, decision: "Los controles no son suficientes: tomar medidas que controlen mejor el riesgo", aprueba: "Coordinador"}
+    H: {nombre: Alto, puntaje: 4, decision: "Buscar alternativas de menor riesgo; si se hace, demostrar cómo se controla", aprueba: "Gerente o jefe de unidad"}
+    VH: {nombre: Muy alto, puntaje: 5, decision: "Intolerable: buscar alternativas", aprueba: "Alta dirección (vicepresidente o director)"}
+  # el ICT usa el riesgo RESIDUAL (con controles); el inherente se publica para comparar
+  nivel_para_ict: residual
+  # Sugerencias de calificacion a partir del territorio real (oro.contexto). Son evidencia para el equipo evaluador,
+  # no reemplazan su juicio. Probabilidad: eventos por ano en el municipio -> letra.
+  sugerencias:
+    eventos_por_ano_para_probabilidad: {E: 12, D: 4, C: 1}    # >= 12 al ano: E; >= 4: D; >= 1: C; alguno en la historia: B; ninguno: A
+    consecuencia_imagen: {en_resguardo: 4, resguardo_a_5km: 3, municipio_pdet: 3}
+    consecuencia_ambiental: {en_area_protegida: 5, area_protegida_a_2km: 4, area_protegida_a_10km: 3}
+
 # Factor multiplicativo de severidad segun el estado de materializacion
 factores_estado:
   latente: 1.0
   proximo_a_materializarse: 1.3
   materializado: 1.6
 
-# Umbral de precipitacion (mm, acumulado 14 dias) considerado amenaza climatica maxima
-amenazas_externas:
-  precipitacion_extrema_mm_14d: 80
-  ventana_dias: 14
-
-# Convergencia: numero de categorias distintas de amenaza que saturan el criterio
-convergencia:
-  categorias_para_saturar: 4
+# Como se calcula cada criterio del ICT (src/modelo/ict.py, paso oro.ict). Todos valen de 0 a 1 en una escala FIJA
+# (1 = el peor caso que se define aqui), no relativa entre paquetes: el ICT de un paquete no cambia porque se agregue
+# otro, y dos fechas se comparan sin reescalar. Un componente sin dato no se imputa: el criterio se calcula con los
+# demas y la falta baja el indice de confianza. Los topes son SUPUESTOS DE TRABAJO a fijar con los expertos (Fase 2).
+criterios:
+  severidad_riesgo: {}                  # 0,7 x la peor amenaza + 0,3 x promedio (ver agregacion); 1 = VH materializado
+  exposicion_proyecto:
+    peso_ruta_critica: 0.5              # el resto: cuantas amenazas abiertas alcanzan el paquete
+    amenazas_para_saturar: 20           # las de otros paquetes cuentan segun su radio de influencia
+  vulnerabilidad_territorial:
+    componentes:                        # peso de cada componente dentro del criterio
+      etnico: 0.30                      # resguardos (ANT): fraccion del paquete dentro; colindante (< radio) cuenta 0,5
+      pobreza: 0.25                     # IPM del municipio (DANE, censo 2018) / 100
+      ambiental: 0.25                   # areas protegidas (RUNAP): dentro = 1, decae a 0 en el radio
+      acceso: 0.20                      # fraccion de km de vias cercanas solo transitables en tiempo seco (INVIAS + IGAC)
+    radio_resguardo_km: 5
+    radio_area_protegida_km: 10
+    radio_vias_km: 10
+  amenazas_externas:
+    componentes:
+      lluvia_reciente: 0.30             # lluvia acumulada en la ventana, estacion del IDEAM mas cercana con datos
+      anomalia_lluvia: 0.15             # |desviacion| de la lluvia de los ultimos meses frente a la normal (CHIRPS)
+      emergencias: 0.25                 # emergencias atendidas por la UNGRD por ano en el municipio
+      seguridad: 0.30                   # delitos contra personas e infraestructura, 12 meses por 100.000 hab. (MinDefensa)
+    ventana_dias: 14
+    lluvia_mm_para_saturar: 80          # 80 mm o mas en la ventana = amenaza climatica maxima
+    dias_minimos_con_dato: 10           # de los 14: con menos, la lluvia queda sin dato (no se imputa)
+    distancia_maxima_estacion_km: 20    # mas lejos, la estacion no representa la lluvia del paquete
+    meses_anomalia: 3
+    anomalia_para_saturar: 1.0          # 100 % de desviacion frente a la normal = maximo
+    emergencias_por_ano_para_saturar: 15
+    delitos_100k_para_saturar: 80       # cerca del doble del departamento (41 por 100.000 en 2025-2026)
+  convergencia:
+    nivel_minimo_registro: M            # categorias de amenazas abiertas con nivel RAM residual M o mas
+    alcance_minimo: 0.5                 # la amenaza alcanza la unidad al menos a media fuerza (o le esta asignada)
+    umbral_factor_territorio: 0.6       # un componente de amenazas externas >= 0,6 cuenta como amenaza que converge
+    amenazas_para_saturar: 5
 
 # Reglas de escalamiento a crisis
 escalamiento:
   ict_critico: 75
-  min_amenazas_convergentes: 3
+  min_amenazas_convergentes: 4          # categorias del registro + factores del territorio (y un ICT de 50 o mas)
   incremento_tendencia_alerta: 10       # puntos ICT
   ventana_tendencia_dias: 7
   dias_vencimiento_accion_critico: 0    # accion vencida = dias restantes < 0
   min_acciones_vencidas: 3              # se reporta como causa de escalamiento solo desde este numero
+  ram_vh_escala: true                   # un riesgo RAM residual VH (intolerable) sin materializar escala el paquete
+  ram_h_en_ruta_critica: true           # un riesgo RAM residual H en un paquete de ruta critica tambien
+  riesgo_en_area_sensible: true         # un riesgo H o VH cuya area de influencia alcanza un resguardo o un area protegida
+  niveles_area_sensible: [H, VH]
+  # el 63 % de La Guajira es resguardo: solo cuentan las categorias que afectan directamente a la comunidad
+  categorias_que_alcanzan_resguardos: [social_comunidad, ambiental]
+  categorias_que_alcanzan_areas_protegidas: [ambiental, climatico]
+
+# Inteligencia artificial sobre el texto del registro (src/modelo/texto.py, paso plata.sinteticos): un clasificador
+# aprende la taxonomia de los riesgos que traen categoria y la sugiere para los que no; marca los que el texto contradice
+# y los que mencionan un municipio lejano a su paquete. Nada se cambia sin dejar rastro: la categoria original queda en
+# categoria_registrada y el origen en categoria_origen (registro, ia, pendiente).
+ia_texto:
+  confianza_para_asignar: 0.6           # minima para asignar la categoria a un riesgo que no la trae
+  confianza_para_revisar: 0.8           # minima para marcar que el texto contradice la categoria registrada
+  distancia_lugar_km: 15                # un municipio mencionado a mas de esto del paquete se marca para revisar
+
+# Alertas tempranas diarias (src/tarea_diaria.py). La aplicacion corre la tarea sola a esta hora mientras esta encendida;
+# en un servidor sin la aplicacion, alertas_diarias.py desde el Programador de tareas o cron (--programar lo explica).
+alertas:
+  automatico: true
+  hora_diaria: "06:00"
+  fuentes_diarias: [ideam]              # lo que cambia cada dia; CHIRPS, delitos y emergencias se actualizan cada mes
+  notificar: [nuevas, suben]            # que cambios se avisan; [todas] envia el boletin completo cada dia
+  url_aplicacion: null                  # direccion del mapa para el boton de la tarjeta de Teams
+  canales:                              # las credenciales van SOLO en variables de entorno (ver src/notificaciones.py)
+    teams: false
+    correo: false
 
 # Radios de influencia por tipo de riesgo (metros), usados para las
 # funciones de decaimiento espacial (ver src/modelo/ict.py)
@@ -65,11 +170,88 @@ agregacion:
 grid:
   resolucion_grados: 0.02
 
-# Kernel density (estimacion de densidad)
+# Kernel density (estimacion de densidad): superficie de calor de las amenazas (y aparte, de las oportunidades)
 kde:
   bandwidth_m: 4000
 
-# Analisis de puntos calientes (Getis-Ord Gi* simplificado)
+# Puntos calientes (Getis-Ord Gi*) sobre las celdas de la grilla del area de estudio (no sobre 14 paquetes: con tan
+# pocas unidades ningun conglomerado puede ser significativo). Valor de cada celda: severidad de las amenazas que caen
+# en ella, sin suavizar.
 hotspot:
   k_vecinos: 8
   z_score_significativo: 1.96   # 95% de confianza
+
+# Cobertura de las estaciones del IDEAM: hasta que distancia (km) una estacion representa razonablemente el clima de un lugar.
+# Son SUPUESTOS DE TRABAJO (reglas practicas), no cifras oficiales del IDEAM: ajustarlos con un especialista.
+# Un lugar queda "cubierto" si su estacion mas cercana esta dentro del radio, "parcial" hasta el doble y "sin cobertura" mas alla.
+# El nivel del rio no aparece porque solo es valido en su punto.
+cobertura_estaciones:
+  radios_km:
+    lluvia: 10          # aguaceros muy locales
+    temperatura: 25
+    humedad: 25
+    humedad_suelo: 5    # depende del suelo y la cobertura de cada sitio
+    viento: 15          # lo dominan el relieve y la exposicion
+    presion: 40         # cambia poco, pero hay que corregir por altitud
+
+# Modelo de RIESGO DE EJECUCION (src/modelo/ejecucion.py, paso oro.ejecucion): cuantos dias de atraso y cuantos USD de
+# sobrecosto puede tener cada paquete y cada proyecto, con que probabilidad y por que. Todo son SUPUESTOS DE TRABAJO a
+# calibrar en taller de expertos y luego con el historial real de Ecopetrol (ver docs/MODELO_EJECUCION.md).
+ejecucion:
+  simulaciones: 10000
+  semilla: 42
+  horizonte_meses_por_defecto: 12        # si un paquete no trae cronograma
+  # 1) Frecuencia anual POR PAQUETE de cada letra RAM (probabilidad RESIDUAL, con controles). Las letras de la RAM hablan
+  #    del historial de toda la industria, la empresa o la unidad, no de un paquete; por eso se reparten entre las
+  #    "unidades de exposicion" (paquetes comparables) de cada nivel:
+  #      E  varias veces al ano en la unidad   ~3 eventos/ano entre ~6 paquetes de una unidad        -> 0,5
+  #      D  varias veces al ano en la empresa  ~3 eventos/ano entre ~60 paquetes de la empresa      -> 0,05
+  #      C  ha ocurrido en la empresa          ~1 evento en ~15 anos entre ~60 paquetes             -> 0,001
+  #      B  ha ocurrido en la industria        ~5 veces menos que C                                 -> 0,0002
+  #      A  no ha ocurrido en la industria     teorico                                              -> 0,00002
+  lambda_por_letra: {A: 0.00002, B: 0.0002, C: 0.001, D: 0.05, E: 0.5}
+  # factor por estado del riesgo (el materializado ya ocurrio: su atraso cuenta como consumido, no como probabilidad)
+  factor_estado: {latente: 1.0, proximo_a_materializarse: 2.0}
+  # La RAM registra la consecuencia POTENCIAL (la peor creible). Un evento que ya ocurrio suele quedarse por debajo:
+  # su atraso consumido es esta fraccion de los dias de la consecuencia potencial.
+  fraccion_consumida_materializado: 0.35
+  # 2) Ajuste por el territorio: lambda = lambda0 * exp(gamma * sum(beta_k * z_k)), con z = 0 en el promedio de La Guajira.
+  #    gamma < 1 evita contar dos veces lo que el evaluador ya puso en la letra RAM.
+  gamma: 0.5
+  multiplicador_max: 3.0                 # el territorio multiplica la frecuencia entre 1/3 y 3
+  covariables:
+    seguridad_fisica: {tasa_delitos_rel: 0.6}
+    climatico: {emergencias_rel: 0.4, anomalia_lluvia: 1.0}
+    social_comunidad: {en_resguardo: 0.8, ipm_rel: 0.8, pdet: 0.3}
+    logistico_acceso: {vias_tiempo_seco: 1.5, anomalia_lluvia: 0.5}
+    ambiental: {}
+    contractual: {}
+  radio_vias_km: 10                      # vias alrededor del paquete para la covariable logistica
+  meses_anomalia_lluvia: 3               # meses de CHIRPS para la anomalia reciente
+  # 3) Impacto: dias de atraso del paquete por evento, segun el nivel de consecuencia RAM de cada dimension (valor mas
+  #    probable; el dia de cada evento es Triangular(0,5x, 1x, 2x)). Manda la peor dimension, como en la RAM.
+  dias_por_consecuencia:
+    PE: [0, 0, 0.5, 2, 10, 30]
+    EC: [0, 0, 1, 5, 20, 60]
+    MA: [0, 0, 1, 5, 20, 60]
+    CL: [0, 0, 1, 5, 15, 30]
+    IM: [0, 0, 2, 7, 30, 60]
+  # costo directo por evento: bandas en USD de la consecuencia Economica (instructivo RAM), log-uniforme dentro de la banda
+  costo_directo_usd:
+    0: [0, 0]
+    1: [1000, 10000]
+    2: [10000, 100000]
+    3: [100000, 1000000]
+    4: [1000000, 10000000]
+    5: [10000000, 30000000]
+  # 4) Dependencia: choque comun W (media 1, desviacion sigma) que comparten los riesgos de un mismo grupo en cada escenario
+  choques:
+    clima: 0.5        # climaticos y logisticos del mismo municipio (temporada de lluvia o sequia)
+    social: 0.6       # sociales del mismo proyecto (paro, bloqueo, consulta)
+  # Solapamiento: en un paquete, el atraso de varios eventos no siempre va en fila. El paquete se atrasa lo del mayor
+  # evento mas esta fraccion de lo de los demas (1 = uno detras de otro, 0 = todos a la vez). El costo de tener el paquete
+  # parado se cobra sobre esos dias una sola vez.
+  solapamiento: 0.5
+  # 5) Salidas: tolerancia de atraso. IRE = 100 x P(atraso > holgura + tolerancia)
+  tolerancia_dias_paquete: 15
+  tolerancia_dias_proyecto: 30

@@ -46,7 +46,7 @@ button { font-family: inherit; }
   gap: var(--s-4);
   box-shadow: var(--sh-card);
 }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; flex-shrink: 0; }
 .brand-mark {
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--green-600); color: #fff;
@@ -69,7 +69,7 @@ button { font-family: inherit; }
 }
 .nav-seg a {
   height: 40px; padding: 0 18px; border-radius: var(--r-pill);
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0;
   text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: var(--fs-14);
   transition: background .15s, color .15s;
 }
@@ -220,6 +220,12 @@ button.chip:hover { border-color: var(--line); color: var(--ink); }
 .lvl.medio { background: var(--lvl-medio); color: var(--lvl-medio-ink); }
 .lvl.alto { background: var(--lvl-alto); }
 .lvl.critico { background: var(--lvl-critico); }
+/* Nivel de la matriz RAM de Ecopetrol (N, L, M, H, VH): chip cuadrado con el color del formato oficial */
+.ram-chip {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 22px; padding: 0 6px;
+  border-radius: 6px; font-size: var(--fs-11); font-weight: 700; letter-spacing: .02em;
+}
+.ram-chip.vacio { background: var(--surface-muted); color: var(--muted); }
 .lvl-soft { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: var(--r-pill); font-size: var(--fs-12); font-weight: 600; }
 .lvl-soft.bajo { background: var(--lvl-bajo-bg); color: #1d7a42; }
 .lvl-soft.medio { background: var(--lvl-medio-bg); color: var(--lvl-medio-ink); }
@@ -423,6 +429,16 @@ input.field { background-image: none; padding-right: 14px; }
 .leaflet-control-attribution a { color: var(--ink-2) !important; }
 
 /* ---------- Responsive ---------- */
+/* Barra superior: 8 secciones. Se compacta por pasos para no partir nombres ni desbordar la pagina. */
+@media (max-width: 1440px) {
+  .nav-seg a { padding: 0 12px; gap: 6px; font-size: var(--fs-13); }
+}
+@media (max-width: 1360px) {
+  .topbar-right .chip.warn .txt { display: none; }
+}
+@media (max-width: 1180px) {
+  .nav-seg a:not(.on) .txt { display: none; }
+}
 @media (max-width: 1100px) {
   .span-3, .span-4, .span-5 { grid-column: span 6; }
   .span-7, .span-8 { grid-column: span 12; }
@@ -431,7 +447,9 @@ input.field { background-image: none; padding-right: 14px; }
   .shell { margin: 8px; padding: 8px; border-radius: 22px; min-height: calc(100vh - 16px); }
   .topbar { padding: 0 8px 0 12px; gap: 8px; }
   .brand-name { display: none; }
-  .nav-seg a { padding: 0 12px; }
+  .topbar .nav-seg { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .topbar .nav-seg::-webkit-scrollbar { display: none; }
+  .nav-seg a { padding: 0 10px; }
   .nav-seg a .txt { display: none; }
   .topbar-right .chip.warn .txt, .avatar-logo { display: none; }
   .bento > * { grid-column: span 12 !important; }

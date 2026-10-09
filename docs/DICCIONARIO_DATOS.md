@@ -6,6 +6,14 @@
 
 ## Bronce
 
+### `ant_resguardos.geojson` — Resguardos indígenas (crudos)
+
+*Territorio étnico (real)* · origen **sintético** · GeoJSON · 40 filas · geometría: Polígonos
+
+Polígonos de los resguardos formalizados de la Agencia Nacional de Tierras que cruzan la caja de La Guajira, tal como llegan.
+
+*13 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
 ### `areas_protegidas.geojson` — Áreas protegidas
 
 *Vulnerabilidad* · origen **sintético** · GeoJSON · 6 filas · geometría: Polígonos
@@ -20,6 +28,51 @@
 | `nombre` | texto | 0 | Nombre descriptivo. |
 | `categoria` | texto | 0 | Tipo de área protegida (ficticia). |
 | `sensibilidad` | decimal | 0 | Índice de sensibilidad ambiental, 0 a 1. |
+
+### `art_pdet.csv` — Municipios PDET (crudo)
+
+*Contexto (real)* · origen **sintético** · CSV · 170 filas
+
+Los 170 municipios de los Programas de Desarrollo con Enfoque Territorial (ART). En La Guajira: Dibulla, Fonseca y San Juan del Cesar.
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `chirps_meta.json` — Metadatos de la descarga de CHIRPS
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Fuente (CHIRPS v3.0 del Climate Hazards Center, UC Santa Barbara), licencia CC BY 4.0, cita, fecha, caja de descarga y meses bajados. Los meses quedan en Bronce como un GeoTIFF cada uno (carpeta `bronze/chirps/`, rejilla de 0,05° con los valores tal como vienen; -9999 en el mar).
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Producto y organización que lo publica. |
+| `licencia` | texto | 0 | CC BY 4.0: uso libre citando la fuente. |
+| `cita` | texto | 0 | Cómo citar CHIRPS (DOI). |
+| `servicio` | texto | 0 | Carpeta de los archivos mensuales (COG) en el servidor de UC Santa Barbara. |
+| `resolucion_grados` | decimal | 0 | Tamaño de la celda en grados (0,05 ≈ 5,5 km). |
+| `unidad` | texto | 0 | Unidad de los valores. |
+| `nodata` | decimal | 0 | Valor de las celdas sin dato (mar). |
+| `descargado_en` | texto | 0 | Fecha y hora de la última descarga. |
+| `desde` | texto | 0 | Primer mes. |
+| `hasta` | texto | 0 | Último mes (CHIRPS publica ~3 semanas después de terminar el mes). |
+| `meses` | entero | 0 | Meses guardados en Bronce. |
+| `meses_fallidos` | lista | 0 | Meses que no se pudieron bajar. |
+| `caja.lat_sur` | decimal | 0 | Caja de descarga: latitud sur. |
+| `caja.lon_oeste` | decimal | 0 | Caja de descarga: longitud oeste. |
+| `caja.lat_norte` | decimal | 0 | Caja de descarga: latitud norte. |
+| `caja.lon_este` | decimal | 0 | Caja de descarga: longitud este. |
+
+### `clave_categorias_sinteticas.csv` — Clave de evaluación de la IA
+
+*Evaluación (sintético)* · origen **sintético** · CSV · 200 filas
+
+Categoría verdadera de cada riesgo y si su texto nombra un municipio lejano. Solo existe porque los datos son sintéticos: con ella se mide cuánto acierta la IA y cuántos errores sembrados detecta.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_riesgo` | texto | 0 | Identificador del riesgo (RSK-0001). En Bronce los duplicados llevan el sufijo -DUP. |
+| `categoria_real` | texto | 0 | Categoría verdadera del riesgo (solo existe porque los datos son sintéticos). |
+| `ubicacion_lejana` | booleano | 0 | Verdadero si el texto se redactó nombrando un municipio lejano a su paquete (error sembrado). |
 
 ### `clima_sintetico.csv` — Clima simulado
 
@@ -54,24 +107,135 @@ Asentamientos con población aproximada e índice de conflictividad social.
 | `poblacion_aprox` | entero | 0 | Población aproximada. |
 | `conflictividad` | decimal | 0 | Índice de conflictividad social, 0 a 1. |
 
+### `cronograma_paquetes.csv` — Cronograma de los paquetes
+
+*Ejecución (modelo de riesgo de ejecución)* · origen **sintético** · CSV · 14 filas
+
+Duración, avance, meses que faltan, holgura (0 en ruta crítica), costo diario de parada y presupuesto de cada paquete.
+
+**Cómo se genera:** Sintético, con su propio generador aleatorio (semilla 49) para no alterar el resto: duración 8 a 24 meses, avance 10 a 70 %, holgura 10 a 45 días fuera de ruta crítica, parada de USD 15 mil a 90 mil por día.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `duracion_meses` | entero | 0 | Duración total del paquete (meses). |
+| `avance` | decimal | 0 | Fracción ejecutada (0 a 1). |
+| `meses_restantes` | decimal | 0 | Meses que faltan: el horizonte T. |
+| `holgura_dias` | entero | 0 | Días que el paquete puede atrasarse sin atrasar el proyecto (0 en ruta crítica). |
+| `costo_dia_parada_usd` | entero | 0 | Costo de un día de paquete parado (equipos, personal, contratistas en espera). |
+| `presupuesto_usd` | entero | 0 | Presupuesto del paquete. |
+
+### `dane_censo2018_deficit_acueducto.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_deficit_habitacional.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*24 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_etnia.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*7 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_ipm.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*7 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_miseria.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi_dependencia.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi_hacinamiento.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi_inasistencia.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi_servicios.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_nbi_vivienda.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_poblacion.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `dane_censo2018_poblacion_rural_dispersa.csv` — Censo 2018 por municipio (crudo)
+
+*Población y pobreza (real)* · origen **sintético** · CSV · 15 filas
+
+Trece archivos, uno por indicador del Censo Nacional de Población y Vivienda 2018 que el DANE publica por municipio en su geoportal: población total y rural dispersa, población indígena y afro, IPM, NBI y sus cinco componentes, miseria, déficit habitacional y su componente de acueducto. Cada uno con el nombre de campo del servicio.
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
 ### `dane_municipios.geojson` — Municipios del DANE (crudos)
 
 *Límites (real)* · origen **DANE** · GeoJSON · 15 filas · geometría: Polígonos
 
-Los 15 polígonos municipales de La Guajira del Marco Geoestadístico Nacional del DANE (versión 2005, base del IGAC), tal como los publica el servicio, con sus más de 200 atributos del censo y ~125 mil vértices.
+Los 15 polígonos municipales de La Guajira del Marco Geoestadístico Nacional 2024, tal como los publica el geoportal del DANE (~104 mil vértices). Reemplazan la versión 2005 con atributos del censo 2005; los indicadores sociales vienen ahora del censo 2018 (`indicadores_censo2018`).
 
-| Columna | Tipo | Nulos | Descripción |
-|---|---|---:|---|
-| `DPTO_CCDGO` | texto | 0 | Código del departamento. |
-| `MPIO_CCDGO` | texto | 0 | Código del municipio dentro del departamento. |
-| `MPIO_CNMBR` | texto | 0 | Nombre del municipio (mayúsculas, sin tildes). |
-| `MPIO_NAREA` | decimal | 0 | Área oficial en m² según la fuente. |
-| `MPIO_NANO` | entero | 0 | Año de la versión de la geometría. |
-| `DEPTO` | texto | 0 | Departamento. |
-| `MUNICIPIO` | texto | 0 | Municipio. |
-| `COD_DEP_MP` | texto | 0 | Código DANE de 5 dígitos. |
-
-*223 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+*10 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
 ### `divipola_municipios.csv` — DIVIPOLA de La Guajira
 
@@ -89,6 +253,18 @@ Código DANE, nombre y coordenadas de la cabecera de cada municipio (datos.gov.c
 | `longitud` | texto | 0 | Longitud de la cabecera (coma decimal en la fuente). |
 | `latitud` | texto | 0 | Latitud de la cabecera (coma decimal en la fuente). |
 
+### `emergencias_meta.json` — Metadatos de emergencias
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Conjuntos de cada periodo, filas descargadas y periodos sin publicar.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+
+*12 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
 ### `hidrografia_meta.json` — Metadatos de la descarga de hidrografía
 
 *Trazabilidad (real)* · origen **IGAC** · JSON · 1 filas
@@ -99,8 +275,18 @@ Servicio de origen, licencia (uso libre solo sin fines comerciales), fecha, caja
 |---|---|---:|---|
 | `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
 | `servicio` | texto | 0 | Dirección del servicio de origen. |
+| `capas.igac_drenaje_sencillo.capa_servicio` | entero | 0 | Número de la capa en el servicio ArcGIS. |
+| `capas.igac_drenaje_sencillo.objetos` | entero | 0 | Objetos descargados. |
+| `capas.igac_drenaje_doble.capa_servicio` | entero | 0 | Número de la capa en el servicio ArcGIS. |
+| `capas.igac_drenaje_doble.objetos` | entero | 0 | Objetos descargados. |
+| `capas.igac_cienagas.capa_servicio` | entero | 0 | Número de la capa en el servicio ArcGIS. |
+| `capas.igac_cienagas.objetos` | entero | 0 | Objetos descargados. |
+| `capas.igac_embalses.capa_servicio` | entero | 0 | Número de la capa en el servicio ArcGIS. |
+| `capas.igac_embalses.objetos` | entero | 0 | Objetos descargados. |
+| `capas.igac_lagunas.capa_servicio` | entero | 0 | Número de la capa en el servicio ArcGIS. |
+| `capas.igac_lagunas.objetos` | entero | 0 | Objetos descargados. |
 
-*26 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+*16 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
 ### `hidrologia.geojson` — Hidrología
 
@@ -117,7 +303,7 @@ Cuerpos de agua (arroyos) como líneas. Es la inventada; la hidrografía real de
 
 ### `ideam_estaciones.csv` — Estaciones del IDEAM
 
-*Catálogo (real)* · origen **IDEAM** · CSV · 219 filas
+*Catálogo (real)* · origen **IDEAM** · CSV · 438 filas
 
 Catálogo Nacional de Estaciones del IDEAM filtrado a La Guajira: código, nombre, categoría, tecnología, estado, municipio, coordenadas y altitud. Incluye estaciones activas, en mantenimiento y suspendidas.
 
@@ -136,12 +322,12 @@ Catálogo Nacional de Estaciones del IDEAM filtrado a La Guajira: código, nombr
 | `latitud` | decimal | 0 | Latitud en grados decimales (WGS84). |
 | `fecha_instalacion` | texto | 0 | Fecha de instalación (texto dd/mm/aaaa). |
 | `area_operativa` | texto | 0 | Área operativa del IDEAM. |
-| `corriente` | texto | 153 | Corriente asociada. |
+| `corriente` | texto | 306 | Corriente asociada. |
 | `area_hidrografica` | texto | 0 | Área hidrográfica. |
 | `zona_hidrografica` | texto | 0 | Zona hidrográfica. |
 | `subzona_hidrografica` | texto | 0 | Subzona hidrográfica. |
 | `entidad` | texto | 0 | Entidad propietaria de la estación. |
-| `fecha_suspension` | texto | 102 | Fecha de suspensión, si aplica. |
+| `fecha_suspension` | texto | 207 | Fecha de suspensión, si aplica. |
 
 ### `ideam_meta.json` — Metadatos de la descarga
 
@@ -161,8 +347,37 @@ Fuente, licencia, fecha de descarga, ventana de fechas y cuántas estaciones se 
 | `estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
 | `estaciones_con_error` | lista | 0 | Estaciones cuya descarga falló. |
 | `lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.temperatura.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.temperatura.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.temperatura.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.temp_max.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.temp_max.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.temp_max.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.temp_min.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.temp_min.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.temp_min.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.humedad.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.humedad.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.humedad.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.viento_vel.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.viento_vel.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.viento_vel.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.viento_dir.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.viento_dir.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.viento_dir.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.presion.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.presion.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.presion.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.nivel_rio.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.nivel_rio.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.nivel_rio.lecturas` | entero | 0 | Lecturas descargadas. |
+| `variables.nivel_mar.estaciones_sondeadas` | entero | 0 | Estaciones candidatas a las que se les pidió su última lectura. |
+| `variables.nivel_mar.estaciones_descargadas` | entero | 0 | Estaciones de las que se bajaron lecturas. |
+| `variables.nivel_mar.lecturas` | entero | 0 | Lecturas descargadas. |
+| `tablas.ultimas_horas.desde` | texto | 0 | Inicio de la ventana descargada. |
+| `tablas.ultimas_horas.hasta` | texto | 0 | Fin de la ventana descargada. |
 
-*74 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+*45 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
 ### `ideam_normales.csv` — Normales climatológicas
 
@@ -197,7 +412,7 @@ Valor típico de cada mes (periodo 1991-2020) por estación y parámetro: precip
 
 ### `ideam_precipitacion.parquet` — Lecturas de precipitación (crudas)
 
-*Lecturas (real)* · origen **IDEAM** · Parquet · 65.123 filas
+*Lecturas (real)* · origen **IDEAM** · Parquet · 68.400 filas
 
 Lecturas de lluvia tal como las entrega el IDEAM, cada ~10 minutos (~2 minutos en la estación del aeropuerto de Riohacha), de los últimos 30 días. Se guardan sin tocar, con duplicados y como texto.
 
@@ -247,7 +462,7 @@ Radiación global media por estación: un valor para cada mes y el promedio anua
 
 ### `ideam_ultimas_horas.parquet` — Lecturas de las últimas horas
 
-*Casi en tiempo real (real)* · origen **IDEAM** · Parquet · 3.041 filas
+*Casi en tiempo real (real)* · origen **IDEAM** · Parquet · 3.303 filas
 
 Flujo del IDEAM con las lecturas de las últimas ~12 horas de todas las variables. Es lo que el mapa muestra como valor de ahora; el backend lo consulta en vivo y guarda este respaldo por si no hay internet.
 
@@ -269,7 +484,7 @@ Flujo del IDEAM con las lecturas de las últimas ~12 horas de todas las variable
 
 ### `ideam_variables.parquet` — Otras variables (crudas)
 
-*Lecturas (real)* · origen **IDEAM** · Parquet · 195.350 filas
+*Lecturas (real)* · origen **IDEAM** · Parquet · 204.330 filas
 
 Temperatura del aire (media, máxima y mínima), humedad, viento (velocidad y dirección), presión y nivel del río de los últimos 30 días, cada una de su conjunto de datos abiertos. Se guardan tal como llegan, con una columna que dice de qué conjunto vino cada fila.
 
@@ -493,6 +708,19 @@ Siete archivos, uno por capa del servicio: seis tipos de vía y los caminos y se
 
 *6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
+### `ins_irca.csv` — Calidad del agua, IRCA (crudo)
+
+*Servicios (real)* · origen **sintético** · CSV · 257 filas
+
+Índice de Riesgo de la Calidad del Agua para consumo humano (INS, SIVICAP) por municipio y año, total, urbano y rural.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+| `irca` | decimal | 0 | Índice de Riesgo de la Calidad del Agua (0-100). |
+
+*9 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
 ### `invias_meta.json` — Metadatos de la descarga de vías
 
 *Trazabilidad (real)* · origen **INVIAS** · JSON · 1 filas
@@ -526,6 +754,148 @@ Tramos de la Red Vial Nacional que cruzan La Guajira, tal como los publica INVIA
 | `sector` | texto | 0 | Sector del tramo (p. ej. Riohacha - Paraguachón). |
 
 *10 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_afectacion_fuerza_publica.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 169 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_delitos_ambientales.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 926 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*7 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_extorsion.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 1.904 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_homicidio.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 5.313 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*10 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_invasion_tierras.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 172 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_masacres.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 10 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+| `casos` | texto | 0 | Registros (casos). |
+| `victimas` | texto | 0 | Víctimas (o cantidad que reporta la fuente). |
+
+*4 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_pirateria_terrestre.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 90 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_secuestro.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 247 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_terrorismo.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 238 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_voladura_oleoductos.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 6 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mindefensa_voladura_puentes_vias.parquet` — Delitos (crudos)
+
+*Seguridad (real)* · origen **sintético** · Parquet · 3 filas
+
+Once archivos, uno por delito (homicidio, extorsión, secuestro, terrorismo, masacres, voladuras, piratería terrestre, invasión de tierras, delitos ambientales, afectación de la fuerza pública), con las filas de La Guajira desde 2003.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `municipio` | texto | 0 | Municipio. |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `mininterior_resguardos_poblacion.csv` — Población de los resguardos (crudo)
+
+*Territorio étnico (real)* · origen **sintético** · CSV · 31 filas
+
+Proyección de población 2020 de cada resguardo por municipio (Ministerio del Interior, datos.gov.co).
+
+*5 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
 ### `municipios_meta.json` — Metadatos de la descarga de municipios
 
@@ -565,7 +935,7 @@ Polígonos de los paquetes de trabajo. Son la unidad sobre la que se calcula el 
 
 Límites de los proyectos que agrupan los paquetes de trabajo.
 
-**Cómo se genera:** 3 proyectos ficticios (Norte, Centro, Sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
+**Cómo se genera:** 3 proyectos ficticios (Proyecto 1 al norte, 2 al centro y 3 al sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -576,30 +946,194 @@ Límites de los proyectos que agrupan los paquetes de trabajo.
 
 *Registro* · origen **sintético** · Excel · 212 filas
 
-Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, con probabilidad, impacto, estado de materialización y acción de tratamiento.
+Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, calificado con la matriz RAM de Ecopetrol (consecuencia 0-5 en Personas, Económica, Ambiental, Clientes e Imagen; probabilidad A-E sin y con controles), estado de materialización y acción de tratamiento. En Plata cada riesgo queda ubicado en la matriz (celda y nivel N, L, M, H o VH, inherente y residual).
 
-**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. Tres paquetes 'calientes' reciben más riesgos y con probabilidad e impacto altos, para que el mapa muestre patrones. ~18% son oportunidades.
+**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. La consecuencia por dimensión sigue el perfil de su categoría (un riesgo social pesa en Imagen; uno de seguridad, en Personas). Tres paquetes 'calientes' reciben más riesgos, con consecuencias y probabilidades más altas, para que el mapa muestre patrones. Los controles bajan la probabilidad 0 a 2 letras. ~18% son oportunidades.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
 | `id_riesgo` | texto | 0 | Identificador del riesgo (RSK-0001). En Bronce los duplicados llevan el sufijo -DUP. |
 | `id_evento_riesgo` | texto | 6 | Identificador del evento de riesgo asociado. |
 | `descripcion` | texto | 0 | Descripción textual del riesgo. |
-| `causa` | texto | 10 | Causa registrada. En Plata los vacíos quedan como 'sin_causa_registrada'. |
-| `categoria` | texto | 0 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
+| `causa` | texto | 11 | Causa registrada. En Plata los vacíos quedan como 'sin_causa_registrada'. |
+| `categoria` | texto | 10 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
 | `tipo` | texto | 0 | amenaza u oportunidad (riesgo positivo). |
-| `probabilidad` | entero | 0 | Escala de 1 a 5. |
-| `impacto` | entero | 0 | Escala de 1 a 5. |
+| `cons_personas` | entero | 0 | Matriz RAM: consecuencia potencial para las personas, 0 a 5. |
+| `cons_economica` | entero | 0 | Matriz RAM: consecuencia económica, 0 a 5 (5 = más de USD 10 M). |
+| `cons_ambiental` | entero | 0 | Matriz RAM: consecuencia ambiental, 0 a 5 (5 = contaminación irreparable). |
+| `cons_clientes` | decimal | 9 | Matriz RAM: consecuencia para los clientes, 0 a 5. Vacía si el evaluador no la calificó. |
+| `cons_imagen` | entero | 0 | Matriz RAM: consecuencia en la imagen, 0 a 5 (5 = internacional). |
+| `probabilidad` | texto | 0 | Matriz RAM: probabilidad inherente (sin controles), A a E. En Bronce llega como 'C', 'c', 'C - Ha ocurrido...' o '3'. |
+| `probabilidad_residual` | texto | 0 | Matriz RAM: probabilidad con los controles actuales, A a E. |
+| `controles` | texto | 0 | Controles que reducen la probabilidad (de inherente a residual). |
 | `estado` | texto | 0 | latente, proximo_a_materializarse o materializado. |
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `id_paquete_trabajo` | texto | 0 | Paquete de trabajo al que pertenece (llave hacia paquetes). |
 | `fecha_identificacion` | texto | 0 | Fecha en que se identificó el riesgo. |
-| `fecha_materializacion` | texto | 172 | Fecha de materialización; vacía si no se ha materializado. |
+| `fecha_materializacion` | texto | 161 | Fecha de materialización; vacía si no se ha materializado. |
 | `accion_tratamiento` | texto | 0 | Acción de tratamiento definida. |
-| `fecha_ejecucion_accion` | texto | 17 | Fecha comprometida de la acción. Si ya pasó y el riesgo sigue activo, la acción está vencida. |
-| `lat` | decimal | 24 | Latitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
-| `lon` | decimal | 24 | Longitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
+| `fecha_ejecucion_accion` | texto | 18 | Fecha comprometida de la acción. Si ya pasó y el riesgo sigue activo, la acción está vencida. |
+| `lat` | decimal | 25 | Latitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
+| `lon` | decimal | 25 | Longitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
 | `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+
+### `resguardos_meta.json` — Metadatos de los resguardos
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Servicio de la ANT, conjunto del Ministerio del Interior, licencias y fecha de descarga.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+
+*6 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `runap_areas_protegidas.geojson` — Áreas protegidas (crudas)
+
+*Territorio protegido (real)* · origen **sintético** · GeoJSON · 28 filas · geometría: Polígonos
+
+Polígonos del Registro Único Nacional de Áreas Protegidas que cruzan la caja de La Guajira, tal como llegan.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `organizacion` | texto | 0 | Entidad que la administra. |
+
+*24 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `runap_meta.json` — Metadatos del RUNAP
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Servicio de Parques Nacionales, licencia y fecha de descarga.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+
+*4 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `seguridad_meta.json` — Metadatos de seguridad
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Conjunto de datos.gov.co de cada delito, filas y rango de fechas descargado.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+
+*59 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `social_meta.json` — Metadatos de los indicadores sociales
+
+*Trazabilidad (real)* · origen **sintético** · JSON · 1 filas
+
+Servicios y conjuntos de origen (DANE, INS, ART), licencias, fecha de descarga y tablas que llegaron.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+| `fuentes.censo_2018.tablas.poblacion` | entero | 0 | Población. |
+| `fuentes.censo_2018.tablas.poblacion_rural_dispersa` | entero | 0 | Personas en el área rural dispersa. |
+| `fuentes.censo_2018.tablas.ipm` | entero | 0 | Índice de Pobreza Multidimensional: % de personas pobres. |
+| `fuentes.censo_2018.tablas.nbi` | entero | 0 | % de personas con necesidades básicas insatisfechas. |
+| `fuentes.censo_2018.tablas.nbi_vivienda` | entero | 0 | NBI: vivienda inadecuada (%). |
+| `fuentes.censo_2018.tablas.nbi_servicios` | entero | 0 | NBI: servicios inadecuados (%). |
+| `fuentes.censo_2018.tablas.nbi_hacinamiento` | entero | 0 | NBI: hacinamiento crítico (%). |
+| `fuentes.censo_2018.tablas.nbi_inasistencia` | entero | 0 | NBI: niños que no asisten a la escuela (%). |
+| `fuentes.censo_2018.tablas.nbi_dependencia` | entero | 0 | NBI: alta dependencia económica (%). |
+| `fuentes.censo_2018.tablas.miseria` | entero | 0 | % de personas con dos o más NBI. |
+| `fuentes.censo_2018.tablas.deficit_habitacional` | entero | 0 | % de hogares en déficit habitacional. |
+
+*16 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `ungrd_emergencias_2019.parquet` — Emergencias de la UNGRD (crudas)
+
+*Desastres (real)* · origen **sintético** · Parquet · 55 filas
+
+Un archivo por reporte anual (2019, 2020, 2023-2024 y 2025 en adelante), con columnas distintas en cada uno. 2021 y 2022 no están publicados en el portal.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fecha` | texto | 0 | Fecha. |
+| `municipio` | texto | 0 | Municipio. |
+| `evento` | texto | 0 | Evento como lo escribe la UNGRD. |
+| `fallecidos` | texto | 0 | Personas fallecidas. |
+| `heridos` | texto | 0 | Personas heridas. |
+| `desaparecidos` | texto | 0 | Personas desaparecidas. |
+| `personas` | texto | 0 | Personas afectadas. |
+| `familias` | texto | 0 | Familias afectadas. |
+| `viviendas_destruidas` | texto | 0 | Viviendas destruidas. |
+| `viviendas_averiadas` | texto | 0 | Viviendas averiadas. |
+| `vias` | texto | 0 | Vías afectadas. |
+| `hectareas` | texto | 0 | Hectáreas afectadas. |
+
+*61 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `ungrd_emergencias_2020.parquet` — Emergencias de la UNGRD (crudas)
+
+*Desastres (real)* · origen **sintético** · Parquet · 61 filas
+
+Un archivo por reporte anual (2019, 2020, 2023-2024 y 2025 en adelante), con columnas distintas en cada uno. 2021 y 2022 no están publicados en el portal.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fecha` | texto | 0 | Fecha. |
+| `municipio` | texto | 0 | Municipio. |
+| `evento` | texto | 0 | Evento como lo escribe la UNGRD. |
+| `fallecidos` | texto | 0 | Personas fallecidas. |
+| `heridos` | texto | 0 | Personas heridas. |
+| `desaparecidos` | texto | 0 | Personas desaparecidas. |
+| `personas` | texto | 0 | Personas afectadas. |
+| `familias` | texto | 0 | Familias afectadas. |
+| `viviendas_destruidas` | texto | 0 | Viviendas destruidas. |
+| `viviendas_averiadas` | texto | 0 | Viviendas averiadas. |
+| `vias` | texto | 0 | Vías afectadas. |
+| `hectareas` | texto | 0 | Hectáreas afectadas. |
+
+*62 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `ungrd_emergencias_2023_2024.parquet` — Emergencias de la UNGRD (crudas)
+
+*Desastres (real)* · origen **sintético** · Parquet · 294 filas
+
+Un archivo por reporte anual (2019, 2020, 2023-2024 y 2025 en adelante), con columnas distintas en cada uno. 2021 y 2022 no están publicados en el portal.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fecha` | texto | 0 | Fecha. |
+| `municipio` | texto | 0 | Municipio. |
+| `evento` | texto | 0 | Evento como lo escribe la UNGRD. |
+| `fallecidos` | texto | 1 | Personas fallecidas. |
+| `heridos` | texto | 0 | Personas heridas. |
+| `desaparecidos` | texto | 0 | Personas desaparecidas. |
+| `personas` | texto | 0 | Personas afectadas. |
+| `familias` | texto | 0 | Familias afectadas. |
+| `viviendas_destruidas` | texto | 0 | Viviendas destruidas. |
+| `viviendas_averiadas` | texto | 0 | Viviendas averiadas. |
+| `hectareas` | texto | 0 | Hectáreas afectadas. |
+
+*58 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
+
+### `ungrd_emergencias_2025_en_adelante.parquet` — Emergencias de la UNGRD (crudas)
+
+*Desastres (real)* · origen **sintético** · Parquet · 226 filas
+
+Un archivo por reporte anual (2019, 2020, 2023-2024 y 2025 en adelante), con columnas distintas en cada uno. 2021 y 2022 no están publicados en el portal.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fecha` | texto | 0 | Fecha. |
+| `municipio` | texto | 0 | Municipio. |
+| `evento` | texto | 0 | Evento como lo escribe la UNGRD. |
+| `heridos` | texto | 0 | Personas heridas. |
+| `personas` | texto | 0 | Personas afectadas. |
+| `familias` | texto | 0 | Familias afectadas. |
+| `vias` | texto | 0 | Vías afectadas. |
+| `hectareas` | texto | 0 | Hectáreas afectadas. |
+
+*53 columnas más sin descripción (tal como las entrega la fuente en Bronce).*
 
 ### `vias.geojson` — Vías
 
@@ -646,6 +1180,37 @@ Servicio de origen, licencia (uso libre solo sin fines comerciales), fecha, caja
 | `categoria` | texto | 0 | Tipo de área protegida (ficticia). |
 | `sensibilidad` | decimal | 0 | Índice de sensibilidad ambiental, 0 a 1. |
 
+### `areas_protegidas_runap.geojson` — Áreas protegidas (RUNAP)
+
+*Capa del mapa (real)* · origen **sintético** · GeoJSON · 25 filas · geometría: Polígonos
+
+Áreas que tocan La Guajira o su franja costera: nacionales (Macuira, Los Flamencos, Bahía Portete, Sierra Nevada), regionales de Corpoguajira y reservas de la sociedad civil, con ámbito, área total y área en tierra guajira. Las del modelo ICT siguen siendo las sintéticas (`areas`).
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_area` | texto | 0 | Identificador del RUNAP. |
+| `nombre` | texto | 0 | Nombre. |
+| `categoria` | texto | 0 | Categoría del área protegida. |
+| `ambito` | texto | 0 | nacional, regional o privada. |
+| `organizacion` | texto | 0 | Entidad que la administra. |
+| `area_km2` | decimal | 0 | Área en km² (en La Guajira para los resguardos; total para las áreas protegidas). |
+| `area_en_guajira_km2` | decimal | 0 | Área en tierra de La Guajira (km²). |
+| `inscrita` | entero | 0 | Año de inscripción. |
+
+### `chirps_municipio_mensual.parquet` — Lluvia mensual por municipio (CHIRPS)
+
+*Lluvia por satélite (real)* · origen **sintético** · Parquet · 6.848 filas
+
+Lluvia de cada mes desde 1991 en cada municipio y en el departamento (código 44): el promedio de las celdas de CHIRPS que lo cubren, ponderado por el área de cada celda que cae adentro (calculada en metros, EPSG:3116). CHIRPS combina satélite con estaciones, entre ellas las del IDEAM.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento entero. |
+| `municipio` | texto | 0 | Nombre del municipio. |
+| `mes` | fecha | 0 | Primer día del mes. |
+| `mm` | decimal | 0 | Lluvia del mes en mm (en Oro, una lista: un valor por mes de `metadata.meses`). |
+| `fraccion_con_dato` | decimal | 0 | Parte del área del municipio cubierta por celdas con dato (0 a 1); en la costa, el mar no tiene dato. |
+
 ### `clima_sintetico.parquet` — Clima simulado
 
 *Amenaza externa (modelo ICT)* · origen **sintético** · Parquet · 600 filas
@@ -678,6 +1243,49 @@ Asentamientos con población aproximada e índice de conflictividad social.
 | `nombre` | texto | 0 | Nombre descriptivo. |
 | `poblacion_aprox` | entero | 0 | Población aproximada. |
 | `conflictividad` | decimal | 0 | Índice de conflictividad social, 0 a 1. |
+
+### `cronograma.parquet` — Cronograma de los paquetes
+
+*Ejecución (modelo de riesgo de ejecución)* · origen **sintético** · Parquet · 14 filas
+
+Duración, avance, meses que faltan, holgura (0 en ruta crítica), costo diario de parada y presupuesto de cada paquete.
+
+**Cómo se genera:** Sintético, con su propio generador aleatorio (semilla 49) para no alterar el resto: duración 8 a 24 meses, avance 10 a 70 %, holgura 10 a 45 días fuera de ruta crítica, parada de USD 15 mil a 90 mil por día.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `duracion_meses` | entero | 0 | Duración total del paquete (meses). |
+| `avance` | decimal | 0 | Fracción ejecutada (0 a 1). |
+| `meses_restantes` | decimal | 0 | Meses que faltan: el horizonte T. |
+| `holgura_dias` | entero | 0 | Días que el paquete puede atrasarse sin atrasar el proyecto (0 en ruta crítica). |
+| `costo_dia_parada_usd` | entero | 0 | Costo de un día de paquete parado (equipos, personal, contratistas en espera). |
+| `presupuesto_usd` | entero | 0 | Presupuesto del paquete. |
+| `ruta_critica` | booleano | 0 | Si el paquete está en la ruta crítica del cronograma. |
+
+### `emergencias.parquet` — Emergencias atendidas
+
+*Desastres (real)* · origen **sintético** · Parquet · 523 filas
+
+Una fila por emergencia con columnas armonizadas: fecha, municipio, evento, tipo (inundación, incendio forestal, vendaval, sequía...) y afectación. Corrige los códigos de municipio de 2025 y quita la duplicación de ese reporte.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `fecha` | fecha | 0 | Fecha. |
+| `anio` | entero | 0 | Año. |
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento. |
+| `evento` | texto | 0 | Evento como lo escribe la UNGRD. |
+| `tipo` | texto | 0 | Tipo de evento agrupado. |
+| `fallecidos` | decimal | 0 | Personas fallecidas. |
+| `heridos` | decimal | 0 | Personas heridas. |
+| `desaparecidos` | decimal | 0 | Personas desaparecidas. |
+| `personas` | decimal | 0 | Personas afectadas. |
+| `familias` | decimal | 0 | Familias afectadas. |
+| `viviendas_destruidas` | decimal | 0 | Viviendas destruidas. |
+| `viviendas_averiadas` | decimal | 0 | Viviendas averiadas. |
+| `vias` | decimal | 0 | Vías afectadas. |
+| `hectareas` | decimal | 0 | Hectáreas afectadas. |
+| `reporte` | texto | 0 | Reporte de origen. |
 
 ### `hidro.geojson` — Hidrología
 
@@ -717,7 +1325,7 @@ Catálogo Nacional de Estaciones del IDEAM filtrado a La Guajira: código, nombr
 | `zona_hidrografica` | texto | 0 | Zona hidrográfica. |
 | `subzona_hidrografica` | texto | 0 | Subzona hidrográfica. |
 | `entidad` | texto | 0 | Entidad propietaria de la estación. |
-| `fecha_suspension` | texto | 102 | Fecha de suspensión, si aplica. |
+| `fecha_suspension` | texto | 105 | Fecha de suspensión, si aplica. |
 
 ### `ideam_normales.parquet` — Normales climatológicas
 
@@ -757,7 +1365,7 @@ Valor típico de cada mes (periodo 1991-2020) por estación y parámetro: precip
 
 ### `ideam_precip_diaria.parquet` — Precipitación diaria por estación
 
-*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 310 filas
+*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 335 filas
 
 Lluvia diaria en mm por estación, calculada como la suma de las lecturas del día luego de quitar duplicados y valores imposibles. Incluye cuántas lecturas y horas con dato tuvo cada día.
 
@@ -797,12 +1405,12 @@ Radiación global media por estación: un valor para cada mes y el promedio anua
 | `oct` | decimal | 0 | Valor de octubre. |
 | `nov` | decimal | 0 | Valor de noviembre. |
 | `dic` | decimal | 0 | Valor de diciembre. |
-| `codigo` | texto | 1 | Código de la estación (10 dígitos). |
+| `codigo` | texto | 2 | Código de la estación (10 dígitos). |
 | `unidad` | texto | 0 | Unidad ya unificada (°C, %, m/s, °, hPa, m, mm, Wh/m²/día). |
 
 ### `ideam_ultimas_horas.parquet` — Lecturas de las últimas horas
 
-*Casi en tiempo real (real)* · origen **IDEAM** · Parquet · 2.849 filas
+*Casi en tiempo real (real)* · origen **IDEAM** · Parquet · 3.129 filas
 
 Flujo del IDEAM con las lecturas de las últimas ~12 horas de todas las variables. Es lo que el mapa muestra como valor de ahora; el backend lo consulta en vivo y guarda este respaldo por si no hay internet.
 
@@ -816,7 +1424,7 @@ Flujo del IDEAM con las lecturas de las últimas ~12 horas de todas las variable
 
 ### `ideam_variables_diaria.parquet` — Otras variables por día
 
-*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 2.039 filas
+*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 2.213 filas
 
 Un valor por estación, variable y día (media, mínimo y máximo). Clasifica cada lectura por su sensor (el conjunto de humedad trae también humedad del suelo), quita duplicados y valores fuera de rango, unifica unidades y promedia la dirección del viento como vector.
 
@@ -826,15 +1434,15 @@ Un valor por estación, variable y día (media, mínimo y máximo). Clasifica ca
 | `var` | texto | 0 | Variable ya clasificada por su sensor: temperatura, temp_max, temp_min, humedad, humedad_suelo, viento_vel, viento_dir, presion, nivel_rio, precipitacion... |
 | `dia` | fecha | 0 | Día de la medición. |
 | `media` | decimal | 0 | Promedio del día (para la dirección del viento, promedio circular en grados). |
-| `minimo` | decimal | 279 | Menor lectura del día. |
-| `maximo` | decimal | 279 | Mayor lectura del día. |
+| `minimo` | decimal | 304 | Menor lectura del día. |
+| `maximo` | decimal | 304 | Mayor lectura del día. |
 | `lecturas` | entero | 0 | Cantidad de lecturas distintas del día. |
 | `horas_con_dato` | entero | 0 | Horas del día (0 a 24) que tuvieron al menos una lectura; indica qué tan completo es el día. |
 | `unidad` | texto | 0 | Unidad ya unificada (°C, %, m/s, °, hPa, m, mm, Wh/m²/día). |
 
 ### `ideam_variables_horaria.parquet` — Otras variables por hora (limpias)
 
-*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 189.646 filas
+*Lecturas limpias (real)* · origen **IDEAM** · Parquet · 198.579 filas
 
 Las lecturas de temperatura, humedad, viento, presión y nivel ya clasificadas por sensor, sin duplicados y en unidades unificadas, una fila por estación, variable y hora. Oro calcula de aquí el promedio de las últimas 24 horas; por eso se guarda en Plata y no se vuelve a Bronce.
 
@@ -866,7 +1474,7 @@ Las cinco capas en una sola tabla con la columna `tipo`. Geometrías reparadas, 
 
 ### `igac_vias.geojson` — Vías del IGAC unificadas
 
-*Vías (real)* · origen **IGAC** · GeoJSON · 5.326 filas · geometría: Líneas
+*Vías (real)* · origen **IGAC** · GeoJSON · 5.322 filas · geometría: Líneas
 
 Las siete capas en una tabla: clase de vía (pavimentada o no, ancho, accesibilidad), recortadas a los municipios del DANE y simplificadas a 20 m (197 mil a 59 mil vértices).
 
@@ -875,11 +1483,41 @@ Las siete capas en una tabla: clase de vía (pavimentada o no, ancho, accesibili
 | `id_via` | texto | 0 | Identificador: tipo de vía, número de objeto y parte (un recorte puede dejar varias). |
 | `tipo` | entero | 0 | 1 a 7: 1 pavimentada de 2 o más carriles, 2 sin pavimentar de 2 o más, 3 pavimentada angosta, 4 sin pavimentar angosta, 5 sin pavimentar solo en tiempo seco, 6 sin afirmar (trocha), 7 camino o sendero. |
 | `clase` | texto | 0 | Nombre de la clase según la combinación de atributos de cada tipo. |
-| `superficie` | texto | 1846 | Pavimentada, sin pavimentar, en construcción o sin afirmar. |
-| `carriles` | texto | 5003 | 2 o más carriles, o angosta. |
-| `accesibilidad` | texto | 1846 | Todo el año, o solo en tiempo seco (puede quedar intransitable con lluvia). |
-| `nombre` | texto | 5322 | Nombre de la vía; casi ninguna lo tiene (4 de 5.600). |
+| `superficie` | texto | 1849 | Pavimentada, sin pavimentar, en construcción o sin afirmar. |
+| `carriles` | texto | 4999 | 2 o más carriles, o angosta. |
+| `accesibilidad` | texto | 1849 | Todo el año, o solo en tiempo seco (puede quedar intransitable con lluvia). |
+| `nombre` | texto | 5318 | Nombre de la vía; casi ninguna lo tiene (4 de 5.600). |
 | `km` | decimal | 0 | Longitud recalculada en metros (EPSG:3116) tras recortar y simplificar. |
+
+### `indicadores_censo2018.parquet` — Indicadores sociales por municipio
+
+*Población y pobreza (real)* · origen **sintético** · Parquet · 16 filas
+
+Una fila por municipio y una del departamento (código 44) con nombres estables: población, % rural disperso, % indígena y afro, IPM, NBI y componentes, miseria, déficit habitacional, hogares sin acueducto y PDET. Reemplaza los atributos del censo 2005 que traía la capa de municipios anterior.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento. |
+| `poblacion_2018` | decimal | 0 | Personas censadas en 2018. |
+| `poblacion_rural_dispersa` | decimal | 0 | Personas en el área rural dispersa. |
+| `indigenas` | decimal | 0 | Personas que se reconocen indígenas. |
+| `pct_indigena` | decimal | 0 | % de la población que se reconoce indígena. |
+| `afro` | decimal | 0 | Personas negras, mulatas o afrodescendientes. |
+| `pct_afro` | decimal | 0 | % afrodescendiente. |
+| `ipm` | decimal | 0 | Índice de Pobreza Multidimensional: % de personas pobres. |
+| `nbi` | decimal | 0 | % de personas con necesidades básicas insatisfechas. |
+| `nbi_vivienda` | decimal | 0 | NBI: vivienda inadecuada (%). |
+| `nbi_servicios` | decimal | 0 | NBI: servicios inadecuados (%). |
+| `nbi_hacinamiento` | decimal | 0 | NBI: hacinamiento crítico (%). |
+| `nbi_inasistencia` | decimal | 0 | NBI: niños que no asisten a la escuela (%). |
+| `nbi_dependencia` | decimal | 0 | NBI: alta dependencia económica (%). |
+| `miseria` | decimal | 0 | % de personas con dos o más NBI. |
+| `deficit_habitacional` | decimal | 0 | % de hogares en déficit habitacional. |
+| `hogares_sin_acueducto` | decimal | 0 | % de hogares sin acueducto (componente del déficit habitacional). |
+| `pct_rural_disperso` | decimal | 0 | % de la población en el área rural dispersa. |
+| `nombre` | texto | 0 | Nombre. |
+| `pdet` | booleano | 0 | Municipio PDET. |
+| `subregion_pdet` | texto | 13 | Subregión PDET. |
 
 ### `invias_red_vial.geojson` — Red vial nacional (INVIAS)
 
@@ -904,11 +1542,26 @@ Tramos de la Red Vial Nacional que cruzan La Guajira, tal como los publica INVIA
 | `longitud_km` | decimal | 0 | Longitud del tramo en km, recalculada en metros tras recortar y simplificar. |
 | `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
 
+### `irca_anual.parquet` — IRCA por municipio y año
+
+*Servicios (real)* · origen **sintético** · Parquet · 257 filas
+
+Índice de riesgo de la calidad del agua 2007-2024, una fila por municipio y año. Solo mide donde hay sistema de suministro: la zona rural wayuu sin acueducto no aparece.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento. |
+| `anio` | entero | 0 | Año. |
+| `irca` | decimal | 0 | Índice de Riesgo de la Calidad del Agua (0-100). |
+| `nivel` | texto | 0 | Nivel de riesgo del IRCA. |
+| `irca_urbano` | decimal | 43 | IRCA urbano. |
+| `irca_rural` | decimal | 208 | IRCA rural. |
+
 ### `municipios.geojson` — Municipios
 
 *Límites (real)* · origen **DANE** · GeoJSON · 15 filas · geometría: Polígonos
 
-Un polígono por municipio con nombre propio, código DANE y área recalculada en metros. La geometría se simplifica sin abrir huecos entre vecinos (125 mil a 14 mil vértices). En Oro suma, por municipio, las estaciones del IDEAM y los kilómetros de vías nacionales.
+Un polígono por municipio con nombre propio, código DANE y área recalculada en metros. La geometría se simplifica sin abrir huecos entre vecinos (104 mil a 15 mil vértices). En Oro suma, por municipio, las estaciones del IDEAM y los kilómetros de vías nacionales.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -934,6 +1587,22 @@ Polígonos de los paquetes de trabajo. Son la unidad sobre la que se calcula el 
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `nombre` | texto | 0 | Nombre descriptivo. |
 | `ruta_critica` | booleano | 0 | Si el paquete está en la ruta crítica del cronograma. |
+
+### `proveniencia_chirps.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*31 columnas sin descripción en el catálogo.*
+
+### `proveniencia_emergencias.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*26 columnas sin descripción en el catálogo.*
 
 ### `proveniencia_hidrografia.json` — Proveniencia de cada fuente
 
@@ -975,6 +1644,38 @@ Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce 
 
 *63 columnas sin descripción en el catálogo.*
 
+### `proveniencia_resguardos.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*22 columnas sin descripción en el catálogo.*
+
+### `proveniencia_runap.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*18 columnas sin descripción en el catálogo.*
+
+### `proveniencia_seguridad.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*72 columnas sin descripción en el catálogo.*
+
+### `proveniencia_social.json` — Proveniencia de cada fuente
+
+*Trazabilidad* · origen **metadatos** · JSON · 1 filas
+
+Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce (fuente, licencia, fecha, caja) y el control de calidad que pasó. Oro lee esto para decir de dónde viene cada producto, sin tener que volver a Bronce.
+
+*45 columnas sin descripción en el catálogo.*
+
 ### `proveniencia_vias_igac.json` — Proveniencia de cada fuente
 
 *Trazabilidad* · origen **metadatos** · JSON · 1 filas
@@ -989,7 +1690,7 @@ Un archivo por fuente con lo que Plata sabe de su origen: la descarga de Bronce 
 
 Límites de los proyectos que agrupan los paquetes de trabajo.
 
-**Cómo se genera:** 3 proyectos ficticios (Norte, Centro, Sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
+**Cómo se genera:** 3 proyectos ficticios (Proyecto 1 al norte, 2 al centro y 3 al sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -998,7 +1699,7 @@ Límites de los proyectos que agrupan los paquetes de trabajo.
 
 ### `red_vial.geojson` — Red vial unificada
 
-*Capa del mapa (real)* · origen **INVIAS + IGAC** · GeoJSON · 5.278 filas · geometría: Líneas
+*Capa del mapa (real)* · origen **INVIAS + IGAC** · GeoJSON · 5.273 filas · geometría: Líneas
 
 La red nacional de INVIAS (8 tramos, ~300 km, con ruta, administrador y categoría) y la red complementaria del IGAC (~18.300 km), en una sola tabla, sin duplicados: lo que el IGAC repite de la red nacional (~320 km, a menos de 50 m) se quitó. La columna `fuente` (INVIAS o IGAC) y `estilo` distinguen cada red. A los tramos de INVIAS, que no traen superficie, se les pone la del IGAC sobre el mismo trazado. Alimenta la capa de vías del mapa.
 
@@ -1009,31 +1710,89 @@ La red nacional de INVIAS (8 tramos, ~300 km, con ruta, administrador y categor�
 | `grupo` | texto | 0 | Red nacional o Red complementaria. |
 | `estilo` | texto | 0 | Clave de dibujo: n0 a n2 (categorías de INVIAS) e i1 a i7 (clases del IGAC). |
 | `clase` | texto | 0 | Clase de vía: categoría de INVIAS o clase interpretada del IGAC. |
-| `ruta` | texto | 5270 | Número de la ruta nacional (solo INVIAS). |
-| `nombre_ruta` | texto | 5270 | Nombre de la ruta (solo INVIAS). |
-| `sector` | texto | 5270 | Sector del tramo (solo INVIAS). |
-| `administrador` | texto | 5270 | Quién administra el tramo (solo INVIAS). |
-| `calzada` | texto | 5270 | Sencilla o doble (solo INVIAS). |
+| `ruta` | texto | 5265 | Número de la ruta nacional (solo INVIAS). |
+| `nombre_ruta` | texto | 5265 | Nombre de la ruta (solo INVIAS). |
+| `sector` | texto | 5265 | Sector del tramo (solo INVIAS). |
+| `administrador` | texto | 5265 | Quién administra el tramo (solo INVIAS). |
+| `calzada` | texto | 5265 | Sencilla o doble (solo INVIAS). |
 | `superficie` | texto | 1840 | Pavimentada, sin pavimentar... En INVIAS, tomada del IGAC sobre el mismo trazado. |
 | `superficie_fuente` | texto | 1840 | De dónde sale la superficie: INVIAS, IGAC o IGAC (cruce espacial). |
-| `carriles` | texto | 4985 | 2 o más carriles, o angosta (solo IGAC). |
+| `carriles` | texto | 4979 | 2 o más carriles, o angosta (solo IGAC). |
 | `accesibilidad` | texto | 1847 | Todo el año o solo en tiempo seco (solo IGAC). |
-| `nombre` | texto | 5276 | Nombre de la vía, si lo tiene. |
+| `nombre` | texto | 5271 | Nombre de la vía, si lo tiene. |
 | `km` | decimal | 0 | Longitud del tramo en km, recalculada en metros. |
 
 ### `reporte_calidad_bronce_a_plata.csv` — Reporte de calidad
 
 *Control de calidad* · origen **sintético** · CSV · 1 filas
 
-Resumen del paso Bronce a Plata: filas de entrada, duplicados removidos, registros sin coordenadas y filas resultantes.
+Resumen del paso Bronce a Plata: filas de entrada, duplicados removidos, registros sin coordenadas, filas resultantes y las cifras de la IA sobre el registro final.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
 | `filas_bronce` | entero | 0 | Filas que llegaron en Bronce. |
+| `ia_exactitud_validacion_cruzada` | decimal | 0 | Acierto de la IA al clasificar riesgos que no vio (validación cruzada en 5 partes). |
+| `ia_riesgos_sin_categoria` | entero | 0 | Riesgos del registro final que llegaron sin categoría. |
+| `ia_categorias_asignadas` | entero | 0 | Categorías faltantes que la IA asignó con confianza suficiente. |
+| `ia_categorias_pendientes` | entero | 0 | Categorías faltantes que la IA no asignó por confianza baja. |
+| `ia_categoria_por_revisar` | entero | 0 | Riesgos cuyo texto contradice la categoría registrada (la IA los marca, no los cambia). |
+| `ia_exactitud_sin_categoria` | decimal | 0 | Acierto de las categorías asignadas por la IA, contra la clave sintética. |
+| `ia_lugar_mencionado` | entero | 0 | Riesgos cuyo texto nombra un municipio. |
+| `ia_ubicacion_por_revisar` | entero | 0 | Riesgos que nombran un municipio lejano a su paquete. |
 | `duplicados_removidos` | entero | 0 | Registros repetidos eliminados. |
 | `sin_coordenadas_originales` | entero | 0 | Registros sin lat/lon; se ubican por el centroide de su paquete. |
 | `riesgos_sin_paquete_valido` | entero | 0 | Registros que no se pudieron ubicar y se descartan. |
 | `filas_plata` | entero | 0 | Filas resultantes en Plata. |
+| `ia_categorias_mal_sembradas` | entero | 0 | Categorías equivocadas sembradas a propósito en el registro sintético. |
+| `ia_categorias_mal_detectadas` | entero | 0 | De las categorías equivocadas sembradas, cuántas detecta la IA. |
+| `ia_categorias_falsas_alarmas` | entero | 0 | Categorías correctas que la IA marcó por error. |
+| `ia_ubicaciones_sembradas` | entero | 0 | Riesgos sembrados con un municipio lejano en el texto. |
+| `ia_ubicaciones_detectadas` | entero | 0 | De las ubicaciones lejanas sembradas, cuántas detecta la IA. |
+| `ia_ubicaciones_falsas_alarmas` | entero | 0 | Ubicaciones correctas que la IA marcó por error. |
+
+*9 columnas sin descripción en el catálogo.*
+
+### `reporte_calidad_chirps.csv` — Reporte de calidad de CHIRPS
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Meses recibidos y procesados, celdas de la ventana y dentro de los municipios, valores fuera de rango y celdas sin dato.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `meses_bronce` | entero | 0 | Meses en Bronce. |
+| `celdas_ventana` | entero | 0 | Celdas de la ventana descargada. |
+| `celdas_en_municipios` | entero | 0 | Celdas que tocan algún municipio. |
+| `meses_con_otra_rejilla` | entero | 0 | Meses con una rejilla distinta (se descartan). |
+| `valores_fuera_de_rango` | entero | 0 | Celdas de tierra con valores negativos o mayores a 2.500 mm (se descartan). |
+| `celdas_municipio_sin_dato` | entero | 0 | Celdas de municipio sin dato, sumadas en todos los meses. |
+| `meses_plata` | entero | 0 | Meses procesados en Plata. |
+| `zonas` | entero | 0 | Municipios más el departamento. |
+| `filas_plata` | entero | 0 | Filas de la tabla de Plata. |
+| `filas_sin_lluvia` | entero | 0 | Filas sin valor de lluvia. |
+| `mm_maximo_mensual` | decimal | 0 | La lluvia mensual más alta encontrada. |
+| `desde` | texto | 0 | Primer mes. |
+| `hasta` | texto | 0 | Último mes (CHIRPS publica ~3 semanas después de terminar el mes). |
+
+### `reporte_calidad_emergencias.csv` — Reporte de calidad de emergencias
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Filas repetidas, códigos corregidos por el nombre, emergencias departamentales y tipos sin clasificar.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `filas_bronce` | entero | 0 | Filas en Bronce. |
+| `duplicados_removidos` | entero | 0 | Filas repetidas quitadas. |
+| `fecha_invalida` | entero | 0 | Fechas inválidas o futuras. |
+| `emergencias_departamentales` | entero | 0 | Emergencias de todo el departamento (código 44). |
+| `codigo_corregido_por_nombre` | entero | 0 | Códigos de municipio corregidos por el nombre. |
+| `municipio_desconocido` | entero | 0 | Filas de un municipio que no es de La Guajira. |
+| `emergencias_plata` | entero | 0 | Emergencias en Plata. |
+| `anios` | texto | 0 | Años con emergencias. |
+| `personas_afectadas` | entero | 0 | Personas afectadas (suma). |
+| `fallecidos` | entero | 0 | Personas fallecidas. |
+| `tipo_otro` | entero | 0 | Emergencias sin tipo conocido. |
 
 ### `reporte_calidad_hidrografia.csv` — Reporte de calidad de hidrografía
 
@@ -1162,6 +1921,91 @@ Kilómetros de cada fuente, cuántos repetía el IGAC, cuántos tramos de INVIAS
 
 *1 columnas sin descripción en el catálogo.*
 
+### `reporte_calidad_resguardos.csv` — Reporte de calidad de los resguardos
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Resguardos que llegaron, reparados, fuera del departamento, sin código y con población.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `resguardos_bronce` | entero | 0 | Resguardos que llegaron. |
+| `vertices_bronce` | entero | 0 | Vértices en Bronce. |
+| `sin_geometria` | entero | 0 | Objetos sin geometría. |
+| `geometrias_invalidas_reparadas` | entero | 0 | Geometrías inválidas reparadas. |
+| `fuera_de_la_guajira` | entero | 0 | Objetos que no tocan La Guajira (salen). |
+| `sin_codigo_resguardo` | entero | 0 | Resguardos sin código DANE. |
+| `resguardos_con_poblacion` | entero | 0 | Resguardos con población del Ministerio del Interior. |
+| `poblacion_sin_poligono` | entero | 0 | Población de resguardos que no tienen polígono (debe ser 0). |
+| `resguardos_plata` | entero | 0 | Resguardos en Plata. |
+| `vertices_plata` | entero | 0 | Vértices en Plata. |
+| `km2_resguardos` | decimal | 0 | km² en resguardos. |
+| `km2_departamento` | decimal | 0 | km² del departamento. |
+| `pct_departamento_en_resguardo` | decimal | 0 | % del departamento en resguardos. |
+
+### `reporte_calidad_runap.csv` — Reporte de calidad del RUNAP
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Áreas que llegaron, reparadas, fuera de La Guajira y por ámbito.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `areas_bronce` | entero | 0 | Áreas que llegaron. |
+| `vertices_bronce` | entero | 0 | Vértices en Bronce. |
+| `sin_geometria` | entero | 0 | Objetos sin geometría. |
+| `geometrias_invalidas_reparadas` | entero | 0 | Geometrías inválidas reparadas. |
+| `fuera_de_la_guajira` | entero | 0 | Objetos que no tocan La Guajira (salen). |
+| `areas_plata` | entero | 0 | Áreas en Plata. |
+| `vertices_plata` | entero | 0 | Vértices en Plata. |
+| `nacionales` | entero | 0 | Áreas nacionales. |
+| `regionales` | entero | 0 | Áreas regionales. |
+| `privadas` | entero | 0 | Reservas de la sociedad civil. |
+| `km2_en_guajira` | decimal | 0 | km² protegidos en tierra guajira. |
+
+### `reporte_calidad_seguridad.csv` — Reporte de calidad de seguridad
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Registros que llegaron, fechas inválidas, municipios ajenos y rango de meses.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `filas_bronce` | entero | 0 | Filas en Bronce. |
+| `fecha_invalida` | entero | 0 | Fechas inválidas o futuras. |
+| `municipio_desconocido` | entero | 0 | Filas de un municipio que no es de La Guajira. |
+| `cantidad_invalida` | entero | 0 | Cantidades inválidas. |
+| `registros_plata` | entero | 0 | Registros que pasan a Plata. |
+| `filas_plata` | entero | 0 | Filas de Plata. |
+| `delitos` | entero | 0 | Delitos con datos. |
+| `victimas_plata` | entero | 0 | Víctimas en Plata. |
+| `primer_mes` | texto | 0 | Primer mes. |
+| `ultimo_mes` | texto | 0 | Último mes publicado. |
+
+### `reporte_calidad_social.csv` — Reporte de calidad de los indicadores sociales
+
+*Control de calidad (real)* · origen **sintético** · CSV · 1 filas
+
+Tablas que llegaron, códigos desconocidos, porcentajes fuera de rango y control cruzado de la población indígena.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `tablas_censo` | entero | 0 | Indicadores del censo que llegaron. |
+| `indicadores_sin_tabla` | entero | 0 | Indicadores que no llegaron. |
+| `codigos_desconocidos` | entero | 0 | Filas con un código que no es de los 15 municipios. |
+| `porcentajes_fuera_de_rango` | entero | 0 | Porcentajes fuera de 0-100 (descartados). |
+| `diferencia_maxima_indigenas_vs_pct` | entero | 0 | Mayor diferencia entre indígenas y % indígena × población (control cruzado). |
+| `municipios_pdet` | entero | 0 | Municipios PDET. |
+| `municipios_plata` | entero | 0 | Municipios en Plata. |
+| `municipios_sin_ipm` | entero | 0 | Municipios sin IPM. |
+| `poblacion_2018_departamento` | entero | 0 | Población del departamento (suma). |
+| `irca_bronce` | entero | 0 | Filas de IRCA en Bronce. |
+| `irca_municipio_desconocido` | entero | 0 | Filas de IRCA sin municipio reconocible. |
+| `irca_fuera_de_rango` | entero | 0 | IRCA fuera de 0-100. |
+| `irca_plata` | entero | 0 | Filas de IRCA en Plata. |
+| `irca_desde` | entero | 0 | Primer año de IRCA. |
+| `irca_hasta` | entero | 0 | Último año de IRCA. |
+
 ### `reporte_calidad_vias_igac.csv` — Reporte de calidad de vías del IGAC
 
 *Control de calidad (real)* · origen **IGAC** · CSV · 1 filas
@@ -1185,13 +2029,31 @@ Objetos y vértices antes y después, kilómetros por clase y atributos sin valo
 
 *3 columnas sin descripción en el catálogo.*
 
+### `resguardos.geojson` — Resguardos indígenas
+
+*Capa del mapa (real)* · origen **sintético** · GeoJSON · 38 filas · geometría: Polígonos
+
+Los resguardos que tocan La Guajira, recortados al departamento, con pueblo normalizado, área, población 2020 (parte guajira), municipios que tocan y último acto administrativo. Cubren cerca del 63 % del departamento.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_resguardo` | texto | 0 | Identificador de la ANT. |
+| `codigo_resguardo` | texto | 7 | Código DANE del resguardo. |
+| `nombre` | texto | 0 | Nombre. |
+| `pueblo` | texto | 0 | Pueblo indígena. |
+| `area_km2` | decimal | 0 | Área en km² (en La Guajira para los resguardos; total para las áreas protegidas). |
+| `poblacion_2020` | decimal | 14 | Población proyectada a 2020 (Ministerio del Interior), parte guajira. |
+| `municipios` | texto | 0 | Códigos de los municipios que toca. |
+| `ultimo_acto` | texto | 0 | Último acto administrativo. |
+| `anio_ultimo_acto` | entero | 0 | Año del último acto. |
+
 ### `riesgos.geojson` — Registro de riesgos
 
 *Registro* · origen **sintético** · GeoJSON · 200 filas · geometría: Puntos
 
-Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, con probabilidad, impacto, estado de materialización y acción de tratamiento.
+Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, calificado con la matriz RAM de Ecopetrol (consecuencia 0-5 en Personas, Económica, Ambiental, Clientes e Imagen; probabilidad A-E sin y con controles), estado de materialización y acción de tratamiento. En Plata cada riesgo queda ubicado en la matriz (celda y nivel N, L, M, H o VH, inherente y residual).
 
-**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. Tres paquetes 'calientes' reciben más riesgos y con probabilidad e impacto altos, para que el mapa muestre patrones. ~18% son oportunidades.
+**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. La consecuencia por dimensión sigue el perfil de su categoría (un riesgo social pesa en Imagen; uno de seguridad, en Personas). Tres paquetes 'calientes' reciben más riesgos, con consecuencias y probabilidades más altas, para que el mapa muestre patrones. Los controles bajan la probabilidad 0 a 2 letras. ~18% son oportunidades.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -1201,20 +2063,54 @@ Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportuni
 | `causa` | texto | 0 | Causa registrada. En Plata los vacíos quedan como 'sin_causa_registrada'. |
 | `categoria` | texto | 0 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
 | `tipo` | texto | 0 | amenaza u oportunidad (riesgo positivo). |
-| `probabilidad` | entero | 0 | Escala de 1 a 5. |
-| `impacto` | entero | 0 | Escala de 1 a 5. |
+| `cons_personas` | entero | 0 | Matriz RAM: consecuencia potencial para las personas, 0 a 5. |
+| `cons_economica` | entero | 0 | Matriz RAM: consecuencia económica, 0 a 5 (5 = más de USD 10 M). |
+| `cons_ambiental` | entero | 0 | Matriz RAM: consecuencia ambiental, 0 a 5 (5 = contaminación irreparable). |
+| `cons_clientes` | decimal | 8 | Matriz RAM: consecuencia para los clientes, 0 a 5. Vacía si el evaluador no la calificó. |
+| `cons_imagen` | entero | 0 | Matriz RAM: consecuencia en la imagen, 0 a 5 (5 = internacional). |
+| `probabilidad` | texto | 0 | Matriz RAM: probabilidad inherente (sin controles), A a E. En Bronce llega como 'C', 'c', 'C - Ha ocurrido...' o '3'. |
+| `probabilidad_residual` | texto | 0 | Matriz RAM: probabilidad con los controles actuales, A a E. |
+| `controles` | texto | 0 | Controles que reducen la probabilidad (de inherente a residual). |
 | `estado` | texto | 0 | latente, proximo_a_materializarse o materializado. |
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `id_paquete_trabajo` | texto | 0 | Paquete de trabajo al que pertenece (llave hacia paquetes). |
 | `fecha_identificacion` | fecha | 0 | Fecha en que se identificó el riesgo. |
-| `fecha_materializacion` | fecha | 161 | Fecha de materialización; vacía si no se ha materializado. |
+| `fecha_materializacion` | fecha | 151 | Fecha de materialización; vacía si no se ha materializado. |
 | `accion_tratamiento` | texto | 0 | Acción de tratamiento definida. |
 | `fecha_ejecucion_accion` | fecha | 16 | Fecha comprometida de la acción. Si ya pasó y el riesgo sigue activo, la acción está vencida. |
 | `lat` | decimal | 0 | Latitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
 | `lon` | decimal | 0 | Longitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
 | `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+| `categoria_registrada` | texto | 0 | Categoría tal como llegó en el registro (sin_clasificar si faltaba o era ilegible). |
+| `categoria_ia` | texto | 0 | Categoría que sugiere la IA leyendo la descripción y la causa. |
+| `confianza_ia` | decimal | 0 | Probabilidad que la IA le da a su categoría (0 a 1). |
+| `palabras_ia` | texto | 0 | Palabras del texto que más pesaron en la decisión de la IA (explicación). |
+| `categoria_origen` | texto | 0 | De dónde sale la categoría final: registro, ia (la asignó el clasificador de texto) o pendiente. |
+| `revisar_categoria` | booleano | 0 | Verdadero si el texto contradice la categoría registrada con alta confianza. |
+| `municipio_mencionado` | texto | 133 | Municipios que nombra el texto (diccionario geográfico del DANE). |
+| `revisar_ubicacion` | booleano | 0 | Verdadero si el texto nombra un municipio a más de 15 km del paquete del riesgo. |
+| `ram_inherente` | texto | 0 | Celda RAM sin controles: consecuencia de la peor dimensión + probabilidad (p. ej. 5D). |
+| `nivel_inherente` | texto | 0 | Nivel RAM sin controles: N, L, M, H o VH. |
+| `ram_residual` | texto | 0 | Celda RAM con controles (p. ej. 5B). |
+| `nivel_residual` | texto | 0 | Nivel RAM con controles: N, L, M, H o VH. Es el que usa el ICT. |
+| `dimension_dominante` | texto | 0 | Dimensión que manda en la calificación residual: PE, EC, MA, CL o IM. |
+| `puntaje_ram` | entero | 0 | Puntaje del nivel residual: N=1, L=2, M=3, H=4, VH=5. |
 | `geolocalizacion_inferida` | booleano | 0 | Verdadero si la ubicación se tomó del centroide del paquete porque el registro no traía coordenadas. |
-| `severidad` | entero | 0 | probabilidad × impacto (1 a 25). |
+| `severidad` | entero | 0 | Puntaje del nivel RAM residual (1 a 5); pondera el mapa de calor. |
+
+### `seguridad_municipio_mensual.parquet` — Delitos por municipio y mes
+
+*Seguridad (real)* · origen **sintético** · Parquet · 3.924 filas
+
+Casos y víctimas por municipio, mes y delito desde 2003. Los meses sin fila son cero.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento. |
+| `mes` | fecha | 0 | Primer día del mes. |
+| `delito` | texto | 0 | Delito. |
+| `casos` | entero | 0 | Registros (casos). |
+| `victimas` | entero | 0 | Víctimas (o cantidad que reporta la fuente). |
 
 ### `vias.geojson` — Vías
 
@@ -1231,20 +2127,24 @@ Red vial por tipo (primaria, secundaria, terciaria de difícil acceso). Es la in
 
 ## Oro
 
-### `alertas.json` — Alertas
+### `alertas.json` — Alertas tempranas
 
-*Resultado del modelo* · origen **sintético** · JSON · 4 filas
+*Resultado del modelo* · origen **sintético** · JSON · 6 filas
 
-Paquetes que cumplen alguna regla de escalamiento o de tendencia, con sus motivos.
+Una alerta por paquete en escalamiento o con el ICT al alza: prioridad, causas, puntos de crisis, qué exige la RAM, quién decide y qué hacer con las comunidades y áreas protegidas que alcanza.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
 | `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
 | `nombre_paquete` | texto | 0 | Nombre del paquete. |
+| `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `ict` | decimal | 0 | ICT del paquete en alerta. |
 | `nivel` | texto | 0 | bajo, medio, alto o crítico según los umbrales. |
 | `motivos` | lista | 0 | Lista de reglas que dispararon la alerta. |
+| `puntos_crisis` | entero | 0 | Puntos de crisis del paquete en el mapa. |
 | `generada_en` | texto | 0 | Fecha del corte que generó la alerta. |
+
+*5 columnas sin descripción en el catálogo.*
 
 ### `areas.geojson` — Áreas protegidas
 
@@ -1261,9 +2161,26 @@ Paquetes que cumplen alguna regla de escalamiento o de tendencia, con sus motivo
 | `categoria` | texto | 0 | Tipo de área protegida (ficticia). |
 | `sensibilidad` | decimal | 0 | Índice de sensibilidad ambiental, 0 a 1. |
 
+### `areas_protegidas_runap.geojson` — Áreas protegidas (RUNAP)
+
+*Capa del mapa (real)* · origen **sintético** · GeoJSON · 25 filas · geometría: Polígonos
+
+Áreas que tocan La Guajira o su franja costera: nacionales (Macuira, Los Flamencos, Bahía Portete, Sierra Nevada), regionales de Corpoguajira y reservas de la sociedad civil, con ámbito, área total y área en tierra guajira. Las del modelo ICT siguen siendo las sintéticas (`areas`).
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_area` | texto | 0 | Identificador del RUNAP. |
+| `nombre` | texto | 0 | Nombre. |
+| `categoria` | texto | 0 | Categoría del área protegida. |
+| `ambito` | texto | 0 | nacional, regional o privada. |
+| `organizacion` | texto | 0 | Entidad que la administra. |
+| `area_km2` | decimal | 0 | Área en km² (en La Guajira para los resguardos; total para las áreas protegidas). |
+| `area_en_guajira_km2` | decimal | 0 | Área en tierra de La Guajira (km²). |
+| `inscrita` | entero | 0 | Año de inscripción. |
+
 ### `clima_estaciones.geojson` — Estaciones con clima
 
-*Capa del mapa (real)* · origen **IDEAM** · GeoJSON · 14 filas · geometría: Puntos
+*Capa del mapa (real)* · origen **IDEAM** · GeoJSON · 16 filas · geometría: Puntos
 
 Un punto por estación que reportó: lluvia acumulada 7, 14 y 30 días, y para cada variable la última lectura, el resumen de 30 días y su serie diaria, más las lecturas de las últimas horas y las normales del mes. Alimenta la capa de clima del mapa.
 
@@ -1288,7 +2205,7 @@ Un punto por estación que reportó: lluvia acumulada 7, 14 y 30 días, y para c
 | `variables` | texto | 0 | Por variable: unidad, última lectura, promedio de 24 h, mín/media/máx de 30 días, cobertura y serie diaria. |
 | `ahora` | texto | 0 | Última lectura de cada variable en las últimas horas. |
 | `normales` | texto | 0 | Normal climatológica mensual de la estación (lluvia, temperatura, humedad). |
-| `radiacion` | texto | 11 | Radiación media mensual de la estación, si tiene sensor calibrado. |
+| `radiacion` | texto | 13 | Radiación media mensual de la estación, si tiene sensor calibrado. |
 
 ### `clima_radiacion.geojson` — Estaciones con radiación
 
@@ -1305,7 +2222,39 @@ Un punto por estación con radiación media mensual y anual. Alimenta la vista d
 | `anual` | decimal | 0 | Valor anual. |
 | `meses` | texto | 0 | Doce valores mensuales (enero a diciembre). |
 | `unidad` | texto | 0 | Unidad ya unificada (°C, %, m/s, °, hPa, m, mm, Wh/m²/día). |
-| `codigo` | texto | 1 | Código de la estación (10 dígitos). |
+| `codigo` | texto | 2 | Código de la estación (10 dígitos). |
+
+### `cobertura_estaciones.geojson` — Cobertura de las estaciones
+
+*Capa del mapa (calculado)* · origen **IDEAM** · GeoJSON · 160 filas · geometría: Polígonos
+
+Cada estación del IDEAM extendida a un área, para cada variable: el área más cercana (cada punto del departamento con su estación más cercana, polígonos de Voronoi recortados al departamento) y el radio de influencia (un círculo alrededor de la estación, recortado a tierra). Los radios son supuestos de trabajo editables en `parametros.yaml`, no cifras oficiales del IDEAM. Alimenta la capa "Cobertura de estaciones" del mapa.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código de la estación del IDEAM (10 dígitos). |
+| `nombre` | texto | 0 | Nombre de la estación. |
+| `variable` | texto | 0 | Variable del mapa: lluvia, temperatura, humedad, humedad_suelo, viento o presion. |
+| `modo` | texto | 0 | cercana (área más cercana, Voronoi) o radio (radio de influencia). |
+| `radio_km` | decimal | 80 | Radio de influencia en km (solo en modo radio); supuesto de trabajo de parametros.yaml. |
+| `area_km2` | decimal | 0 | Área del polígono, ya recortado al departamento. |
+
+### `cobertura_paquetes.csv` — Estación que representa a cada paquete
+
+*Cruce espacial (calculado)* · origen **IDEAM** · CSV · 84 filas
+
+Para cada paquete de trabajo y variable: la estación más cercana (desde el centro del paquete), a cuántos km, cuántas estaciones hay dentro del radio y si el paquete queda cubierto, parcial o sin cobertura. Se muestra en la ficha del paquete.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Paquete de trabajo. |
+| `variable` | texto | 0 | Variable del mapa: lluvia, temperatura, humedad, humedad_suelo, viento o presion. |
+| `codigo` | entero | 0 | Código de la estación del IDEAM (10 dígitos). |
+| `estacion` | texto | 0 | Nombre de la estación más cercana al centro del paquete. |
+| `distancia_km` | decimal | 0 | Distancia del centro del paquete a esa estación. |
+| `radio_km` | decimal | 0 | Radio de influencia en km (solo en modo radio); supuesto de trabajo de parametros.yaml. |
+| `estado` | texto | 0 | cubierto (dentro del radio), parcial (hasta el doble) o sin_cobertura. |
+| `estaciones_en_el_radio` | entero | 0 | Cuántas estaciones de esa variable hay dentro del radio del paquete. |
 
 ### `comunidades.geojson` — Comunidades
 
@@ -1322,6 +2271,47 @@ Asentamientos con población aproximada e índice de conflictividad social.
 | `poblacion_aprox` | entero | 0 | Población aproximada. |
 | `conflictividad` | decimal | 0 | Índice de conflictividad social, 0 a 1. |
 
+### `contexto_paquetes.csv` — Contexto real de cada paquete
+
+*Cruce espacial (calculado)* · origen **sintético** · CSV · 14 filas
+
+Cada paquete de trabajo (sintético) cruzado con las fuentes reales: municipio, pobreza, % dentro de resguardos y áreas protegidas y el más cercano, delitos de 12 meses, emergencias e IRCA. No cambia el ICT; se muestra en la ficha del paquete.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Paquete de trabajo. |
+| `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
+| `codigo_municipio` | entero | 0 | Municipio donde cae el centro del paquete. |
+| `municipio` | texto | 0 | Municipio. |
+| `ipm` | decimal | 0 | Índice de Pobreza Multidimensional: % de personas pobres. |
+| `nbi` | decimal | 0 | % de personas con necesidades básicas insatisfechas. |
+| `miseria` | decimal | 0 | % de personas con dos o más NBI. |
+| `pct_indigena` | decimal | 0 | % de la población que se reconoce indígena. |
+| `hogares_sin_acueducto` | decimal | 0 | % de hogares sin acueducto (componente del déficit habitacional). |
+| `pdet` | booleano | 0 | Municipio PDET. |
+| `irca_ultimo` | decimal | 0 | IRCA del último año. |
+| `irca_anio` | entero | 0 | Año del IRCA. |
+| `pct_en_resguardo` | decimal | 0 | % del paquete dentro de resguardos. |
+| `resguardo_cercano` | texto | 0 | Resguardo más cercano (o el que cruza). |
+| `resguardo_pueblo` | texto | 0 | Pueblo del resguardo más cercano. |
+| `distancia_resguardo_km` | decimal | 0 | Distancia al resguardo más cercano (0 si se cruzan). |
+| `pct_en_area_protegida` | decimal | 0 | % del paquete dentro de áreas protegidas. |
+| `area_protegida_cercano` | texto | 0 | Área protegida más cercana. |
+| `area_protegida_categoria` | texto | 0 | Categoría del área protegida más cercana. |
+| `distancia_area_protegida_km` | decimal | 0 | Distancia al área protegida más cercana (0 si se cruzan). |
+| `homicidio_12m_municipio` | entero | 0 | Víctimas de homicidio en el municipio, últimos 12 meses. |
+| `tasa_homicidio_12m` | decimal | 0 | Por 100.000 habitantes (censo 2018). |
+| `extorsion_12m_municipio` | entero | 0 | Denuncias de extorsión en el municipio, últimos 12 meses. |
+| `tasa_extorsion_12m` | decimal | 0 | Por 100.000 habitantes. |
+| `emergencias_municipio` | entero | 0 | Emergencias del municipio en los años publicados. |
+| `emergencias_tipo_principal` | texto | 0 | Tipo de emergencia más frecuente. |
+| `ram_prob_seguridad` | texto | 0 | Probabilidad RAM que sugieren los delitos contra personas e infraestructura en el municipio (sin homicidio). |
+| `ram_prob_desastres` | texto | 0 | Probabilidad RAM que sugieren las emergencias de la UNGRD en el municipio. |
+| `ram_cons_imagen` | entero | 0 | Consecuencia mínima sugerida en Imagen (resguardo, PDET). |
+| `ram_cons_ambiental` | entero | 0 | Consecuencia mínima sugerida en Ambiental (área protegida). |
+| `ram_por_revisar` | entero | 0 | Amenazas abiertas calificadas por debajo de lo que sugiere el territorio. |
+| `ram_por_revisar_ids` | texto | 2 | Cuáles son. |
+
 ### `cuerpos_agua.geojson` — Cuerpos de agua para el mapa
 
 *Capa del mapa (real)* · origen **IGAC** · GeoJSON · 218 filas · geometría: Polígonos
@@ -1335,16 +2325,140 @@ Ríos anchos, ciénagas, lagunas y embalses como polígonos con su área en km²
 | `nombre` | texto | 118 | Nombre del río, arroyo o cuerpo de agua, normalizado (vacío si no tiene). |
 | `area_km2` | decimal | 0 | Área del polígono en km², calculada en metros (EPSG:3116). |
 
+### `ejecucion_paquetes.csv` — Riesgo de ejecución por paquete
+
+*Resultado del modelo* · origen **sintético** · CSV · 14 filas
+
+Atraso esperado, P50/P80/P90 de atraso y sobrecosto, lo ya consumido, el IRE (probabilidad de pasar la holgura más la tolerancia), el riesgo principal, los días que evitan los controles y las covariables del territorio (z) con sus valores.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
+| `atraso_media` | decimal | 0 | Atraso esperado en días (consumido + por venir). |
+| `atraso_p50` | decimal | 0 | Mediana del atraso. |
+| `atraso_p80` | decimal | 0 | Atraso que no se supera en el 80 % de los escenarios. |
+| `atraso_p90` | decimal | 0 | Atraso que no se supera en el 90 % de los escenarios. |
+| `atraso_consumido` | decimal | 0 | Atraso de las amenazas ya materializadas. |
+| `costo_media` | decimal | 0 | Sobrecosto esperado (USD). |
+| `costo_p50` | decimal | 0 | Mediana del sobrecosto. |
+| `costo_p80` | decimal | 0 | Sobrecosto P80. |
+| `costo_p90` | decimal | 0 | Sobrecosto P90 (reserva de contingencia). |
+| `costo_consumido` | decimal | 0 | Sobrecosto de lo ya materializado. |
+| `holgura_dias` | decimal | 0 | Días que el paquete puede atrasarse sin atrasar el proyecto (0 en ruta crítica). |
+| `prob_atraso_al_proyecto` | decimal | 0 | Probabilidad de que el paquete pase su holgura y atrase el proyecto. |
+| `ire` | decimal | 0 | Índice de riesgo de ejecución: 100 × P(atraso > holgura + tolerancia). |
+| `nombre` | texto | 0 | Nombre descriptivo. |
+| `ruta_critica` | booleano | 0 | Si el paquete está en la ruta crítica del cronograma. |
+| `meses_restantes` | decimal | 0 | Meses que faltan: el horizonte T. |
+| `costo_dia_parada_usd` | entero | 0 | Costo de un día de paquete parado (equipos, personal, contratistas en espera). |
+| `presupuesto_usd` | entero | 0 | Presupuesto del paquete. |
+| `amenazas_abiertas` | entero | 0 | Amenazas latentes o próximas a materializarse. |
+| `atraso_evitado_por_controles` | decimal | 0 | Días de atraso esperado que evitan los controles (inherente − residual). |
+| `riesgo_principal` | texto | 0 | Amenaza que más atraso esperado aporta. |
+| `categoria_principal` | texto | 0 | Su categoría. |
+| `z_tasa_delitos_rel` | decimal | 0 | Covariable: delitos contra proyectos frente al departamento (ln). |
+| `z_emergencias_rel` | decimal | 0 | Covariable: emergencias frente al promedio (ln). |
+| `z_anomalia_lluvia` | decimal | 0 | Covariable: lluvia fuera de lo normal frente al departamento. |
+| `z_en_resguardo` | decimal | 0 | Covariable: fracción en resguardo frente al departamento. |
+| `z_ipm_rel` | decimal | 0 | Covariable: IPM relativo al departamento. |
+| `z_pdet` | decimal | 0 | Covariable: municipio PDET (centrada). |
+| `z_vias_tiempo_seco` | decimal | 0 | Covariable: vías solo en tiempo seco cerca (relativa). |
+| `tasa_delitos_100k` | decimal | 0 | Delitos contra proyectos en 12 meses por 100.000 hab. |
+| `emergencias_por_ano` | decimal | 0 | Emergencias UNGRD por año en el municipio. |
+| `anomalia_lluvia_pct` | decimal | 0 | Desviación media de la lluvia frente a lo normal (últimos meses). |
+| `vias_tiempo_seco_pct` | decimal | 0 | % de km cercanos solo en tiempo seco. |
+
+*5 columnas sin descripción en el catálogo.*
+
+### `ejecucion_proyectos.csv` — Riesgo de ejecución por proyecto
+
+*Resultado del modelo* · origen **sintético** · CSV · 3 filas
+
+Atraso del proyecto (lo que los paquetes no absorben con su holgura), sobrecosto, IRE y probabilidad de terminar sin atraso.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
+| `atraso_media` | decimal | 0 | Atraso esperado en días (consumido + por venir). |
+| `atraso_p50` | decimal | 0 | Mediana del atraso. |
+| `atraso_p80` | decimal | 0 | Atraso que no se supera en el 80 % de los escenarios. |
+| `atraso_p90` | decimal | 0 | Atraso que no se supera en el 90 % de los escenarios. |
+| `costo_media` | decimal | 0 | Sobrecosto esperado (USD). |
+| `costo_p50` | decimal | 0 | Mediana del sobrecosto. |
+| `costo_p80` | decimal | 0 | Sobrecosto P80. |
+| `costo_p90` | decimal | 0 | Sobrecosto P90 (reserva de contingencia). |
+| `ire` | decimal | 0 | Índice de riesgo de ejecución: 100 × P(atraso > holgura + tolerancia). |
+| `prob_sin_atraso` | decimal | 0 | Probabilidad de que el proyecto no se atrase. |
+
+### `ejecucion_resumen.json` — Resumen de la simulación
+
+*Resultado del modelo* · origen **sintético** · JSON · 1 filas
+
+Supuestos usados, fuentes de las covariables, resumen del portafolio e histogramas de atraso y sobrecosto por proyecto.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `portafolio.atraso_media` | decimal | 0 | Atraso esperado en días (consumido + por venir). |
+| `portafolio.atraso_p50` | decimal | 0 | Mediana del atraso. |
+| `portafolio.atraso_p80` | decimal | 0 | Atraso que no se supera en el 80 % de los escenarios. |
+| `portafolio.atraso_p90` | decimal | 0 | Atraso que no se supera en el 90 % de los escenarios. |
+| `portafolio.costo_media` | decimal | 0 | Sobrecosto esperado (USD). |
+| `portafolio.costo_p50` | decimal | 0 | Mediana del sobrecosto. |
+| `portafolio.costo_p80` | decimal | 0 | Sobrecosto P80. |
+| `portafolio.costo_p90` | decimal | 0 | Sobrecosto P90 (reserva de contingencia). |
+
+*65 columnas sin descripción en el catálogo.*
+
+### `ejecucion_riesgos.csv` — Riesgo de ejecución por amenaza
+
+*Resultado del modelo* · origen **sintético** · CSV · 168 filas
+
+Cada amenaza con su frecuencia (letra RAM → eventos por año), el multiplicador del territorio, la probabilidad en lo que falta, los días y el costo por evento, el atraso y costo esperados y su aporte al paquete.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_riesgo` | texto | 0 | Identificador del riesgo (RSK-0001). En Bronce los duplicados llevan el sufijo -DUP. |
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
+| `categoria` | texto | 0 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
+| `estado` | texto | 0 | latente, proximo_a_materializarse o materializado. |
+| `nivel_residual` | texto | 0 | Nivel RAM con controles: N, L, M, H o VH. Es el que usa el ICT. |
+| `ram_residual` | texto | 0 | Celda RAM con controles (p. ej. 5B). |
+| `letra` | texto | 0 | Letra RAM usada (residual o, en el escenario sin controles, la inherente). |
+| `lambda0` | decimal | 0 | Eventos por año de esa letra en un paquete. |
+| `multiplicador_territorial` | decimal | 0 | Cuánto multiplica el territorio la frecuencia (1 = promedio de La Guajira). |
+| `lambda` | decimal | 0 | Frecuencia final (eventos por año). |
+| `horizonte_anios` | decimal | 0 | Años que le faltan al paquete. |
+| `probabilidad` | decimal | 0 | Probabilidad de que ocurra en lo que falta (1 si ya ocurrió). |
+| `dias_por_evento` | decimal | 0 | Días de atraso más probables por evento (la peor dimensión). |
+| `costo_directo_medio` | decimal | 0 | Costo directo medio por evento (banda USD económica). |
+| `costo_dia` | decimal | 0 | Costo diario de parada del paquete. |
+| `atraso_esperado` | decimal | 0 | λ · T · días medios. |
+| `costo_esperado` | decimal | 0 | λ · T · costo medio por evento. |
+| `atraso_evitado_por_controles` | decimal | 0 | Días de atraso esperado que evitan los controles (inherente − residual). |
+| `consumido_dias` | decimal | 0 | Días ya consumidos (materializado). |
+| `consumido_usd` | decimal | 0 | USD ya consumidos. |
+| `grupo_choque` | texto | 78 | Grupo con el que comparte el choque común. |
+| `tipo_choque` | texto | 78 | clima o social. |
+| `contribucion_pct` | decimal | 0 | Parte del atraso esperado de su paquete. |
+
 ### `grid_calor.geojson` — Superficie de calor
 
-*Resultado del modelo* · origen **sintético** · GeoJSON · 620 filas · geometría: Puntos
+*Resultado del modelo* · origen **sintético** · GeoJSON · 686 filas · geometría: Puntos
 
-Grilla de puntos con la densidad kernel de los riesgos ponderada por severidad. Alimenta el mapa de calor.
+Grilla de ~2 km con la densidad kernel de las amenazas (ponderada por nivel RAM y estado) y, aparte, de las oportunidades; y los puntos calientes significativos (Getis-Ord Gi*, 95 %). Alimenta el mapa de calor.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
 | `celda_id` | texto | 0 | Identificador de la celda de la grilla. |
-| `intensidad` | decimal | 0 | Densidad kernel normalizada 0 a 1 (ponderada por severidad). |
+| `intensidad` | decimal | 0 | Densidad kernel de las amenazas, 0 a 1 (ponderada por nivel RAM y estado). |
+| `intensidad_oportunidades` | decimal | 0 | Densidad kernel de las oportunidades abiertas, 0 a 1. |
+| `severidad_celda` | decimal | 0 | Severidad de las amenazas que caen en la celda, sin suavizar (entrada del Gi*). |
+| `gi_z` | decimal | 0 | Estadístico z de Getis-Ord Gi* de la celda (8 vecinas). |
+| `punto_caliente` | booleano | 0 | Verdadero si la celda es un conglomerado significativo al 95 % (z >= 1,96). |
+| `ict` | decimal | 0 | ICT del paquete en alerta. |
+| `nivel` | texto | 0 | bajo, medio, alto o crítico según los umbrales. |
 
 ### `hidro.geojson` — Hidrología
 
@@ -1359,6 +2473,54 @@ Cuerpos de agua (arroyos) como líneas. Es la inventada; la hidrografía real de
 | `id_cuerpo_agua` | texto | 0 | Identificador del cuerpo de agua. |
 | `nombre` | texto | 0 | Nombre descriptivo. |
 
+### `indicadores_municipio.json` — Indicadores por municipio para el mapa
+
+*Capa del mapa (real)* · origen **sintético** · JSON · 16 filas
+
+Una fila por municipio (y el departamento) con su censo 2018, IRCA, territorio en resguardos y áreas protegidas, delitos por mes desde 2016 con resumen de 12 meses y tasas, y emergencias. Incluye la lista de indicadores que el mapa puede pintar. Alimenta la capa "Indicadores sociales" y la ficha de cada municipio.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento. |
+| `nombre` | texto | 0 | Nombre. |
+| `pdet` | booleano | 0 | Municipio PDET. |
+| `subregion_pdet` | texto | 13 | Subregión PDET. |
+| `censo.poblacion_2018` | decimal | 0 | Personas censadas en 2018. |
+| `censo.poblacion_rural_dispersa` | decimal | 0 | Personas en el área rural dispersa. |
+| `censo.pct_rural_disperso` | decimal | 0 | % de la población en el área rural dispersa. |
+| `censo.indigenas` | decimal | 0 | Personas que se reconocen indígenas. |
+| `censo.pct_indigena` | decimal | 0 | % de la población que se reconoce indígena. |
+| `censo.afro` | decimal | 0 | Personas negras, mulatas o afrodescendientes. |
+| `censo.pct_afro` | decimal | 0 | % afrodescendiente. |
+| `censo.ipm` | decimal | 0 | Índice de Pobreza Multidimensional: % de personas pobres. |
+| `censo.nbi` | decimal | 0 | % de personas con necesidades básicas insatisfechas. |
+| `censo.nbi_vivienda` | decimal | 0 | NBI: vivienda inadecuada (%). |
+| `censo.nbi_servicios` | decimal | 0 | NBI: servicios inadecuados (%). |
+| `censo.nbi_hacinamiento` | decimal | 0 | NBI: hacinamiento crítico (%). |
+| `censo.nbi_inasistencia` | decimal | 0 | NBI: niños que no asisten a la escuela (%). |
+| `censo.nbi_dependencia` | decimal | 0 | NBI: alta dependencia económica (%). |
+| `censo.miseria` | decimal | 0 | % de personas con dos o más NBI. |
+| `censo.deficit_habitacional` | decimal | 0 | % de hogares en déficit habitacional. |
+| `censo.hogares_sin_acueducto` | decimal | 0 | % de hogares sin acueducto (componente del déficit habitacional). |
+| `irca.anios` | lista | 0 | Años con IRCA. |
+| `irca.valores` | lista | 0 | IRCA de cada año. |
+| `irca.ultimo` | texto | 0 | Último IRCA publicado. |
+| `territorio.km2` | decimal | 0 | Área del municipio (km²). |
+| `territorio.resguardo_km2` | decimal | 0 | km² del municipio en resguardos (sin contar solapes). |
+| `territorio.pct_resguardo` | decimal | 0 | % del municipio en resguardos. |
+| `territorio.resguardos_n` | entero | 0 | Resguardos que tocan el municipio. |
+| `territorio.pueblos` | lista | 0 | Pueblos de esos resguardos. |
+| `territorio.area_protegida_km2` | decimal | 0 | km² del municipio en áreas protegidas. |
+| `territorio.pct_area_protegida` | decimal | 0 | % del municipio en áreas protegidas. |
+| `territorio.area_protegidas_n` | entero | 0 | Áreas protegidas que tocan el municipio. |
+| `seguridad.serie` | texto | 0 | Víctimas por mes de cada delito (desde 2016). |
+| `seguridad.resumen` | texto | 0 | Últimos 12 meses, 12 anteriores, tasa y total desde 2003. |
+| `emergencias.personas` | entero | 0 | Personas afectadas. |
+| `emergencias.fallecidos` | entero | 0 | Personas fallecidas. |
+| `emergencias.hectareas` | entero | 0 | Hectáreas afectadas. |
+
+*5 columnas sin descripción en el catálogo.*
+
 ### `limite_departamental.geojson` — Contorno de La Guajira
 
 *Límites (real)* · origen **DANE** · GeoJSON · 1 filas · geometría: Polígonos
@@ -1371,11 +2533,26 @@ La unión de los 15 municipios: un solo polígono de ~20.670 km². Sirve para re
 | `codigo` | texto | 0 | Código DANE (departamento + municipio, 5 dígitos). |
 | `area_km2` | decimal | 0 | Área calculada en metros (EPSG:3116), en km². |
 
+### `lluvia_chirps.json` — Lluvia por municipio para el mapa
+
+*Capa del mapa (real)* · origen **sintético** · JSON · 16 filas
+
+Una fila por municipio (y el departamento): la lluvia de cada mes de los últimos 10 años, la normal de cada mes del año (1991-2020) y cuánto se apartó cada mes de su normal, en %. Alimenta la capa "Lluvia por municipio" (CHIRPS) y la escala de meses del controlador de tiempo del mapa.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `nombre` | texto | 0 | Nombre del municipio o del departamento. |
+| `mm` | lista | 0 | Lluvia del mes en mm (en Oro, una lista: un valor por mes de `metadata.meses`). |
+| `normal` | lista | 0 | Lluvia normal de cada mes del año (enero a diciembre), promedio 1991-2020, en mm. |
+| `anomalia_pct` | lista | 0 | Cuánto se apartó cada mes de su normal, en %: 0 es lo normal, -50 la mitad, +100 el doble. |
+| `normal_anual` | decimal | 0 | Lluvia normal de un año completo (1991-2020), en mm. |
+| `codigo` | texto | 0 | Código DANE del municipio (5 dígitos); 44 es el departamento entero. |
+
 ### `municipios.geojson` — Municipios
 
 *Límites (real)* · origen **DANE** · GeoJSON · 15 filas · geometría: Polígonos
 
-Un polígono por municipio con nombre propio, código DANE y área recalculada en metros. La geometría se simplifica sin abrir huecos entre vecinos (125 mil a 14 mil vértices). En Oro suma, por municipio, las estaciones del IDEAM y los kilómetros de vías nacionales.
+Un polígono por municipio con nombre propio, código DANE y área recalculada en metros. La geometría se simplifica sin abrir huecos entre vecinos (104 mil a 15 mil vértices). En Oro suma, por municipio, las estaciones del IDEAM y los kilómetros de vías nacionales.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -1396,7 +2573,7 @@ Un polígono por municipio con nombre propio, código DANE y área recalculada e
 
 *Resultado del modelo* · origen **sintético** · GeoJSON · 14 filas · geometría: Polígonos
 
-Tabla principal de consumo: cada paquete con sus 5 criterios normalizados, la contribución de cada uno, el ICT, el nivel, las reglas de escalamiento, la tendencia y el resultado de Getis-Ord.
+Tabla principal de consumo: cada paquete con sus 5 criterios en escala fija de 0 a 1, la contribución de cada uno, el ICT, el nivel, los componentes del territorio REAL (resguardos, pobreza, áreas protegidas, vías, lluvia del IDEAM y de CHIRPS, emergencias, delitos) con su valor crudo, la confianza, la oportunidad, la tendencia, el escalamiento y el perfil RAM.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -1404,11 +2581,11 @@ Tabla principal de consumo: cada paquete con sus 5 criterios normalizados, la co
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `nombre` | texto | 0 | Nombre descriptivo. |
 | `ruta_critica` | booleano | 0 | Si el paquete está en la ruta crítica del cronograma. |
-| `severidad_riesgo` | decimal | 0 | Criterio normalizado 0 a 1: severidad agregada de las amenazas. |
-| `exposicion_proyecto` | decimal | 0 | Criterio normalizado 0 a 1: ruta crítica y cantidad de riesgos. |
-| `vulnerabilidad_territorial` | decimal | 0 | Criterio normalizado 0 a 1: cercanía a comunidades y áreas protegidas. |
-| `amenazas_externas` | decimal | 0 | Criterio normalizado 0 a 1: lluvia acumulada en la estación más cercana. |
-| `convergencia` | decimal | 0 | Criterio normalizado 0 a 1: categorías distintas de amenaza en el paquete. |
+| `severidad_riesgo` | decimal | 0 | Criterio 0 a 1 (escala fija): severidad de las amenazas que alcanzan el paquete; 1 = VH materializado. |
+| `exposicion_proyecto` | decimal | 0 | Criterio 0 a 1 (escala fija): ruta crítica y amenazas abiertas que alcanzan el paquete. |
+| `vulnerabilidad_territorial` | decimal | 0 | Criterio 0 a 1 (escala fija): territorio étnico, pobreza, áreas protegidas y acceso (datos reales). |
+| `amenazas_externas` | decimal | 0 | Criterio 0 a 1 (escala fija): lluvia reciente, lluvia anómala, emergencias y delitos (datos reales). |
+| `convergencia` | decimal | 0 | Criterio 0 a 1 (escala fija): amenazas distintas que coinciden (registro + territorio). |
 | `ICT` | decimal | 0 | Índice de Criticidad Territorial, 0 a 100. |
 | `severidad_riesgo_contrib` | decimal | 0 | Puntos que aporta el criterio al ICT (peso × valor normalizado × 100). |
 | `exposicion_proyecto_contrib` | decimal | 0 | Puntos que aporta el criterio al ICT (peso × valor normalizado × 100). |
@@ -1416,15 +2593,54 @@ Tabla principal de consumo: cada paquete con sus 5 criterios normalizados, la co
 | `amenazas_externas_contrib` | decimal | 0 | Puntos que aporta el criterio al ICT (peso × valor normalizado × 100). |
 | `convergencia_contrib` | decimal | 0 | Puntos que aporta el criterio al ICT (peso × valor normalizado × 100). |
 | `nivel` | texto | 0 | bajo, medio, alto o crítico según los umbrales. |
-| `indice_confianza` | decimal | 0 | Fracción de criterios con dato disponible (0 a 1). |
-| `indice_oportunidad` | decimal | 0 | Índice equivalente al ICT calculado sobre las oportunidades, 0 a 100. |
+| `indice_confianza` | decimal | 0 | Fracción de la información del modelo disponible y al día (0 a 1), ponderada por el peso de cada criterio. |
+| `indice_oportunidad` | decimal | 0 | Índice de 0 a 100 sobre las oportunidades abiertas (nivel RAM del beneficio; 100 = VH). |
+| `delitos_100k` | decimal | 0 | Delitos contra personas e infraestructura en 12 meses por 100.000 hab. (sin homicidio). |
+| `emergencias_por_ano` | decimal | 0 | Emergencias atendidas por la UNGRD por año en el municipio. |
+| `anomalia_lluvia` | decimal | 0 | Desviación media de la lluvia de los últimos meses frente a la normal 1991-2020 (fracción). |
+| `fraccion_resguardo` | decimal | 0 | Fracción del paquete dentro de resguardos indígenas (ANT). |
+| `distancia_resguardo_km` | decimal | 0 | Distancia al resguardo más cercano en km (0 si se tocan). |
+| `fraccion_area_protegida` | decimal | 0 | Fracción del paquete dentro de áreas protegidas (RUNAP). |
+| `distancia_area_protegida_km` | decimal | 0 | Distancia al área protegida más cercana en km (0 si se tocan). |
+| `vias_tiempo_seco` | decimal | 0 | Fracción de los km de vías a menos de 10 km solo transitables en tiempo seco. |
+| `lluvia_mm` | decimal | 4 | Lluvia acumulada en la ventana en la estación del IDEAM elegida (vacío = sin dato al día). |
+| `lluvia_estacion` | texto | 4 | Estación del IDEAM más cercana con datos suficientes en la ventana. |
+| `lluvia_distancia_km` | decimal | 0 | Distancia a esa estación en km. |
+| `lluvia_dias_con_dato` | entero | 0 | Días con dato de esa estación dentro de la ventana. |
+| `vul_etnico` | decimal | 0 | Componente 0 a 1: fracción del paquete en resguardo (colindante cuenta la mitad). ANT. |
+| `vul_pobreza` | decimal | 0 | Componente 0 a 1: IPM del municipio / 100. DANE, censo 2018. |
+| `vul_ambiental` | decimal | 0 | Componente 0 a 1: dentro de un área protegida = 1, decae con la distancia. RUNAP. |
+| `vul_acceso` | decimal | 0 | Componente 0 a 1: fracción de los km de vías cercanas solo transitables en tiempo seco. INVIAS + IGAC. |
+| `ext_lluvia_reciente` | decimal | 4 | Componente 0 a 1: lluvia acumulada en la ventana / tope. IDEAM; vacío si no hay estación al día. |
+| `ext_anomalia_lluvia` | decimal | 0 | Componente 0 a 1: desviación de la lluvia de los últimos meses frente a la normal. CHIRPS. |
+| `ext_emergencias` | decimal | 0 | Componente 0 a 1: emergencias por año en el municipio / tope. UNGRD. |
+| `ext_seguridad` | decimal | 0 | Componente 0 a 1: delitos contra proyectos por 100.000 hab. / tope. MinDefensa. |
+| `amenazas_que_alcanzan` | decimal | 0 | Amenazas abiertas que alcanzan el paquete (las de otros paquetes cuentan según su radio). |
+| `n_categorias_registro` | entero | 0 | Categorías de amenaza abiertas (nivel RAM M o más) que coinciden en el paquete. |
+| `n_factores_territorio` | entero | 0 | Factores del territorio por encima de su umbral (lluvia, emergencias, delitos). |
+| `amenazas_convergentes` | texto | 0 | Las amenazas que coinciden, del registro y del territorio. |
+| `disp_severidad_riesgo` | decimal | 0 | 1 si el paquete tiene riesgos en el registro (está evaluado). |
+| `disp_exposicion_proyecto` | decimal | 0 | 1 si el paquete tiene riesgos en el registro. |
+| `disp_convergencia` | decimal | 0 | 1 si el paquete tiene riesgos en el registro. |
+| `disp_vulnerabilidad_territorial` | decimal | 0 | Fracción del peso de la vulnerabilidad con dato real. |
+| `disp_amenazas_externas` | decimal | 0 | Fracción del peso de las amenazas externas con dato real y al día. |
+| `ram_N` | entero | 0 | Amenazas abiertas con nivel residual N. |
+| `ram_L` | entero | 0 | Amenazas abiertas con nivel residual L. |
+| `ram_M` | entero | 0 | Amenazas abiertas con nivel residual M. |
+| `ram_H` | entero | 0 | Amenazas abiertas con nivel residual H. |
+| `ram_VH` | entero | 0 | Amenazas abiertas con nivel residual VH (intolerable). |
+| `ram_peor_inherente` | texto | 0 | Peor nivel RAM sin controles entre las amenazas abiertas. |
+| `ram_peor_residual` | texto | 0 | Peor nivel RAM con controles. |
 | `escalamiento` | booleano | 0 | Verdadero si el paquete cumple alguna regla de escalamiento a crisis. |
+| `reglas_escalamiento` | texto | 0 | Identificadores de las reglas que se cumplieron (ict_critico, ram_vh, ram_h_ruta_critica, area_sensible, convergencia, acciones_vencidas). |
 | `causas_escalamiento` | texto | 0 | Reglas que se cumplieron, separadas por punto y coma. |
-| `ict_hace_ndias` | decimal | 0 | ICT recalculado con los datos de hace 7 días (mismos límites de normalización). |
+| `ict_hace_ndias` | decimal | 0 | ICT recalculado con los datos de hace 7 días (misma escala fija). |
 | `tendencia_delta` | decimal | 0 | Cambio del ICT en los últimos 7 días. |
 | `tendencia_alerta` | booleano | 0 | Verdadero si el ICT subió más que el umbral de tendencia. |
-| `z_score` | decimal | 0 | Estadístico z de Getis-Ord Gi*. |
-| `clasificacion` | texto | 0 | Punto caliente, punto frío o sin patrón significativo (95%). |
+| `en_punto_caliente` | booleano | 0 | Verdadero si una celda de punto caliente (Gi*) cae en el paquete o a menos de media celda. |
+| `puntos_crisis` | entero | 0 | Puntos de crisis del paquete en el mapa. |
+
+*2 columnas sin descripción en el catálogo.*
 
 ### `proyectos.geojson` — Proyectos
 
@@ -1432,16 +2648,44 @@ Tabla principal de consumo: cada paquete con sus 5 criterios normalizados, la co
 
 Límites de los proyectos que agrupan los paquetes de trabajo.
 
-**Cómo se genera:** 3 proyectos ficticios (Norte, Centro, Sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
+**Cómo se genera:** 3 proyectos ficticios (Proyecto 1 al norte, 2 al centro y 3 al sur) en tierra firme de La Guajira: cada uno queda en el punto más cercano a su zona donde cabe entero dentro del departamento.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `nombre` | texto | 0 | Nombre descriptivo. |
 
+### `puntos_crisis.geojson` — Puntos de crisis
+
+*Resultado del modelo* · origen **sintético** · GeoJSON · 19 filas · geometría: Puntos
+
+Dónde un evento podría escalar a crisis: la amenaza que dispara una regla de escalamiento (o el centro del paquete si la causa es del paquete entero), con su causa, su prioridad, la decisión que exige la RAM, quién decide y el radio de su zona de intervención.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_punto` | texto | 0 | Identificador del punto (PC- + riesgo o paquete). |
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `nombre_paquete` | texto | 0 | Nombre del paquete. |
+| `tipo` | texto | 0 | riesgo (la amenaza dispara la regla) o paquete (causa del paquete entero). |
+| `id_riesgo` | texto | 6 | Identificador del riesgo (RSK-0001). En Bronce los duplicados llevan el sufijo -DUP. |
+| `categoria` | texto | 6 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
+| `nivel_ram` | texto | 0 | Nivel RAM residual de la amenaza (o el peor del paquete). |
+| `ram` | texto | 6 | Código RAM residual (consecuencia + probabilidad). |
+| `estado` | texto | 6 | latente, proximo_a_materializarse o materializado. |
+| `reglas` | texto | 0 | Reglas de escalamiento que dispara. |
+| `causas` | texto | 0 | Por qué puede escalar, en texto. |
+| `n_causas` | entero | 0 | Cuántas reglas dispara. |
+| `prioridad` | texto | 0 | critica (VH o ICT crítico) o alta. |
+| `radio_m` | decimal | 0 | Radio de la zona de intervención: el de influencia de su categoría (m). |
+| `decision` | texto | 0 | Qué exige la RAM para ese nivel. |
+| `aprueba` | texto | 0 | Quién decide según la RAM. |
+| `accion_tratamiento` | texto | 6 | Acción de tratamiento registrada. |
+| `fecha_accion` | fecha | 9 | Fecha de ejecución de la acción. |
+| `accion_vencida` | booleano | 0 | Verdadero si la acción ya debió ejecutarse. |
+
 ### `red_vial.geojson` — Red vial unificada
 
-*Capa del mapa (real)* · origen **INVIAS + IGAC** · GeoJSON · 5.278 filas · geometría: Líneas
+*Capa del mapa (real)* · origen **INVIAS + IGAC** · GeoJSON · 5.273 filas · geometría: Líneas
 
 La red nacional de INVIAS (8 tramos, ~300 km, con ruta, administrador y categoría) y la red complementaria del IGAC (~18.300 km), en una sola tabla, sin duplicados: lo que el IGAC repite de la red nacional (~320 km, a menos de 50 m) se quitó. La columna `fuente` (INVIAS o IGAC) y `estilo` distinguen cada red. A los tramos de INVIAS, que no traen superficie, se les pone la del IGAC sobre el mismo trazado. Alimenta la capa de vías del mapa.
 
@@ -1452,16 +2696,16 @@ La red nacional de INVIAS (8 tramos, ~300 km, con ruta, administrador y categor�
 | `grupo` | texto | 0 | Red nacional o Red complementaria. |
 | `estilo` | texto | 0 | Clave de dibujo: n0 a n2 (categorías de INVIAS) e i1 a i7 (clases del IGAC). |
 | `clase` | texto | 0 | Clase de vía: categoría de INVIAS o clase interpretada del IGAC. |
-| `ruta` | texto | 5270 | Número de la ruta nacional (solo INVIAS). |
-| `nombre_ruta` | texto | 5270 | Nombre de la ruta (solo INVIAS). |
-| `sector` | texto | 5270 | Sector del tramo (solo INVIAS). |
-| `administrador` | texto | 5270 | Quién administra el tramo (solo INVIAS). |
-| `calzada` | texto | 5270 | Sencilla o doble (solo INVIAS). |
+| `ruta` | texto | 5265 | Número de la ruta nacional (solo INVIAS). |
+| `nombre_ruta` | texto | 5265 | Nombre de la ruta (solo INVIAS). |
+| `sector` | texto | 5265 | Sector del tramo (solo INVIAS). |
+| `administrador` | texto | 5265 | Quién administra el tramo (solo INVIAS). |
+| `calzada` | texto | 5265 | Sencilla o doble (solo INVIAS). |
 | `superficie` | texto | 1840 | Pavimentada, sin pavimentar... En INVIAS, tomada del IGAC sobre el mismo trazado. |
 | `superficie_fuente` | texto | 1840 | De dónde sale la superficie: INVIAS, IGAC o IGAC (cruce espacial). |
-| `carriles` | texto | 4985 | 2 o más carriles, o angosta (solo IGAC). |
+| `carriles` | texto | 4979 | 2 o más carriles, o angosta (solo IGAC). |
 | `accesibilidad` | texto | 1847 | Todo el año o solo en tiempo seco (solo IGAC). |
-| `nombre` | texto | 5276 | Nombre de la vía, si lo tiene. |
+| `nombre` | texto | 5271 | Nombre de la vía, si lo tiene. |
 | `km` | decimal | 0 | Longitud del tramo en km, recalculada en metros. |
 
 ### `reporte_cruces_municipios.csv` — Cruces espaciales de municipios
@@ -1479,13 +2723,31 @@ Lo que encontró el cruce de los municipios con otras fuentes: estaciones del ID
 
 *1 columnas sin descripción en el catálogo.*
 
+### `resguardos.geojson` — Resguardos indígenas
+
+*Capa del mapa (real)* · origen **sintético** · GeoJSON · 38 filas · geometría: Polígonos
+
+Los resguardos que tocan La Guajira, recortados al departamento, con pueblo normalizado, área, población 2020 (parte guajira), municipios que tocan y último acto administrativo. Cubren cerca del 63 % del departamento.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_resguardo` | texto | 0 | Identificador de la ANT. |
+| `codigo_resguardo` | texto | 7 | Código DANE del resguardo. |
+| `nombre` | texto | 0 | Nombre. |
+| `pueblo` | texto | 0 | Pueblo indígena. |
+| `area_km2` | decimal | 0 | Área en km² (en La Guajira para los resguardos; total para las áreas protegidas). |
+| `poblacion_2020` | decimal | 14 | Población proyectada a 2020 (Ministerio del Interior), parte guajira. |
+| `municipios` | texto | 0 | Códigos de los municipios que toca. |
+| `ultimo_acto` | texto | 0 | Último acto administrativo. |
+| `anio_ultimo_acto` | entero | 0 | Año del último acto. |
+
 ### `riesgos.geojson` — Registro de riesgos
 
 *Registro* · origen **sintético** · GeoJSON · 200 filas · geometría: Puntos
 
-Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, con probabilidad, impacto, estado de materialización y acción de tratamiento.
+Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportunidad, calificado con la matriz RAM de Ecopetrol (consecuencia 0-5 en Personas, Económica, Ambiental, Clientes e Imagen; probabilidad A-E sin y con controles), estado de materialización y acción de tratamiento. En Plata cada riesgo queda ubicado en la matriz (celda y nivel N, L, M, H o VH, inherente y residual).
 
-**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. Tres paquetes 'calientes' reciben más riesgos y con probabilidad e impacto altos, para que el mapa muestre patrones. ~18% son oportunidades.
+**Cómo se genera:** 200 riesgos repartidos en los 14 paquetes. La consecuencia por dimensión sigue el perfil de su categoría (un riesgo social pesa en Imagen; uno de seguridad, en Personas). Tres paquetes 'calientes' reciben más riesgos, con consecuencias y probabilidades más altas, para que el mapa muestre patrones. Los controles bajan la probabilidad 0 a 2 letras. ~18% son oportunidades.
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -1495,20 +2757,44 @@ Cada fila es un riesgo identificado en un paquete de trabajo: amenaza u oportuni
 | `causa` | texto | 0 | Causa registrada. En Plata los vacíos quedan como 'sin_causa_registrada'. |
 | `categoria` | texto | 0 | Una de 6 categorías. En Bronce llega con mayúsculas y espacios inconsistentes; Plata la normaliza. |
 | `tipo` | texto | 0 | amenaza u oportunidad (riesgo positivo). |
-| `probabilidad` | entero | 0 | Escala de 1 a 5. |
-| `impacto` | entero | 0 | Escala de 1 a 5. |
+| `cons_personas` | entero | 0 | Matriz RAM: consecuencia potencial para las personas, 0 a 5. |
+| `cons_economica` | entero | 0 | Matriz RAM: consecuencia económica, 0 a 5 (5 = más de USD 10 M). |
+| `cons_ambiental` | entero | 0 | Matriz RAM: consecuencia ambiental, 0 a 5 (5 = contaminación irreparable). |
+| `cons_clientes` | decimal | 8 | Matriz RAM: consecuencia para los clientes, 0 a 5. Vacía si el evaluador no la calificó. |
+| `cons_imagen` | entero | 0 | Matriz RAM: consecuencia en la imagen, 0 a 5 (5 = internacional). |
+| `probabilidad` | texto | 0 | Matriz RAM: probabilidad inherente (sin controles), A a E. En Bronce llega como 'C', 'c', 'C - Ha ocurrido...' o '3'. |
+| `probabilidad_residual` | texto | 0 | Matriz RAM: probabilidad con los controles actuales, A a E. |
+| `controles` | texto | 0 | Controles que reducen la probabilidad (de inherente a residual). |
 | `estado` | texto | 0 | latente, proximo_a_materializarse o materializado. |
 | `id_proyecto` | texto | 0 | Proyecto al que pertenece. |
 | `id_paquete_trabajo` | texto | 0 | Paquete de trabajo al que pertenece (llave hacia paquetes). |
 | `fecha_identificacion` | fecha | 0 | Fecha en que se identificó el riesgo. |
-| `fecha_materializacion` | fecha | 161 | Fecha de materialización; vacía si no se ha materializado. |
+| `fecha_materializacion` | fecha | 151 | Fecha de materialización; vacía si no se ha materializado. |
 | `accion_tratamiento` | texto | 0 | Acción de tratamiento definida. |
 | `fecha_ejecucion_accion` | fecha | 16 | Fecha comprometida de la acción. Si ya pasó y el riesgo sigue activo, la acción está vencida. |
 | `lat` | decimal | 0 | Latitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
 | `lon` | decimal | 0 | Longitud (WGS84). En Bronce ~12 % viene vacía; en Plata se ubica en el centroide de su paquete (ver geolocalizacion_inferida). |
 | `fuente` | texto | 0 | Archivo de origen del registro (simula varios Excel dispersos). |
+| `categoria_registrada` | texto | 0 | Categoría tal como llegó en el registro (sin_clasificar si faltaba o era ilegible). |
+| `categoria_ia` | texto | 0 | Categoría que sugiere la IA leyendo la descripción y la causa. |
+| `confianza_ia` | decimal | 0 | Probabilidad que la IA le da a su categoría (0 a 1). |
+| `palabras_ia` | texto | 0 | Palabras del texto que más pesaron en la decisión de la IA (explicación). |
+| `categoria_origen` | texto | 0 | De dónde sale la categoría final: registro, ia (la asignó el clasificador de texto) o pendiente. |
+| `revisar_categoria` | booleano | 0 | Verdadero si el texto contradice la categoría registrada con alta confianza. |
+| `municipio_mencionado` | texto | 133 | Municipios que nombra el texto (diccionario geográfico del DANE). |
+| `revisar_ubicacion` | booleano | 0 | Verdadero si el texto nombra un municipio a más de 15 km del paquete del riesgo. |
+| `ram_inherente` | texto | 0 | Celda RAM sin controles: consecuencia de la peor dimensión + probabilidad (p. ej. 5D). |
+| `nivel_inherente` | texto | 0 | Nivel RAM sin controles: N, L, M, H o VH. |
+| `ram_residual` | texto | 0 | Celda RAM con controles (p. ej. 5B). |
+| `nivel_residual` | texto | 0 | Nivel RAM con controles: N, L, M, H o VH. Es el que usa el ICT. |
+| `dimension_dominante` | texto | 0 | Dimensión que manda en la calificación residual: PE, EC, MA, CL o IM. |
+| `puntaje_ram` | entero | 0 | Puntaje del nivel residual: N=1, L=2, M=3, H=4, VH=5. |
 | `geolocalizacion_inferida` | booleano | 0 | Verdadero si la ubicación se tomó del centroide del paquete porque el registro no traía coordenadas. |
-| `severidad` | entero | 0 | probabilidad × impacto (1 a 25). |
+| `severidad` | entero | 0 | Puntaje del nivel RAM residual (1 a 5); pondera el mapa de calor. |
+| `punto_crisis` | booleano | 0 | Verdadero si la amenaza es un punto donde el paquete puede escalar a crisis. |
+| `causa_crisis` | texto | 187 | Por qué esa amenaza es un punto de crisis. |
+| `alcanza_resguardo` | texto | 173 | Resguardo indígena (ANT) que alcanza el área de influencia de la amenaza, si su categoría puede afectarlo. |
+| `alcanza_area_protegida` | texto | 193 | Área protegida (RUNAP) que alcanza el área de influencia de la amenaza, si su categoría puede afectarla. |
 
 ### `rios.geojson` — Ríos para el mapa
 
@@ -1523,11 +2809,11 @@ Tramos de ríos, arroyos y quebradas con nombre (si tiene), estado del cauce y l
 | `estado` | texto | 0 | Permanente o intermitente, según la clasificación del IGAC a 1:100.000 (no es una medición de caudal). |
 | `longitud_km` | decimal | 0 | Longitud del tramo en km, calculada en metros (EPSG:3116). |
 
-### `validacion_backtest.csv` — Validación: backtest
+### `validacion_backtest.csv` — Prueba de consistencia (circular)
 
 *Validación* · origen **sintético** · CSV · 14 filas
 
-ICT de cada paquete frente al número de riesgos que ya se materializaron.
+ICT de cada paquete frente al número de riesgos que ya se materializaron. Es circular (los materializados entran al ICT): comprueba el mecanismo, no valida el modelo; la validación real necesita el historial de Ecopetrol (Fase 4).
 
 | Columna | Tipo | Nulos | Descripción |
 |---|---|---:|---|
@@ -1561,3 +2847,17 @@ Red vial por tipo (primaria, secundaria, terciaria de difícil acceso). Es la in
 |---|---|---:|---|
 | `id_via` | texto | 0 | Identificador de la vía. |
 | `tipo` | texto | 0 | primaria, secundaria o terciaria de difícil acceso. |
+
+### `zonas_intervencion.geojson` — Zonas de intervención prioritaria
+
+*Resultado del modelo* · origen **sintético** · GeoJSON · 6 filas · geometría: Polígonos
+
+Unión, por paquete, de las áreas de influencia de sus puntos de crisis: dónde intervenir primero.
+
+| Columna | Tipo | Nulos | Descripción |
+|---|---|---:|---|
+| `id_paquete` | texto | 0 | Identificador del paquete (PRY-01-PT03). |
+| `nombre_paquete` | texto | 0 | Nombre del paquete. |
+| `prioridad` | texto | 0 | critica (VH o ICT crítico) o alta. |
+| `n_puntos` | entero | 0 | Puntos de crisis que forman la zona. |
+| `area_km2` | decimal | 0 | Área de la zona de intervención en km². |

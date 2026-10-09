@@ -183,8 +183,56 @@ Reglas de este mapa:
   variable, elige la serie del grafico), grafico Chart.js (barras para lluvia,
   linea con minimo/maximo para el resto) y "Contexto climatico" con las
   normales del mes.
-- El modelo (ICT, pesos, alertas) ya no vive en el mapa. Si vuelve, entra
-  como una capa mas, no como un panel que ocupe la pantalla.
+- Lluvia por satelite (CHIRPS): tarjeta estatica dentro de `#grupo-clima`
+  (despues de las variables), chip `.chip.ok` "CHIRPS · real". Colorea los
+  municipios en el pane `chirps` (z 398, sin eventos: el clic lo recibe la capa
+  de municipios). Dos modos en `.seg`: mm del mes (azules, cortes 10/50/100/200)
+  y frente a lo normal (divergente cafe -> verde azulado, cortes -60/-20/20/60 %;
+  "normal" ±20 % en gris claro). La ficha del municipio lleva barras por mes con
+  la linea de la normal; clic en una barra mueve el tiempo a ese mes.
+- Controlador de tiempo `#barra-tiempo`: `.glass` flotando abajo al centro del
+  mapa (nunca un panel aparte): `.seg` Dias|Meses, boton redondo `.t-play`,
+  slider con extremos (`#t-desde`/`#t-hasta`) y la fecha elegida en negrita a
+  la derecha. Dias = estaciones IDEAM (30 dias + "ahora · en vivo"); Meses =
+  CHIRPS (10 anos) y enciende esa capa. Todo lo que dependa de la fecha pasa
+  por `fechaDia()` / `mesReferencia()` y se repinta en `alCambiarTiempo()`; un
+  acumulado cuya ventana sale de la serie se marca como cota (≥, borde punteado).
+- Indicadores sociales: tarjeta `#capa-social` con un `select.field` agrupado
+  por tema (los indicadores y sus cortes vienen de `indicadores_municipio.json`,
+  no del JS). Pane `social` (z 397, sin eventos). Rampas: naranja para lo que es
+  peor cuanto mas alto (pobreza, delitos, emergencias, IRCA), morada para lo
+  etnico (% indigena, territorio en resguardo) y verde para areas protegidas:
+  lo etnico NUNCA en la rampa de "peor". Homicidios y extorsion son temporales
+  (tasa de 12 meses hasta el mes elegido) y usan la escala Meses.
+- Resguardos (morado, borde punteado) y areas protegidas (verdes por ambito)
+  van en el pane `territorios` (z 404) y abren su ficha al clic. La ficha de
+  municipio apila: censo 2018 (con barras `.barras-h` de componentes NBI),
+  territorio, IRCA, seguridad (segundo grafico `S.chart2`), emergencias
+  (`.eventos`) y CHIRPS. La del paquete agrega "Contexto real del territorio".
+- Matriz RAM de Ecopetrol: sus colores son los del formato oficial ECP-DRI-F-045
+  (N verde, L amarillo claro, M amarillo, H naranja, VH rojo) en `ui.RAM`, y se
+  muestran con `ui.ramChip(nivel)` (chip cuadrado `.ram-chip`). No reutilizar
+  los colores de nivel del ICT para la RAM ni al reves: son escalas distintas.
+  En Explorar la matriz es una tabla 6x5 (`.ram-matriz`) con el conteo en cada
+  celda y, al lado, que exige cada nivel (`.ram-nivel`); clic filtra el registro.
+- El modelo vive en el mapa como capas, nunca como un panel que ocupe la
+  pantalla: los paquetes se pintan por nivel de ICT (o de IRE) con los colores
+  `--lvl-*` y una `.seg` en la tarjeta de proyectos elige el indicador; de lejos
+  (zoom < 10,5) se muestra una etiqueta por proyecto con su maximo y de cerca una
+  por paquete (`.tag-proyecto` / `.tag-paquete`). **Escalamiento a crisis**:
+  puntos `.pc` que laten (critica en `--lvl-critico`, alta en `--lvl-alto`,
+  cuadrados si la causa es del paquete entero) en el pane `crisisPane` y zonas de
+  intervencion punteadas, sin eventos, en el pane `zonas`. **Mapa de calor**:
+  celdas de la grilla en el pane `calor` (z 406, sin eventos) con rampa calida
+  para amenazas y azul-verde para oportunidades; los puntos calientes Gi* llevan
+  borde blanco punteado. **Alertas**: un `.map-btn` con campana y contador
+  (`.map-badge`) abre la lista en la `.pop-card` de detalle, con el estado de la
+  tarea diaria y "Actualizar ahora". La ficha del paquete empieza por su ICT
+  (numero, nivel, barra apilada de aportes con la escala verde, componentes
+  reales en un `details`) y las causas de escalamiento en `.escala-box`.
+  Lo que hizo la IA con el texto de un riesgo va en `.ia-box` (morado claro):
+  morado es "IA", nunca nivel de riesgo.
+- Rios y vias pesan ~7 MB: se descargan la primera vez que se enciende su capa.
 
 ### Explorar (`explorar.html`) - basado en Ejemplo_1
 ```
@@ -221,6 +269,39 @@ Todo numero de esta pagina sale de `/api/catalogo` y `/api/parametros`
 (inventario vivo de los archivos), nunca escrito a mano en el HTML: si el
 pipeline se vuelve a correr, la pagina sigue siendo verdadera. Los colores
 `--medal-*` solo identifican capas medallion; no los uses como acento.
+
+### Flujo (`flujo.html`) - de la fuente al tablero
+```
+shell
+ ├ topbar (Flujo activo) + page-head + anclas + 4 stat cards
+ ├ card "Recorrido": .riel (6 nodos circulares unidos por linea punteada)
+ │   + .etapas (grid 3 col) con tono por etapa: origen, bronce, plata, oro,
+ │   servicio (verde), consumo (navy); cada una: que hace, "Con", "Entrega"
+ │   y una franja "En produccion"
+ ├ card "Pipeline paso a paso": grafo (.dag, 4 columnas Bronce/Plata/Oro/
+ │   Consumo, .nodo por paso, aristas SVG) | .dag-detalle sticky
+ ├ card "Fuentes" (grid de .fuente, sintetica en tono crema) → "Ver su recorrido"
+ ├ page-head "Los modelos" + bento de 8 cards (ICT en card-green)
+ ├ card "Ciclo diario" (.ciclo de 6 pasos) · card "Tecnologias" (.tec)
+ └ bento 6/6 calidad (auditoria por grupo con .meter) | ciberseguridad
+   + tabla piloto vs produccion
+```
+Los pasos, sus dependencias, fechas, licencias, auditoria, pruebas y versiones
+salen de `/api/flujo` (lee `src/pipeline.py`, los `*_meta.json`, la auditoria y
+`requirements.txt`). Al tocar un nodo: el nodo en verde lleno, lo que viene
+antes en `--green-50` con aristas verdes, lo que sigue en `--lvl-alto-bg` con
+aristas naranja, el resto atenuado. Las aristas se dibujan con la posicion real
+de los nodos: redibujar al cargar fuentes y al cambiar el tamano. En movil se
+ocultan las aristas y las columnas se apilan. Lo que no depende de una corrida
+(recorrido, fuentes, modelos, tecnologias, produccion) se pinta antes de consultar
+al servidor; si `/api/flujo` falla (servidor de una version anterior: 404), el
+grafo se reemplaza por un `.aviso-flujo` que dice como reiniciar, nunca una
+pagina vacia.
+
+La topbar tiene 8 secciones: se compacta por pasos (≤1440 menos padding,
+≤1360 chip de datos sinteticos solo con icono, ≤1180 solo la seccion activa con
+texto, ≤760 solo iconos y desplazable dentro de la barra). Nunca debe partir un
+nombre en dos lineas ni ensanchar la pagina.
 
 ## Graficos y mapas (resumen; codigo en references)
 

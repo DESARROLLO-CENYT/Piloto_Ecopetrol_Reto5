@@ -1,0 +1,90 @@
+/* Riesgo de ejecucion. Componentes en components.css (skill reto5-design). */
+
+.bento { align-items: start; }
+.aviso { margin: 0 0 var(--gap-shell); padding: 10px 14px; border-radius: 12px; font-size: var(--fs-13); display: flex; align-items: center; gap: 8px; }
+.aviso svg { width: 16px; height: 16px; flex-shrink: 0; }
+.aviso.ok { background: var(--lvl-bajo-bg); color: #1d5a33; }
+.aviso.info { background: #e3f2fb; color: #1f5f86; }
+.aviso.error { background: var(--lvl-critico-bg); color: #8f1f15; }
+
+/* Tarjetas de proyecto */
+.proy { cursor: pointer; border: 2px solid transparent; }
+.proy.sel { border-color: var(--green-600); }
+.proy .fila { display: flex; align-items: center; gap: var(--s-4); margin-top: var(--s-2); }
+.proy .kpis { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.proy .kpi .l { font-size: var(--fs-11); color: var(--muted); }
+.proy .kpi .v { font-family: var(--font-display); font-size: 20px; font-weight: 500; }
+.proy .kpi .v small { font-size: var(--fs-12); color: var(--muted); font-weight: 400; }
+.proy .hist { height: 92px; margin-top: var(--s-3); position: relative; }
+.proy .pie { font-size: var(--fs-11); color: var(--muted); margin-top: 4px; }
+.ring .lbl { font-size: 10.5px; color: var(--muted); }
+
+/* Tabla de paquetes */
+#tabla-paquetes td { white-space: nowrap; }
+#tabla-paquetes tbody tr { cursor: pointer; }
+#tabla-paquetes tbody tr.sel td { background: var(--green-50); }
+.atr b { font-variant-numeric: tabular-nums; }
+.sub { color: var(--muted); font-size: var(--fs-11); }
+.barra-atr { display: flex; height: 6px; width: 120px; border-radius: 3px; overflow: hidden; background: var(--surface-muted); margin-top: 4px; }
+.barra-atr .c { background: var(--ink-2); }
+.barra-atr .f { background: var(--lvl-alto); }
+
+/* Detalle */
+.det-riesgo { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-12); }
+.det-riesgo:last-child { border-bottom: 0; }
+.det-riesgo .t { font-weight: 600; font-size: var(--fs-13); display: flex; align-items: center; gap: 6px; }
+.det-riesgo .s { grid-column: 1 / -1; color: var(--muted); }
+.det-riesgo .meter { grid-column: 1 / -1; height: 5px; }
+.det-riesgo .meter span { background: var(--lvl-alto); }
+.terr { display: flex; flex-direction: column; gap: 6px; margin: var(--s-2) 0 var(--s-3); }
+.terr .x { display: grid; grid-template-columns: 1fr auto; font-size: var(--fs-12); color: var(--ink-2); }
+.terr .x b { font-variant-numeric: tabular-nums; }
+.terr .x.sube b { color: #a3261a; }
+.terr .x.baja b { color: #1d7a42; }
+.sec { font-size: var(--fs-12); font-weight: 700; margin: var(--s-3) 0 var(--s-1); }
+.ahorro { padding: 10px 12px; border-radius: 12px; background: var(--green-50); font-size: var(--fs-12); color: var(--green-800); margin-top: var(--s-3); }
+
+/* Escenarios */
+.esc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--s-6); }
+.esc-ctrls { display: flex; flex-direction: column; gap: 14px; }
+.esc-c .top { display: flex; justify-content: space-between; font-size: var(--fs-13); margin-bottom: 6px; }
+.esc-c .top b { font-family: var(--font-display); font-weight: 500; }
+.esc-c .s { font-size: var(--fs-11); color: var(--muted); margin-top: 4px; }
+.esc-sw { display: flex; align-items: center; gap: 10px; font-size: var(--fs-13); cursor: pointer; }
+.esc-res table { width: 100%; border-collapse: collapse; font-size: var(--fs-13); }
+.esc-res th { text-align: left; font-weight: 500; color: var(--muted); font-size: var(--fs-12); padding: 6px 8px; }
+.esc-res td { padding: 9px 8px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.delta { font-size: var(--fs-11); margin-left: 6px; }
+.delta.sube { color: #a3261a; }
+.delta.baja { color: #1d7a42; }
+.esc-hist { height: 190px; position: relative; margin-top: var(--s-3); }
+.esc-res .nota { font-size: var(--fs-11); color: var(--muted); margin-top: var(--s-2); }
+
+/* Supuestos */
+.supuestos summary { list-style: none; display: flex; align-items: center; gap: var(--s-3); cursor: pointer; }
+.supuestos summary::-webkit-details-marker { display: none; }
+.supuestos summary .grow { display: flex; flex-direction: column; flex: 1; }
+.supuestos summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin: -4px 6px 0; transition: transform .15s; }
+.supuestos[open] summary::after { transform: rotate(-135deg); margin-top: 4px; }
+.formula { margin: var(--s-4) 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); }
+.paso-f { padding: 12px 14px; border-radius: 14px; background: var(--surface-muted); font-size: var(--fs-12); color: var(--ink-2); line-height: 1.5; }
+.paso-f .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; font-weight: 700; margin-right: 6px; }
+.paso-f .t { font-weight: 600; color: var(--ink); font-size: var(--fs-13); }
+.paso-f code { display: block; margin: 6px 0; font-size: 12px; background: var(--surface); padding: 6px 8px; border-radius: 8px; white-space: pre-wrap; }
+.sup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.sup-b { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.sup-b .t { font-weight: 600; font-size: var(--fs-13); margin-bottom: 2px; }
+.sup-b .s { font-size: var(--fs-11); color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
+.sup-b table { width: 100%; border-collapse: separate; border-spacing: 4px; }
+.sup-b th { font-size: var(--fs-11); color: var(--muted); font-weight: 600; text-align: left; }
+.sup-b .field { height: 32px; border-radius: 9px; padding: 0 8px; width: 100%; box-sizing: border-box; font-size: var(--fs-13); background-image: none; }
+.sup-b .field.cambio { border-color: var(--lvl-medio); background: var(--lvl-medio-bg); }
+.sup-fila { display: grid; grid-template-columns: 1fr 110px; gap: 8px; align-items: center; font-size: var(--fs-12); margin-bottom: 6px; }
+.sup-acciones { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; margin-top: var(--s-4); }
+.sup-acciones .field { height: 36px; width: 170px; }
+.sup-acciones .field.nota { width: 260px; flex: 1; }
+.advertencias { margin-top: var(--s-2); font-size: var(--fs-12); color: #8a5a00; }
+
+@media (max-width: 900px) {
+  .esc-grid, .sup-grid, .formula { grid-template-columns: 1fr; }
+}
