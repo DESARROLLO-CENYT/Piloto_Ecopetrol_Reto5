@@ -47,6 +47,12 @@ CAPAS = {
 POR_PAQUETE = {
     "riesgo_ejecucion_paquetes": ("ejecucion_paquetes.csv", "calculado", "Riesgo de ejecución (Monte Carlo): atraso y sobrecosto por paquete"),
     "contexto_paquetes": ("contexto_paquetes.csv", "calculado", "Contexto real de cada paquete: municipio, censo, resguardos, áreas protegidas, delitos"),
+    "cronograma_paquetes": ("cronograma_paquetes.csv", "sintético", "Cronograma SINTÉTICO por paquete: avance real y planeado, fechas planeadas y proyectadas, holgura"),
+}
+# tablas de Oro sin geometria (se exportan tal cual)
+TABLAS = {
+    "cronograma_proyectos": ("cronograma_proyectos.csv", "sintético", "Cronograma SINTÉTICO por proyecto: avance ponderado por actividad y fechas planeadas y proyectadas"),
+    "cronograma_actividades": ("cronograma_actividades.csv", "sintético", "Actividades SINTÉTICAS de cada paquete: peso, avance y fechas planeadas, reales y proyectadas"),
 }
 
 
@@ -109,6 +115,15 @@ def main():
             pyogrio.write_dataframe(tabla, gpkg, layer="alertas", driver="GPKG")
             tabla.to_csv(EXPORTS / "alertas.csv", index=False, encoding="utf-8-sig")
         leeme.append({"capa": "alertas", "origen": "calculado", "fuente_y_uso": "Alertas tempranas del día (tabla, sin geometría)", "filas": len(tabla)})
+
+    for capa, (archivo, origen, fuente) in TABLAS.items():
+        if not (ORO / archivo).exists():
+            continue
+        tabla = pd.read_csv(ORO / archivo)
+        pyogrio.write_dataframe(tabla, gpkg, layer=capa, driver="GPKG")
+        tabla.to_csv(EXPORTS / f"{capa}.csv", index=False, encoding="utf-8-sig")
+        leeme.append({"capa": capa, "origen": origen, "fuente_y_uso": fuente, "filas": len(tabla)})
+        print(f"  {capa}: {len(tabla)} ({origen}, tabla)")
 
     pyogrio.write_dataframe(pd.DataFrame(leeme), gpkg, layer="leeme", driver="GPKG")
     pd.DataFrame(leeme).to_csv(EXPORTS / "leeme_capas.csv", index=False, encoding="utf-8-sig")

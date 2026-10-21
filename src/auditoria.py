@@ -239,6 +239,9 @@ def conciliacion() -> list[dict]:
                 if set(cols) <= set(p.columns):
                     out.append(_cuadra("matriz RAM", "Oro: amenazas abiertas por nivel en los paquetes = las de Plata", abiertas, int(p[cols].sum().sum())))
     out += conciliacion_ict()
+    out += conciliacion_cronograma()
+    out += conciliacion_riesgo_actividad()
+    out += conciliacion_fechas_riesgos()
     r = _reporte("reporte_calidad_invias.csv")
     if r:
         out.append(_cuadra("invias", "tramos Bronce - sin geometria - repetidos = tramos Plata", r["tramos_bronce"] - r["sin_geometria"] - r["repetidos_removidos"], r["tramos_plata"]))
@@ -312,6 +315,122 @@ def conciliacion_ict() -> list[dict]:
         alertas = json.loads(al.read_text(encoding="utf-8"))
         esperadas = int((p["escalamiento"].astype(bool) | p["tendencia_alerta"].astype(bool)).sum())
         out.append(_cuadra("ict", "una alerta por paquete en escalamiento o con tendencia al alza", esperadas, len(alertas)))
+    return out
+
+
+def conciliacion_cronograma() -> list[dict]:
+    """El cronograma cuadra: pesos que suman 1, avances entre 0 y 1, estados coherentes y fechas en orden."""
+    out = []
+    arch = {n: ORO / f"cronograma_{n}.csv" for n in ("actividades", "paquetes", "proyectos")}
+    if not all(a.exists() for a in arch.values()) or not (PLATA / "actividades.parquet").exists():
+        return out
+    a = pd.read_csv(arch["actividades"], parse_dates=["fecha_inicio_plan", "fecha_fin_plan", "fecha_inicio_proyectada", "fecha_fin_proyectada", "fecha_corte"])
+    p = pd.read_csv(arch["paquetes"], parse_dates=["fecha_inicio_plan", "fecha_fin_plan", "fecha_fin_proyectada", "fecha_corte"])
+    pr = pd.read_csv(arch["proyectos"])
+    plata = pd.read_parquet(PLATA / "actividades.parquet")
+    r = _reporte("reporte_calidad_bronce_a_plata.csv")
+    if r and "actividades_bronce" in r:
+        out.append(_cuadra("cronograma", "actividades Bronce - repetidas - sin paquete = actividades Plata",
+                           r["actividades_bronce"] - r["actividades_repetidas_removidas"] - r["actividades_sin_paquete_valido"], len(plata)))
+    out.append(_cuadra("cronograma", "las actividades de Oro son las de Plata", len(plata), len(a)))
+    pesos = a.groupby("id_paquete")["peso_en_paquete"].sum()
+    out.append(_cuadra("cronograma", "los pesos de las actividades de cada paquete suman 1 (+-0,001)", 0.0, float((pesos - 1).abs().max()), 0.001))
+    por_proy = a.groupby("id_proyecto")["peso_en_proyecto"].sum()
+    out.append(_cuadra("cronograma", "los pesos de las actividades de cada proyecto suman 1 (+-0,001)", 0.0, float((por_proy - 1).abs().max()), 0.001))
+    out.append(_cuadra("cronograma", "avances entre 0 y 1", 0, int(((a["avance"] < 0) | (a["avance"] > 1)).sum())))
+    estado_ok = ((a["estado"] == "completada") == (a["avance"] >= 1)) & ((a["estado"] == "por_iniciar") == (a["avance"] <= 0))
+    out.append(_cuadra("cronograma", "el estado de cada actividad coincide con su avance", 0, int((~estado_ok).sum())))
+    fechas = int((a["fecha_inicio_plan"] > a["fecha_fin_plan"]).sum() + (a["fecha_inicio_proyectada"] > a["fecha_fin_proyectada"]).sum())
+    out.append(_cuadra("cronograma", "toda actividad empieza antes de terminar (plan y proyectado)", 0, fechas))
+    pendientes = a[a["estado"] != "completada"]
+    out.append(_cuadra("cronograma", "lo que falta por hacer se proyecta desde la fecha de corte en adelante", 0,
+                       int((pendientes["fecha_fin_proyectada"] < pendientes["fecha_corte"]).sum())))
+    av_paq = (a["peso_en_paquete"] * a["avance"]).groupby(a["id_paquete"]).sum()
+    out.append(_cuadra("cronograma", "el avance de cada paquete es la suma de sus actividades por su peso (+-0,001)", 0.0,
+                       float((p.set_index("id_paquete")["avance"] - av_paq).abs().max()), 0.001))
+    av_proy = (a["peso_en_proyecto"] * a["avance"]).groupby(a["id_proyecto"]).sum()
+    out.append(_cuadra("cronograma", "el avance de cada proyecto es la suma de sus actividades por su peso en el proyecto (+-0,001)", 0.0,
+                       float((pr.set_index("id_proyecto")["avance"] - av_proy).abs().max()), 0.001))
+    criticos = p[p["ruta_critica"].astype(bool)]
+    fin_proy = pr.set_index("id_proyecto")["fecha_fin_plan"]
+    desfase = int((criticos["fecha_fin_plan"].dt.strftime("%Y-%m-%d") != criticos["id_proyecto"].map(fin_proy)).sum())
+    out.append(_cuadra("cronograma", "un paquete de ruta critica termina el mismo dia que su proyecto (sin holgura)", 0, desfase))
+    return out
+
+
+def conciliacion_riesgo_actividad() -> list[dict]:
+    """Cada riesgo apunta a una actividad de su paquete que cuadra con su momento, y los conteos de Oro lo reflejan."""
+    out = []
+    rp, ap = PLATA / "riesgos.geojson", PLATA / "actividades.parquet"
+    if not rp.exists() or not ap.exists():
+        return out
+    r = gpd.read_file(rp)
+    if "id_actividad" not in r:
+        return out
+    a = pd.read_parquet(ap).set_index("id_actividad")
+    corte = pd.to_datetime(a["fecha_corte"]).max()
+    rep = _reporte("reporte_calidad_bronce_a_plata.csv")
+    if rep and "riesgos_actividad_por_codigo" in rep:
+        partes = sum(rep[k] for k in ("riesgos_actividad_por_codigo", "riesgos_actividad_por_nombre", "riesgos_actividad_inferidas",
+                                      "riesgos_actividad_codigo_de_otro_paquete"))
+        out.append(_cuadra("riesgos", "por código + por nombre + inferidas + código de otro paquete = riesgos de Plata", rep["filas_plata"], partes))
+    out.append(_cuadra("riesgos", "todo riesgo tiene actividad", 0, int(r["id_actividad"].isna().sum())))
+    de_otro = r["id_actividad"].map(a["id_paquete"]) != r["id_paquete_trabajo"]
+    out.append(_cuadra("riesgos", "la actividad de cada riesgo es de su mismo paquete", 0, int(de_otro.sum())))
+    abiertos = r[r["estado"] != "materializado"]
+    out.append(_cuadra("riesgos", "ningún riesgo abierto apunta a una actividad ya terminada", 0,
+                       int((abiertos["id_actividad"].map(a["estado"]) == "completada").sum())))
+    mat = r[(r["estado"] == "materializado") & r["fecha_materializacion"].notna()]
+    fm = pd.to_datetime(mat["fecha_materializacion"])
+    inicio = pd.to_datetime(mat["id_actividad"].map(a["fecha_inicio_real"]))
+    fin = pd.to_datetime(mat["id_actividad"].map(a["fecha_fin_real"])).fillna(corte)
+    out.append(_cuadra("riesgos", "todo riesgo materializado ocurrió mientras se ejecutaba su actividad", 0,
+                       int((inicio.isna() | (inicio > fm) | (fm > fin)).sum())))
+    prox = r[r["estado"] == "proximo_a_materializarse"]
+    pronto = (prox["id_actividad"].map(a["estado"]) == "en_curso") | \
+        (pd.to_datetime(prox["id_actividad"].map(a["fecha_inicio_proyectada"])) <= corte + pd.Timedelta(days=45))
+    out.append(_cuadra("riesgos", "todo riesgo próximo a materializarse pega en algo que se ejecuta o arranca en 45 días", 0, int((~pronto).sum())))
+    ca = ORO / "cronograma_actividades.csv"
+    if ca.exists():
+        c = pd.read_csv(ca)
+        if "riesgos" in c:
+            out.append(_cuadra("cronograma", "los riesgos contados por actividad son los del registro", len(r), int(c["riesgos"].sum())))
+            amen = int(((r["tipo"] == "amenaza") & (r["estado"] != "materializado")).sum())
+            out.append(_cuadra("cronograma", "las amenazas abiertas por actividad suman las del registro", amen, int(c["amenazas_abiertas"].sum())))
+    er = ORO / "ejecucion_riesgos.csv"
+    cron = PLATA / "cronograma.parquet"
+    if er.exists() and cron.exists():
+        e = pd.read_csv(er)
+        if "horizonte_origen" in e:
+            meses = pd.read_parquet(cron).set_index("id_paquete")["meses_restantes"]
+            por_act = e[e["horizonte_origen"] == "actividad"]
+            mas_largo = por_act["horizonte_anios"] * 12 > por_act["id_paquete"].map(meses) + 0.2
+            out.append(_cuadra("ejecucion", "el horizonte de una amenaza (su actividad) no pasa lo que le falta a su paquete", 0, int(mas_largo.sum())))
+    return out
+
+
+def conciliacion_fechas_riesgos() -> list[dict]:
+    """Las fechas de cada riesgo cuentan una historia posible (lo que no, queda marcado para revisar)."""
+    out = []
+    rp = PLATA / "riesgos.geojson"
+    if not rp.exists():
+        return out
+    r = gpd.read_file(rp)
+    if "revisar_fechas" not in r:
+        return out
+    ap = PLATA / "actividades.parquet"
+    corte = pd.to_datetime(pd.read_parquet(ap)["fecha_corte"]).max() if ap.exists() else pd.Timestamp.today().normalize()
+    ident, fm, acc = (pd.to_datetime(r[c]) for c in ("fecha_identificacion", "fecha_materializacion", "fecha_ejecucion_accion"))
+    mat = r["estado"] == "materializado"
+    rep = _reporte("reporte_calidad_bronce_a_plata.csv")
+    if rep and "riesgos_fechas_por_revisar" in rep:
+        out.append(_cuadra("riesgos", "los riesgos con fechas por revisar son los que dice el reporte", rep["riesgos_fechas_por_revisar"], int(r["revisar_fechas"].sum())))
+    out.append(_cuadra("riesgos", "ningún riesgo se materializó después de la fecha de corte", 0, int((fm > corte).sum())))
+    out.append(_cuadra("riesgos", "ningún riesgo se materializó antes de identificarse", 0, int((fm < ident).sum())))
+    out.append(_cuadra("riesgos", "ningún riesgo abierto tiene fecha de materialización", 0, int((~mat & fm.notna()).sum())))
+    out.append(_cuadra("riesgos", "todo materializado sin fecha está marcado para revisar", 0, int((mat & fm.isna() & ~r["revisar_fechas"]).sum())))
+    out.append(_cuadra("riesgos", "ninguna acción es anterior a la identificación sin estar marcada", 0,
+                       int(((acc < ident) & ~r["revisar_fechas"]).sum())))
     return out
 
 

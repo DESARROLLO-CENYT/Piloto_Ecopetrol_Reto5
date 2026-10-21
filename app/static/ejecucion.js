@@ -2,6 +2,8 @@
 
 const X = {
   d: null,            // GET /api/ejecucion
+  c: null,            // GET /api/cronograma
+  paqCron: null,      // paquete cuyas actividades se muestran
   proy: null,         // proyecto seleccionado
   paq: null,          // paquete seleccionado (o null: todo el proyecto)
   sup: null,          // supuestos en edicion
@@ -118,7 +120,7 @@ function filaRiesgo(r, maxAporte) {
   return `<div class="det-riesgo">
     <span class="t">${ui.ramChip(r.nivel_residual)} ${r.id_riesgo} <span class="sub">${catCorto(r.categoria)}</span></span>
     <b>${fmt(r.atraso_esperado, 1)} d</b>
-    <span class="s">RAM ${r.ram_residual} · ${fmt(r.probabilidad * 100, r.probabilidad < 0.01 ? 2 : 0)} % de ocurrir en ${fmt(r.horizonte_anios * 12, 0)} meses · ${fmt(r.dias_por_evento, 0)} días por evento${r.multiplicador_territorial !== 1 ? ` · territorio ×${fmt(r.multiplicador_territorial, 2)}` : ''}</span>
+    <span class="s">${r.actividad ? `Pega en ${r.actividad} · ` : ''}RAM ${r.ram_residual} · ${fmt(r.probabilidad * 100, r.probabilidad < 0.01 ? 2 : 0)} % de ocurrir en ${fmt(r.horizonte_anios * 12, r.horizonte_anios * 12 < 3 ? 1 : 0)} meses · ${fmt(r.dias_por_evento, 0)} días por evento${r.multiplicador_territorial !== 1 ? ` · territorio ×${fmt(r.multiplicador_territorial, 2)}` : ''}</span>
     <div class="meter"><span style="width:${(r.atraso_esperado / maxAporte) * 100}%"></span></div>
   </div>`;
 }
@@ -153,6 +155,72 @@ function renderDetalle() {
       ${evitado > 0.05 ? `<div class="ahorro">Los controles registrados evitan unos <b>${fmt(evitado, 0)} días</b> de atraso esperado en el proyecto.</div>` : ''}`;
   }
   ui.icons();
+}
+
+// ---------------------------------------------------------------------------
+// Cronograma: avance y fechas por paquete y por actividad
+// ---------------------------------------------------------------------------
+
+const fechaCorta = (s) => (s ? new Date(`${String(s).slice(0, 10)}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }) : '-');
+const pct = (v, d = 0) => (v == null ? '-' : `${fmt(v * 100, d)} %`);
+const ESTADO_ACT = { completada: ['Completada', 'bajo'], en_curso: ['En curso', 'medio'], por_iniciar: ['Por iniciar', ''] };
+
+function barraAvance(real, plan) {
+  return `<div class="av" title="Real ${pct(real, 1)} · planeado ${pct(plan, 1)}"><span class="plan" style="width:${(plan || 0) * 100}%"></span><span class="real" style="width:${(real || 0) * 100}%"></span></div>`;
+}
+
+function renderCronograma() {
+  const c = X.c;
+  const card = document.getElementById('cronograma');
+  if (!c || !c.disponible) { card.hidden = true; return; }
+  card.hidden = false;
+  const pr = c.proyectos.find((p) => p.id_proyecto === X.proy);
+  const paqs = c.paquetes.filter((p) => p.id_proyecto === X.proy).sort((a, b) => b.atraso_sobre_holgura_dias - a.atraso_sobre_holgura_dias || b.atraso_proyectado_dias - a.atraso_proyectado_dias);
+  document.getElementById('sub-cron').textContent = `${nombreProy(X.proy)} · a ${fechaCorta(c.fecha_corte)} · cada actividad pesa en su paquete y cada paquete en el proyecto según su presupuesto`;
+  const defineFin = c.paquetes.find((p) => p.id_paquete === pr.paquete_que_define_el_fin);
+  const atr = pr.atraso_proyectado_dias;
+  document.getElementById('cron-proy').innerHTML = `<div class="cron-kpis">
+    <div class="kpi"><div class="l">Avance del proyecto</div><div class="v">${fmt(pr.avance * 100, 1)} <small>% · planeado ${fmt(pr.avance_plan * 100, 1)} %</small></div>${barraAvance(pr.avance, pr.avance_plan)}</div>
+    <div class="kpi"><div class="l">Índice de cumplimiento</div><div class="v">${fmt(pr.indice_cumplimiento, 2)} <small>${pr.indice_cumplimiento >= 1 ? 'al día' : 'avance real / planeado'}</small></div></div>
+    <div class="kpi"><div class="l">Inicio → fin planeado</div><div class="v sm">${fechaCorta(pr.fecha_inicio_plan)} → ${fechaCorta(pr.fecha_fin_plan)}</div></div>
+    <div class="kpi"><div class="l">Fin proyectado</div><div class="v sm">${fechaCorta(pr.fecha_fin_proyectada)} <span class="delta ${atr > 0 ? 'sube' : 'baja'}">${atr > 0 ? '+' : ''}${fmt(atr, 0)} d</span></div>
+      <div class="sub">Lo define ${defineFin ? ui.nombreCorto(defineFin.nombre) : '-'}</div></div>
+    <div class="kpi"><div class="l">Actividades</div><div class="v">${fmt(pr.n_completadas)} <small>de ${fmt(pr.n_actividades)} completadas · ${fmt(pr.meses_restantes, 1)} meses por ejecutar</small></div></div>
+  </div>`;
+  if (!X.paqCron || !paqs.some((p) => p.id_paquete === X.paqCron)) X.paqCron = (paqs.find((p) => p.id_paquete === X.paq) || paqs[0])?.id_paquete;
+  document.querySelector('#tabla-cron tbody').innerHTML = paqs.map((p) => {
+    const sobre = p.atraso_sobre_holgura_dias;
+    return `<tr data-id="${p.id_paquete}" class="${p.id_paquete === X.paqCron ? 'sel' : ''}">
+      <td><div class="cell-main"><span class="tile" style="background:var(--green-50);color:var(--green-700)"><i data-lucide="hexagon"></i></span>
+        <div><div class="t">${ui.nombreCorto(p.nombre)}</div><div class="s">${p.ruta_critica ? 'ruta crítica · ' : ''}pesa ${pct(p.peso_en_proyecto)} del proyecto</div></div></div></td>
+      <td><b>${pct(p.avance, 1)}</b>${barraAvance(p.avance, p.avance_plan)}</td>
+      <td class="ink-2">${pct(p.avance_plan, 1)}</td>
+      <td class="ink-2">${fechaCorta(p.fecha_fin_plan)}</td>
+      <td class="ink-2">${fechaCorta(p.fecha_fin_proyectada)}</td>
+      <td>${p.atraso_proyectado_dias <= 0 ? '<span class="status">a tiempo</span>' : `<b>+${fmt(p.atraso_proyectado_dias, 0)} d</b> <span class="sub">de ${fmt(p.holgura_dias, 0)} d de holgura</span>${sobre > 0 ? ` <span class="lvl alto">${fmt(sobre, 0)} d de más</span>` : ''}`}</td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#tabla-cron tbody tr').forEach((tr) => tr.addEventListener('click', () => { X.paqCron = tr.dataset.id; renderCronograma(); }));
+  renderActividades();
+  ui.icons();
+}
+
+function renderActividades() {
+  const c = X.c;
+  const p = c.paquetes.find((q) => q.id_paquete === X.paqCron);
+  if (!p) { document.getElementById('cron-act').innerHTML = ''; return; }
+  const acts = c.actividades.filter((a) => a.id_paquete === p.id_paquete).sort((a, b) => a.orden - b.orden);
+  document.getElementById('cron-act').innerHTML = `<div class="sec">Actividades de ${ui.nombreCorto(p.nombre)}</div>
+    <div class="sub">${p.actividad_en_curso ? `En curso: ${p.actividad_en_curso}` : 'Ninguna en curso'}${p.siguiente_actividad ? ` · sigue: ${p.siguiente_actividad}` : ''}</div>
+    <ol class="acts">${acts.map((a) => {
+      const [txt, lv] = ESTADO_ACT[a.estado] || [a.estado, ''];
+      return `<li class="${a.estado}">
+        <div class="top"><span class="n">${a.nombre}</span><span class="lvl-soft ${lv}">${txt}</span></div>
+        <div class="s">pesa ${pct(a.peso_en_paquete)} del paquete · aporta ${fmt(a.aporte_avance_pp, 1)} de ${fmt(a.aporte_total_pp, 1)} puntos al proyecto</div>
+        <div class="av"><span class="real" style="width:${a.avance * 100}%"></span></div>
+        <div class="s">Plan ${fechaCorta(a.fecha_inicio_plan)} → ${fechaCorta(a.fecha_fin_plan)} · ${a.estado === 'completada' ? 'terminó' : 'termina'} ${fechaCorta(a.fecha_fin_proyectada)}${a.atraso_proyectado_dias > 0 && a.estado !== 'completada' ? ` <b class="atr-a">(+${fmt(a.atraso_proyectado_dias, 0)} d)</b>` : ''}</div>
+      </li>`;
+    }).join('')}</ol>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -386,12 +454,14 @@ function renderTodo() {
   renderProyectos();
   renderPaquetes();
   renderDetalle();
+  renderCronograma();
   renderResultadoEsc();
   ui.icons();
 }
 
 async function cargar() {
   X.d = await ui.json('/api/ejecucion');
+  X.c = await ui.json('/api/cronograma').catch(() => null);
   if (!X.d.disponible) {
     aviso('<i data-lucide="info"></i> Aún no hay resultados: corre el pipeline (paso oro.ejecucion).', 'info');
     return;

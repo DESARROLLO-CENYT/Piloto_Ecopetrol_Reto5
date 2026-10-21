@@ -1,7 +1,8 @@
 """Riesgo de ejecucion por paquete y proyecto: Plata (+ contexto de Oro) -> Oro.
 
 Entradas:
-  Plata: riesgos.geojson (con la RAM), paquetes.geojson, cronograma.parquet (sinteticos); seguridad_municipio_mensual,
+  Plata: riesgos.geojson (con la RAM y su actividad), paquetes.geojson, cronograma.parquet, actividades.parquet (sinteticos);
+         seguridad_municipio_mensual,
          emergencias, chirps_municipio_mensual, indicadores_censo2018, red_vial, reporte_calidad_resguardos (reales).
   Oro:   contexto_paquetes.csv (municipio del paquete, % en resguardo, consecuencia ambiental sugerida).
 Salidas (Oro): ejecucion_paquetes.csv, ejecucion_proyectos.csv, ejecucion_riesgos.csv, ejecucion_resumen.json
@@ -147,11 +148,16 @@ def cargar_entradas(cfg: dict | None = None) -> dict:
     info["municipio"] = ctx.set_index("id_paquete")["municipio"].reindex(info.index)
     z, extra = covariables(paquetes, ctx, cfg)
     piso = ctx.set_index("id_paquete")["ram_cons_ambiental"] if "ram_cons_ambiental" in ctx else None
-    return {"riesgos": riesgos, "paquetes": info, "z": z, "crudo": extra["crudo"], "fuentes_z": extra["fuentes"], "piso_ambiental": piso}
+    act = _lee(PLATA / "actividades.parquet")          # el horizonte de cada riesgo es el de la actividad a la que pega
+    corte = pd.to_datetime(act["fecha_corte"]).max() if act is not None else None
+    act = act.set_index("id_actividad") if act is not None else None
+    return {"riesgos": riesgos, "paquetes": info, "z": z, "crudo": extra["crudo"], "fuentes_z": extra["fuentes"], "piso_ambiental": piso,
+            "actividades": act, "corte": corte}
 
 
 def correr(entradas: dict, cfg: dict, escenario: dict | None = None, n: int | None = None) -> dict:
-    tabla = m.preparar_riesgos(entradas["riesgos"], entradas["paquetes"], entradas["z"], cfg, entradas["piso_ambiental"], escenario)
+    tabla = m.preparar_riesgos(entradas["riesgos"], entradas["paquetes"], entradas["z"], cfg, entradas["piso_ambiental"], escenario,
+                               actividades=entradas.get("actividades"), corte=entradas.get("corte"))
     sim = m.simular(tabla, entradas["paquetes"], cfg, n=n,
                     tolerancia_paquete=(escenario or {}).get("tolerancia_paquete"),
                     tolerancia_proyecto=(escenario or {}).get("tolerancia_proyecto"))

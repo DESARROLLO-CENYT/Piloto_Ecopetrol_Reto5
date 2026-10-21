@@ -98,7 +98,8 @@ ARCHIVO_A_DATASET = {
     "emergencias_meta.json": "emergencias_meta", "emergencias.parquet": "emergencias",
     "reporte_calidad_emergencias.csv": "emergencias_reporte_calidad", "proveniencia_emergencias.json": "proveniencia",
     "indicadores_municipio.json": "indicadores_municipio", "contexto_paquetes.csv": "contexto_paquetes",
-    "cronograma_paquetes.csv": "cronograma", "cronograma.parquet": "cronograma",
+    "cronograma_paquetes.csv": "cronograma", "cronograma.parquet": "cronograma", "cronograma_proyectos.csv": "cronograma_proyectos",
+    "actividades_cronograma.csv": "actividades", "actividades.parquet": "actividades", "cronograma_actividades.csv": "actividades",
     "ejecucion_paquetes.csv": "ejecucion_paquetes", "ejecucion_proyectos.csv": "ejecucion_proyectos",
     "ejecucion_riesgos.csv": "ejecucion_riesgos", "ejecucion_resumen.json": "ejecucion_resumen",
     "proveniencia_ideam.json": "proveniencia",
@@ -134,10 +135,27 @@ def dataset_de(nombre: str) -> str:
 
 DATASETS = {
     "cronograma": {
-        "titulo": "Cronograma de los paquetes", "icono": "calendar-clock", "rol": "Ejecución (modelo de riesgo de ejecución)",
-        "descripcion": "Duración, avance, meses que faltan, holgura (0 en ruta crítica), costo diario de parada y presupuesto de cada paquete.",
-        "generacion": "Sintético, con su propio generador aleatorio (semilla 49) para no alterar el resto: duración 8 a 24 meses, avance 10 a 70 %, "
-                      "holgura 10 a 45 días fuera de ruta crítica, parada de USD 15 mil a 90 mil por día.",
+        "titulo": "Cronograma de los paquetes", "icono": "calendar-clock", "rol": "Ejecución (avance, fechas y modelo de riesgo de ejecución)",
+        "descripcion": "Un paquete por fila: fechas de inicio y fin planeadas y proyectadas, avance real y planeado, índice de cumplimiento, "
+                       "meses que faltan, holgura (0 en ruta crítica), costo diario de parada y presupuesto. En Plata y Oro, el avance, las fechas y los "
+                       "meses que faltan se calculan desde las actividades del paquete.",
+        "generacion": "Sintético. Cada proyecto termina entre 0,4 y 0,6 veces la duración de su paquete más corto desde hoy; cada paquete termina su "
+                      "holgura antes que el proyecto (la ruta crítica, el mismo día). Duración, holgura (10 a 45 días fuera de ruta crítica), costo de parada "
+                      "(USD 15 mil a 90 mil por día) y presupuesto conservan los sorteos de siempre; el avance sale de las actividades.",
+    },
+    "cronograma_proyectos": {
+        "titulo": "Cronograma de los proyectos", "icono": "calendar-range", "rol": "Ejecución (avance y fechas del proyecto)",
+        "descripcion": "Un proyecto por fila: avance ponderado de todas sus actividades (cada una pesa lo de su paquete por el peso del paquete en el "
+                       "presupuesto), avance planeado a la fecha de corte, índice de cumplimiento, fechas planeadas y proyectadas, atraso proyectado y el "
+                       "paquete que define el fin.",
+    },
+    "actividades": {
+        "titulo": "Actividades de los paquetes", "icono": "list-checks", "rol": "Ejecución (fuente única del avance y las fechas)",
+        "descripcion": "Entre 5 y 7 actividades por paquete (ingeniería, gestión social, licencias, compras, obra civil, montaje, pruebas, cierre), en secuencia. "
+                       "Cada una pesa una fracción de su paquete (suma 1) y, por el peso del paquete en el proyecto, una fracción del proyecto (suma 1). "
+                       "Lleva fechas planeadas, reales y proyectadas: la proyectada es la real si ya ocurrió y, si falta, un pronóstico al ritmo que lleva el paquete.",
+        "generacion": "Sintético y sucio a propósito: estado escrito de varias formas, algunos avances en porcentaje (0 a 100) y filas repetidas. Plata "
+                      "las limpia: el estado se deriva del avance, los pesos se renormalizan a 1 y las fechas invertidas se corrigen.",
     },
     "ejecucion_paquetes": {
         "titulo": "Riesgo de ejecución por paquete", "icono": "timer", "rol": "Resultado del modelo",
@@ -660,6 +678,7 @@ COLUMNAS = {
     "id_paquete": "Identificador del paquete (PRY-01-PT03).",
     "nombre": "Nombre descriptivo.",
     "ruta_critica": "Si el paquete está en la ruta crítica del cronograma.",
+    "fecha_inicio_plan": "Inicio planeado (línea base): el de su primera actividad.", "fecha_fin_plan": "Fin planeado (línea base): el de su última actividad.",
     "id_comunidad": "Identificador de la comunidad.",
     "poblacion_aprox": "Población aproximada.",
     "conflictividad": "Índice de conflictividad social, 0 a 1.",
@@ -733,6 +752,8 @@ COLUMNAS = {
     "alcanza_resguardo": "Resguardo indígena (ANT) que alcanza el área de influencia de la amenaza, si su categoría puede afectarlo.",
     "alcanza_area_protegida": "Área protegida (RUNAP) que alcanza el área de influencia de la amenaza, si su categoría puede afectarla.",
     "punto_crisis": "Verdadero si la amenaza es un punto donde el paquete puede escalar a crisis.",
+    "municipio": "Municipio (DANE) donde cae: las coordenadas del riesgo o el centro del paquete.",
+    "codigo_municipio": "Código DANE de 5 dígitos de ese municipio.",
     "causa_crisis": "Por qué esa amenaza es un punto de crisis.",
     "tendencia_delta": "Cambio del ICT en los últimos 7 días.",
     "tendencia_alerta": "Verdadero si el ICT subió más que el umbral de tendencia.",
@@ -768,6 +789,57 @@ COLUMNAS = {
     "ia_ubicaciones_sembradas": "Riesgos sembrados con un municipio lejano en el texto.",
     "ia_ubicaciones_detectadas": "De las ubicaciones lejanas sembradas, cuántas detecta la IA.",
     "ia_ubicaciones_falsas_alarmas": "Ubicaciones correctas que la IA marcó por error.",
+    # actividad del cronograma a la que pega cada riesgo
+    "actividad_afectada": "Actividad afectada tal como la escribió quien llenó el registro: código, nombre o disciplina con cualquier ortografía, o vacía.",
+    "actividad_registrada": "Actividad afectada tal como llegó en el registro (sin corregir), para trazabilidad.",
+    "id_actividad": "Actividad del cronograma a la que pega el riesgo (o de la que es parte la fila).",
+    "actividad": "Nombre de la actividad del cronograma a la que pega el riesgo.",
+    "actividad_origen": "De dónde sale la actividad: registro (código válido), nombre (se reconoció el nombre o la disciplina), inferida (venía vacía) o corregida (código de otro paquete, o una actividad que no cuadra con el momento del riesgo).",
+    "revisar_actividad": "Verdadero si la actividad registrada se tuvo que corregir: alguien debería revisarla.",
+    "actividad_real": "Actividad verdadera a la que pega el riesgo (solo existe porque los datos son sintéticos).",
+    "riesgos_actividad_por_codigo": "Riesgos cuya actividad llegó con un código válido de su paquete.",
+    "riesgos_actividad_por_nombre": "Riesgos cuya actividad llegó escrita por su nombre o su disciplina.",
+    "riesgos_actividad_inferidas": "Riesgos sin actividad (o irreconocible): se infirió por su momento y su texto.",
+    "riesgos_actividad_codigo_de_otro_paquete": "Riesgos con el código de una actividad de otro paquete (se infirió la correcta).",
+    "riesgos_actividad_no_cuadra_con_el_estado": "Riesgos cuya actividad registrada no cuadra con su momento: abiertos en una actividad terminada o materializados en una que no había empezado.",
+    "riesgos_actividad_corregidas": "Riesgos con la actividad corregida (código de otro paquete o que no cuadra con el estado).",
+    "riesgos_sin_actividad": "Riesgos que quedaron sin actividad (debe ser 0).",
+    "actividad_exactitud_inferidas": "Acierto de la actividad inferida o corregida, contra la clave sintética.",
+    "actividad_exactitud_a_ciegas": "Acierto de la inferencia si ningún riesgo trajera su actividad (se infiere para todos y se compara con la clave).",
+    "actividades_bronce": "Filas de actividades que llegaron del cronograma (con repetidas).",
+    "actividades_repetidas_removidas": "Actividades repetidas que se quitaron.",
+    "actividades_sin_paquete_valido": "Actividades de un paquete que no existe.",
+    "actividades_plan_fechas_invertidas": "Actividades con la fecha de fin planeada antes del inicio (se invierten).",
+    "actividades_proyectada_fechas_invertidas": "Actividades con la fecha de fin proyectada antes del inicio (se invierten).",
+    "actividades_avance_en_porcentaje": "Avances que llegaron de 0 a 100 en vez de 0 a 1.",
+    "actividades_avance_sin_dato": "Actividades sin avance (se toman como no iniciadas).",
+    "actividades_estado_con_formato_distinto": "Estados escritos de otra forma ('Completada', ' EN_CURSO ').",
+    "actividades_estado_corregido": "Estados que no coincidían con el avance (manda el avance).",
+    "actividades_paquetes_con_pesos_corregidos": "Paquetes cuyos pesos de actividad no sumaban 1 (se renormalizan).",
+    "actividades_plata": "Actividades que pasan a Plata.",
+    "cronograma_bronce": "Paquetes en el cronograma de Bronce.",
+    "cronograma_holgura_en_ruta_critica_corregida": "Paquetes de ruta crítica con holgura declarada (se lleva a 0).",
+    "cronograma_fechas_corregidas_con_actividades": "Paquetes cuyas fechas declaradas no coincidían con las de sus actividades (mandan las actividades).",
+    "cronograma_sin_actividades": "Paquetes sin actividades.",
+    "cronograma_plata": "Paquetes con cronograma en Plata.",
+    "paquetes_sin_cronograma": "Paquetes que no aparecen en el cronograma.",
+    "ram_dimensiones_sin_calificar": "Consecuencias RAM (riesgo por dimensión) que llegaron en blanco.",
+    "ram_sin_probabilidad": "Riesgos sin probabilidad RAM reconocible.",
+    "ram_residual_igual_a_inherente": "Riesgos sin probabilidad residual: se toma la inherente (los controles no la bajan).",
+    "ram_residual_mayor_corregido": "Riesgos con la probabilidad residual mayor que la inherente (se iguala: los controles no la suben).",
+    "ram_sin_clasificar": "Riesgos que quedaron sin nivel RAM.",
+    # fechas del registro
+    "revisar_fechas": "Verdadero si alguna fecha del riesgo se corrigió o no cuadra: alguien debería revisarla.",
+    "problema_fechas": "Qué pasó con las fechas del riesgo (cruzadas, un año de más, sin fecha de materialización...).",
+    "fechas_dia_mes_ano": "Fechas que llegaron escritas día/mes/año en vez de año-mes-día (se leen igual).",
+    "fechas_materializacion_antes_de_identificacion": "Materializados con la fecha de materialización antes que la de identificación (se intercambian).",
+    "fechas_materializacion_futura_corregida": "Materializados con fecha en el futuro que cuadran con un año menos (se corrige).",
+    "fechas_materializacion_futura_sin_corregir": "Materializados con fecha en el futuro sin explicación (quedan sin fecha).",
+    "fechas_materializado_sin_fecha": "Materializados sin fecha de materialización.",
+    "fechas_abierto_con_materializacion": "Riesgos abiertos que traen fecha de materialización.",
+    "fechas_identificacion_futura": "Riesgos identificados después de la fecha de corte.",
+    "fechas_accion_antes_de_identificacion": "Riesgos con la acción anterior a su identificación.",
+    "riesgos_fechas_por_revisar": "Riesgos con alguna fecha corregida o por revisar.",
 }
 
 COLUMNAS_IDEAM = {
@@ -1157,7 +1229,8 @@ COLUMNAS_EJECUCION = {
     "riesgo_principal": "Amenaza que más atraso esperado aporta.", "categoria_principal": "Su categoría.",
     "letra": "Letra RAM usada (residual o, en el escenario sin controles, la inherente).", "lambda0": "Eventos por año de esa letra en un paquete.",
     "multiplicador_territorial": "Cuánto multiplica el territorio la frecuencia (1 = promedio de La Guajira).", "lambda": "Frecuencia final (eventos por año).",
-    "horizonte_anios": "Años que le faltan al paquete.", "probabilidad": "Probabilidad de que ocurra en lo que falta (1 si ya ocurrió).",
+    "horizonte_anios": "Años de exposición: lo que le falta por ejecutarse a la actividad a la que pega la amenaza (o a su paquete, si no se sabe).",
+    "horizonte_origen": "De dónde sale el horizonte: actividad (lo que le falta a su actividad) o paquete.", "probabilidad": "Probabilidad de que ocurra en lo que falta (1 si ya ocurrió).",
     "dias_por_evento": "Días de atraso más probables por evento (la peor dimensión).", "costo_directo_medio": "Costo directo medio por evento (banda USD económica).",
     "costo_dia": "Costo diario de parada del paquete.", "atraso_esperado": "λ · T · días medios.", "costo_esperado": "λ · T · costo medio por evento.",
     "consumido_dias": "Días ya consumidos (materializado).", "consumido_usd": "USD ya consumidos.", "grupo_choque": "Grupo con el que comparte el choque común.",
@@ -1179,9 +1252,37 @@ COLUMNAS_CRISIS = {
     "n_puntos": "Puntos de crisis que forman la zona.", "area_km2": "Área de la zona de intervención en km².",
 }
 
+COLUMNAS_CRONOGRAMA = {
+    "id_actividad": "Identificador de la actividad (paquete + número).", "orden": "Posición de la actividad dentro del paquete (van en secuencia).",
+    "nombre": "Nombre de la actividad.", "disciplina": "Disciplina que la ejecuta.", "estado": "por_iniciar, en_curso o completada (se deriva del avance).",
+    "peso_en_paquete": "Fracción del paquete que representa la actividad (suma 1 por paquete).",
+    "peso_en_proyecto": "Fracción del proyecto que representa: su peso en el paquete por el peso del paquete (presupuesto) en el proyecto. Suma 1 por proyecto.",
+    "peso_en_proyecto_pct": "Peso del paquete en el proyecto (su presupuesto sobre el del proyecto).",
+    "avance": "Fracción ejecutada (0 a 1); en un paquete o proyecto es la suma de peso × avance de sus actividades.",
+    "avance_plan": "Fracción que el calendario planeado dice que ya debería estar hecha a la fecha de corte.",
+    "indice_cumplimiento": "Avance real / avance planeado (como el SPI del valor ganado): 1 va al día, menos de 1 va atrasado.",
+    "aporte_avance_pp": "Puntos de avance (de 100) que la actividad ya aporta al proyecto.", "aporte_total_pp": "Puntos que aportará al proyecto al terminar.",
+    "por_ejecutar": "Verdadero si la actividad aún no está completada.",
+    "fecha_inicio_plan": "Inicio planeado (línea base).", "fecha_fin_plan": "Fin planeado (línea base).",
+    "fecha_inicio_real": "Inicio real (solo si ya empezó).", "fecha_fin_real": "Fin real (solo si ya terminó).",
+    "fecha_inicio_proyectada": "Inicio proyectado: el real si ya ocurrió; si no, pronóstico al ritmo actual.",
+    "fecha_fin_proyectada": "Fin proyectado: el real si ya ocurrió; si no, pronóstico al ritmo actual.",
+    "atraso_proyectado_dias": "Fin proyectado menos fin planeado (días).",
+    "atraso_sobre_holgura_dias": "Días de atraso proyectado que pasan la holgura del paquete: lo que ya atrasa al proyecto.",
+    "paquetes_sobre_su_holgura": "Paquetes del proyecto cuyo atraso proyectado ya pasa su holgura.",
+    "paquete_que_define_el_fin": "Paquete que termina último según las fechas proyectadas.",
+    "actividad_en_curso": "Actividad que se está ejecutando.", "siguiente_actividad": "Primera actividad por iniciar.",
+    "n_actividades": "Número de actividades.", "n_completadas": "Actividades completadas.", "n_en_curso": "Actividades en curso.", "n_paquetes": "Número de paquetes.",
+    "fecha_corte": "Fecha a la que están medidos el avance y las fechas proyectadas (día en que se generó el dato).",
+    "nombre_paquete": "Nombre del paquete.", "nombre_proyecto": "Nombre del proyecto.",
+    "riesgos": "Riesgos del registro que pegan en la actividad.", "amenazas_abiertas": "Amenazas abiertas (latentes o próximas a materializarse) que pegan en la actividad.",
+    "amenazas_altas": "De esas, las de nivel RAM residual alto o muy alto.", "riesgos_materializados": "Riesgos que ya se materializaron en la actividad.",
+}
+
 COLUMNAS_POR_DATASET = {
     "puntos_crisis": COLUMNAS_CRISIS, "zonas_intervencion": COLUMNAS_CRISIS,
-    **{d: COLUMNAS_EJECUCION for d in ("cronograma", "ejecucion_paquetes", "ejecucion_proyectos", "ejecucion_riesgos", "ejecucion_resumen")},
+    **{d: COLUMNAS_EJECUCION for d in ("ejecucion_paquetes", "ejecucion_proyectos", "ejecucion_riesgos", "ejecucion_resumen")},
+    **{d: {**COLUMNAS_EJECUCION, **COLUMNAS_CRONOGRAMA} for d in ("cronograma", "cronograma_proyectos", "actividades")},
     **{d: COLUMNAS_SOCIAL for d in ("dane_censo2018", "ins_irca", "art_pdet", "social_meta", "indicadores_censo2018", "irca_anual",
                                     "social_reporte_calidad", "ant_resguardos", "mininterior_resguardos_poblacion", "resguardos_meta", "resguardos",
                                     "resguardos_reporte_calidad", "runap_crudo", "runap_meta", "areas_protegidas", "runap_reporte_calidad",

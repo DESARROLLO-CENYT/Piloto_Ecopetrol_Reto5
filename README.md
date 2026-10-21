@@ -7,7 +7,7 @@ arquitectura medallion (Bronce → Plata → Oro), modelo multicriterio explicab
 mapa de calor, alertas tempranas y una aplicación web para explorarlo.
 
 > **Registro sintético, territorio real.** Los proyectos, los paquetes de trabajo,
-> su cronograma y el registro de riesgos son inventados (`src/bronce/sinteticos.py`):
+> sus actividades con fechas y avance y el registro de riesgos son inventados (`src/bronce/sinteticos.py`):
 > no son información de Ecopetrol ni de ninguna comunidad. El territorio sí es
 > real y sale de datos abiertos oficiales: clima (IDEAM, CHIRPS), municipios y censo
 > (DANE), resguardos (ANT), áreas protegidas (RUNAP), vías (INVIAS, IGAC), ríos
@@ -112,11 +112,19 @@ Si cambió el modelo o el generador de datos, agrega `--regenerar`.
   de cada municipio reúne todo (con la serie de delitos por mes) y la de cada
   paquete dice su entorno real (municipio, resguardo y área protegida más
   cercanos, delitos y emergencias).
-- **Explorar**: registro de riesgos ordenable y filtrable (también por el texto
-  de la descripción y por lo que marcó la IA), riesgos por categoría y por semana,
-  paquetes prioritarios y la **matriz RAM de Ecopetrol** (amenazas abiertas en
-  cada celda, residual o inherente, con lo que exige cada nivel; clic en una
-  celda para filtrar el registro).
+- **Explorar**, en tres subpáginas (`explorar.html#resumen`, `#proyectos`, `#riesgos`):
+  - *Resumen*: cuántos proyectos, paquetes, actividades y riesgos hay; todo por
+    municipio; actividades por tipo y estado; el cruce de riesgos por proyecto y
+    paquete (por categoría, nivel RAM o estado), su estado y su ritmo semanal.
+    Cada número lleva al detalle.
+  - *Proyectos y actividades*: avance real y planeado de cada proyecto, su
+    cronograma (Gantt con lo planeado, lo proyectado, lo ejecutado y el atraso),
+    las actividades con su peso y su aporte, los paquetes con su ICT y sus
+    amenazas abiertas, y el avance por tipo de actividad.
+  - *Riesgos*: la **matriz RAM de Ecopetrol** (residual o inherente, con lo que
+    exige cada nivel), el registro filtrable por proyecto, paquete, municipio,
+    categoría, tipo, estado, acción, texto y marcas de la IA, y la **ficha** de
+    cada riesgo con todas sus características (`#riesgos/RSK-0001` la abre directo).
 - **Alertas tempranas diarias**: cada día (a las 06:00 si la aplicación está
   encendida, o con `alertas_diarias.py` desde el Programador de tareas) se
   descarga la lluvia del IDEAM, se recalcula el ICT y se arma un boletín con las
@@ -147,6 +155,13 @@ Si cambió el modelo o el generador de datos, agrega `--regenerar`.
   escala el paquete y la ficha de cada paquete compara su calificación con lo
   que sugiere el territorio real (delitos, emergencias, resguardos, áreas
   protegidas). Escalas y matriz en `parametros.yaml` → `ram`.
+- **Cronograma por actividades**: cada paquete tiene actividades con un peso; el avance
+  de un paquete y de un proyecto es la suma de lo que aporta cada una. Fechas de
+  inicio y fin planeadas y proyectadas (al ritmo real), atraso frente a la holgura
+  y el paquete que define el fin del proyecto. Cada riesgo apunta a la actividad a la
+  que pega (la que trae el registro, o inferida por su momento y su texto), y el riesgo
+  de ejecución usa lo que le falta a esa actividad como horizonte. Detalle en
+  **[docs/CRONOGRAMA.md](docs/CRONOGRAMA.md)**.
 - **Riesgo de ejecución**: modelo matemático (Monte Carlo) que convierte la
   matriz RAM y el territorio real en días de atraso y dólares de sobrecosto por
   paquete y proyecto: atraso esperado, P50/P90, IRE (probabilidad de pasar la
@@ -390,6 +405,7 @@ requirements.txt             dependencias con versiones fijas
 docs/PIPELINE.md             documentación del pipeline medallion (tablas automáticas)
 docs/MODELO_ICT.md           formulación del ICT, escalamiento, mapa de calor, alertas e IA
 docs/MODELO_EJECUCION.md     formulación del riesgo de ejecución (Monte Carlo)
+docs/CRONOGRAMA.md           actividades con peso, avance y fechas planeadas y proyectadas
 src/                         pipeline de datos y modelo
   comun/ bronce/ plata/ oro/ consumo/   una carpeta por capa medallion
   modelo/                    ICT, territorio real, AHP, estadística espacial, IA sobre texto, riesgo de ejecución

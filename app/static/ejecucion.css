@@ -88,3 +88,25 @@
 @media (max-width: 900px) {
   .esc-grid, .sup-grid, .formula { grid-template-columns: 1fr; }
 }
+
+/* Cronograma */
+.cron-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--s-4); margin: var(--s-2) 0 var(--s-4); }
+.cron-kpis .kpi .l { font-size: var(--fs-11); color: var(--muted); }
+.cron-kpis .kpi .v { font-family: var(--font-display); font-size: 22px; font-weight: 500; }
+.cron-kpis .kpi .v.sm { font-size: 16px; }
+.cron-kpis .kpi .v small { font-size: var(--fs-12); color: var(--muted); font-weight: 400; }
+.cron-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-4); }
+#tabla-cron td { white-space: nowrap; }
+#tabla-cron tbody tr { cursor: pointer; }
+#tabla-cron tbody tr.sel td { background: var(--green-50); }
+.av { position: relative; height: 6px; width: 120px; border-radius: 3px; background: var(--surface-muted); margin-top: 4px; overflow: hidden; }
+.av .plan { position: absolute; inset: 0 auto 0 0; background: var(--green-200); }
+.av .real { position: absolute; inset: 0 auto 0 0; background: var(--green-600); border-radius: 3px; }
+.acts { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 var(--s-6); }
+.acts li { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-12); }
+.acts li:last-child { border-bottom: 0; }
+.acts .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: var(--fs-13); font-weight: 600; }
+.acts .s { color: var(--muted); margin-top: 2px; }
+.acts .av { width: 100%; }
+.acts li.por_iniciar .n { color: var(--ink-2); font-weight: 500; }
+.atr-a { color: #a3261a; }

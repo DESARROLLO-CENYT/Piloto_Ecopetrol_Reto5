@@ -15,6 +15,9 @@ from shapely.geometry import Point
 
 from comun.config import BRONCE, CRS_GEOGRAFICO, CRS_METRICO, PLATA, asegurar_directorios, cargar_parametros
 from modelo.ram import Ram, normalizar_consecuencia, normalizar_probabilidad
+from modelo import actividad_riesgo as m_act
+from modelo import cronograma as m_cron
+from modelo import fechas_riesgo as m_fechas
 from modelo import texto as m_texto
 
 COLUMNAS_RAM = {"PE": "cons_personas", "EC": "cons_economica", "MA": "cons_ambiental", "CL": "cons_clientes", "IM": "cons_imagen"}
@@ -179,19 +182,21 @@ def cargar_bronce():
     gdf_vias = gpd.read_file(BRONCE / "vias.geojson")
     df_clima = pd.read_csv(BRONCE / "clima_sintetico.csv")
     df_cron = pd.read_csv(BRONCE / "cronograma_paquetes.csv")
+    df_act = pd.read_csv(BRONCE / "actividades_cronograma.csv")
     clave = BRONCE / "clave_categorias_sinteticas.csv"
     municipios = PLATA / "municipios.geojson"     # diccionario geografico para la IA (si ya se descargo)
     return {
         "riesgos": df_riesgos, "paquetes": gdf_paquetes, "proyectos": gdf_proyectos,
         "comunidades": gdf_comunidades, "areas": gdf_areas, "hidro": gdf_hidro,
-        "vias": gdf_vias, "clima": df_clima, "cronograma": df_cron,
+        "vias": gdf_vias, "clima": df_clima, "cronograma": df_cron, "actividades": df_act,
         "clave": pd.read_csv(clave) if clave.exists() else None,
         "municipios": gpd.read_file(municipios) if municipios.exists() else None,
     }
 
 
 def limpiar_riesgos(df: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame, ram: Ram | None = None,
-                    municipios: gpd.GeoDataFrame | None = None, clave: pd.DataFrame | None = None) -> tuple[gpd.GeoDataFrame, dict]:
+                    municipios: gpd.GeoDataFrame | None = None, clave: pd.DataFrame | None = None,
+                    actividades: pd.DataFrame | None = None) -> tuple[gpd.GeoDataFrame, dict]:
     params = cargar_parametros()
     ram = ram or Ram(params["ram"])
     reporte = {"filas_bronce": len(df)}
@@ -219,10 +224,24 @@ def limpiar_riesgos(df: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame, ram: Ram |
     reporte["duplicados_removidos"] = antes - len(df)
     reporte.update(rep_ram)
 
-    # 4) Tipos y fechas
-    for col in ["fecha_identificacion", "fecha_materializacion", "fecha_ejecucion_accion"]:
-        df[col] = pd.to_datetime(df[col], errors="coerce")
+    # 4) Fechas: ISO o dia/mes/ano; las cruzadas se intercambian, un ano de mas se corrige y lo que no tiene arreglo se
+    #    marca para revisar (modelo/fechas_riesgo.py). El corte es el del cronograma (o hoy, si no hay).
+    corte = pd.to_datetime(actividades["fecha_corte"]).max() if actividades is not None and len(actividades) else pd.Timestamp.today()
+    df, rep_fechas = m_fechas.revisar(df, corte)
+    reporte.update(rep_fechas)
     df["causa"] = df["causa"].fillna("sin_causa_registrada")
+
+    # 4b) Actividad del cronograma a la que pega cada riesgo: la registrada si cuadra; si falta o no cuadra, inferida
+    #     por el momento del riesgo y su texto (modelo/actividad_riesgo.py)
+    if "actividad_afectada" in df:
+        df = df.rename(columns={"actividad_afectada": "actividad_registrada"})
+    if actividades is not None and len(actividades):
+        if "actividad_registrada" not in df:
+            df["actividad_registrada"] = None
+        df["actividad_afectada"] = df["actividad_registrada"]
+        resueltas, rep_act = m_act.resolver(df, actividades)
+        df = df.drop(columns=["actividad_afectada"]).join(resueltas)
+        reporte.update(rep_act)
 
     # 4) Geolocalizacion: usar lat/lon si existen; si no, inferir por el
     #    centroide del paquete de trabajo y marcarlo.
@@ -246,33 +265,100 @@ def limpiar_riesgos(df: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame, ram: Ram |
 
     reporte["filas_plata"] = len(gdf)
     reporte.update(resumen_ia(gdf, clave))   # las cifras de la IA se reportan sobre el registro final, sin duplicados
+    if actividades is not None and clave is not None and "actividad_real" in clave and "id_actividad" in gdf:
+        reporte.update(m_act.exactitud(gdf, actividades, clave.set_index("id_riesgo")["actividad_real"]))
     return gdf, reporte
 
 
-def limpiar_cronograma(cron: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame) -> tuple[pd.DataFrame, dict]:
-    """Un paquete por fila, numeros validos y coherencia con la ruta critica (un paquete critico no tiene holgura)."""
+COLUMNAS_FECHA = ["fecha_inicio_plan", "fecha_fin_plan", "fecha_inicio_real", "fecha_fin_real", "fecha_inicio_proyectada",
+                  "fecha_fin_proyectada", "fecha_corte"]
+
+
+def limpiar_actividades(act: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame, cron: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Actividades listas para calcular: sin repetidas, con estado y avance coherentes, fechas ordenadas y pesos que suman 1.
+
+    * Estado: se escribe de varias formas ('Completada', ' EN_CURSO '); manda el avance (0 por iniciar, 1 completada).
+    * Avance: algunos exports lo traen de 0 a 100; lo que pasa de 1 se divide por 100.
+    * Fechas: si el fin queda antes del inicio se invierten; las reales solo existen si la actividad ya empezo o termino.
+    * Pesos: los de cada paquete se renormalizan a 1; `peso_en_proyecto` = peso en el paquete por el peso del paquete
+      (su presupuesto sobre el del proyecto).
+    """
+    rep = {"actividades_bronce": int(len(act))}
+    a = act.drop_duplicates("id_actividad").copy()
+    rep["actividades_repetidas_removidas"] = int(len(act) - len(a))
+    en_paquetes = a["id_paquete"].isin(gdf_paquetes["id_paquete"])
+    rep["actividades_sin_paquete_valido"] = int((~en_paquetes).sum())
+    a = a[en_paquetes].copy()
+
+    for c in COLUMNAS_FECHA:
+        a[c] = pd.to_datetime(a[c], errors="coerce")
+    for ini, fin in (("fecha_inicio_plan", "fecha_fin_plan"), ("fecha_inicio_proyectada", "fecha_fin_proyectada")):
+        al_reves = a[ini] > a[fin]
+        rep[f"actividades_{ini.split('_', 1)[1].replace('inicio_', '')}_fechas_invertidas"] = int(al_reves.sum())
+        a.loc[al_reves, [ini, fin]] = a.loc[al_reves, [fin, ini]].to_numpy()
+
+    a["avance"], rep["actividades_avance_en_porcentaje"] = m_cron.normalizar_avance(a["avance"])
+    rep["actividades_avance_sin_dato"] = int(a["avance"].isna().sum())
+    a["avance"] = a["avance"].fillna(0.0)
+    rep["actividades_estado_con_formato_distinto"] = int((~a["estado"].isin(m_cron.ESTADOS)).sum())
+    estado = m_cron.normalizar_estado(a["estado"])
+    esperado = m_cron.estado_por_avance(a["avance"])
+    rep["actividades_estado_corregido"] = int((estado != esperado).sum())
+    a["estado"] = esperado
+
+    a["peso_en_paquete"], rep["actividades_paquetes_con_pesos_corregidos"] = m_cron.normalizar_pesos(a)
+    presupuesto = pd.to_numeric(cron.drop_duplicates("id_paquete").set_index("id_paquete")["presupuesto_usd"], errors="coerce")
+    proyecto_de = gdf_paquetes.set_index("id_paquete")["id_proyecto"]
+    a["peso_en_proyecto"] = m_cron.peso_en_proyecto(a, presupuesto, proyecto_de).round(6)
+    a["peso_en_paquete"] = a["peso_en_paquete"].round(6)
+    rep["actividades_plata"] = int(len(a))
+    return a.sort_values(["id_paquete", "orden"]).reset_index(drop=True), rep
+
+
+def limpiar_cronograma(cron: pd.DataFrame, gdf_paquetes: gpd.GeoDataFrame, act: pd.DataFrame | None = None) -> tuple[pd.DataFrame, dict]:
+    """Un paquete por fila. Con actividades, el avance, la duracion, los meses que faltan y las fechas se CALCULAN desde ellas
+    (lo declarado en el cronograma de Bronce se compara y, si no coincide, manda la suma de las actividades). La holgura
+    sigue siendo la declarada, salvo que un paquete de ruta critica no tiene holgura."""
     rep = {"cronograma_bronce": int(len(cron))}
     c = cron.drop_duplicates("id_paquete").copy()
     c = c[c["id_paquete"].isin(gdf_paquetes["id_paquete"])]
-    for col in ("duracion_meses", "avance", "meses_restantes", "holgura_dias", "costo_dia_parada_usd", "presupuesto_usd"):
+    for col in ("holgura_dias", "costo_dia_parada_usd", "presupuesto_usd"):
         c[col] = pd.to_numeric(c[col], errors="coerce").clip(lower=0)
-    c["avance"] = c["avance"].clip(upper=1)
     critico = c["id_paquete"].map(gdf_paquetes.set_index("id_paquete")["ruta_critica"].astype(bool))
     rep["cronograma_holgura_en_ruta_critica_corregida"] = int((critico & (c["holgura_dias"] > 0)).sum())
     c.loc[critico, "holgura_dias"] = 0
     c["ruta_critica"] = critico.values
+    c = c.set_index("id_paquete")
+
+    if act is not None and len(act):
+        corte = pd.to_datetime(act["fecha_corte"]).max()
+        calc = m_cron.consolidar_paquetes(act, corte)
+        declarado_ini = pd.to_datetime(c["fecha_inicio_plan"], errors="coerce")
+        declarado_fin = pd.to_datetime(c["fecha_fin_plan"], errors="coerce")
+        distintas = (declarado_ini != calc["fecha_inicio_plan"].reindex(c.index)) | (declarado_fin != calc["fecha_fin_plan"].reindex(c.index))
+        rep["cronograma_fechas_corregidas_con_actividades"] = int(distintas.sum())
+        c = c.drop(columns=["fecha_inicio_plan", "fecha_fin_plan", "fecha_corte"], errors="ignore").join(calc)
+        c["fecha_corte"] = corte
+        c["fecha_corte"] = pd.to_datetime(c["fecha_corte"])
+        rep["cronograma_sin_actividades"] = int(c["n_actividades"].isna().sum())
+    else:
+        rep["cronograma_sin_actividades"] = int(len(c))
     rep["cronograma_plata"] = int(len(c))
-    rep["paquetes_sin_cronograma"] = int((~gdf_paquetes["id_paquete"].isin(c["id_paquete"])).sum())
-    return c.reset_index(drop=True), rep
+    rep["paquetes_sin_cronograma"] = int((~gdf_paquetes["id_paquete"].isin(c.index)).sum())
+    return c.reset_index(), rep
 
 
 def main():
     asegurar_directorios()
     datos = cargar_bronce()
 
-    gdf_riesgos, reporte = limpiar_riesgos(datos["riesgos"], datos["paquetes"], municipios=datos["municipios"], clave=datos["clave"])
-    cron, rep_cron = limpiar_cronograma(datos["cronograma"], datos["paquetes"])
+    act, rep_act = limpiar_actividades(datos["actividades"], datos["paquetes"], datos["cronograma"])
+    gdf_riesgos, reporte = limpiar_riesgos(datos["riesgos"], datos["paquetes"], municipios=datos["municipios"], clave=datos["clave"],
+                                           actividades=act)
+    cron, rep_cron = limpiar_cronograma(datos["cronograma"], datos["paquetes"], act)
+    reporte.update(rep_act)
     reporte.update(rep_cron)
+    act.to_parquet(PLATA / "actividades.parquet", index=False)
     cron.to_parquet(PLATA / "cronograma.parquet", index=False)
 
     gdf_riesgos.to_file(PLATA / "riesgos.geojson", driver="GeoJSON")

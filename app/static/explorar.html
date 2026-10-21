@@ -23,144 +23,274 @@
     </div>
   </div>
 
-  <div class="bento">
-    <div class="stack span-4">
-      <section class="card card-green">
+  <nav class="subnav" aria-label="Subpáginas de Explorar">
+    <div class="seg light" id="subnav">
+      <button data-vista="resumen"><i data-lucide="chart-pie"></i> Resumen</button>
+      <button data-vista="proyectos"><i data-lucide="briefcase"></i> Proyectos y actividades</button>
+      <button data-vista="riesgos"><i data-lucide="shield-alert"></i> Riesgos</button>
+    </div>
+    <span class="subnav-txt" id="subnav-txt"></span>
+  </nav>
+
+  <!-- =========================================================================================================== -->
+  <!-- 1. Resumen: cuantos hay de cada cosa, donde estan y como se cruzan                                          -->
+  <!-- =========================================================================================================== -->
+  <section class="vista" id="v-resumen" hidden>
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="bento">
+      <section class="card span-7">
         <div class="card-head">
+          <div class="card-icon"><i data-lucide="map-pin"></i></div>
           <div class="grow">
-            <div class="card-title">Índice de criticidad</div>
-            <div class="card-sub">Promedio del portafolio · escala 0 a 100</div>
+            <div class="card-title">Por municipio</div>
+            <div class="card-sub" id="sub-municipios">-</div>
           </div>
-          <span class="icon-btn glass"><i data-lucide="radar"></i></span>
         </div>
-        <div class="num xl" id="ict-prom">-</div>
-        <div class="hero-foot"><span id="ict-paquetes">-</span><span id="ict-escalamiento">-</span></div>
+        <div class="table-wrap">
+          <table class="table tabla-mun" id="tabla-municipios">
+            <thead><tr>
+              <th>Municipio</th><th title="Proyectos con al menos un paquete en el municipio">Proyectos</th><th>Paquetes</th>
+              <th>Actividades</th><th title="Riesgos ubicados en el municipio (por sus coordenadas)">Riesgos</th>
+              <th title="Amenazas latentes o próximas a materializarse">Abiertas</th><th title="Amenazas abiertas con RAM residual alta o muy alta">H y VH</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="nota">Proyectos, paquetes y actividades se cuentan por el municipio del centro de su paquete; los riesgos, por el municipio donde están ubicados. Clic en un municipio para ver sus riesgos.</p>
       </section>
 
-      <section class="card">
+      <section class="card span-5 chart-card">
         <div class="card-head">
-          <div class="card-icon"><i data-lucide="file-text"></i></div>
+          <div class="card-icon"><i data-lucide="list-checks"></i></div>
           <div class="grow">
-            <div class="card-title">Riesgos registrados</div>
-            <div class="card-sub">Registro consolidado (capa Oro)</div>
+            <div class="card-title">Actividades por tipo</div>
+            <div class="card-sub" id="sub-tipos">-</div>
+          </div>
+          <div class="seg" id="seg-tipos">
+            <button class="on" data-v="estado">Avance</button>
+            <button data-v="riesgos">Riesgos</button>
           </div>
         </div>
-        <div class="stat-row"><div class="num lg" id="n-riesgos">-</div><span class="trend soft" id="trend-riesgos"></span></div>
-        <div class="split">
-          <span class="status"><span class="dot" style="background:var(--lvl-critico)"></span>Amenazas <b id="n-amenazas">-</b></span>
-          <span class="status"><span class="dot" style="background:var(--navy)"></span>Oportunidades <b id="n-oport">-</b></span>
+        <div class="leyenda" id="ley-tipos"></div>
+        <div class="chart-box"><canvas id="chart-tipos"></canvas></div>
+      </section>
+
+      <section class="card span-8">
+        <div class="card-head wrap">
+          <div class="card-icon"><i data-lucide="grid-2x2"></i></div>
+          <div class="grow">
+            <div class="card-title">Riesgos por proyecto y paquete</div>
+            <div class="card-sub">Qué riesgos tiene cada proyecto · clic en una celda para verlos</div>
+          </div>
+          <div class="seg" id="seg-cruce">
+            <button class="on" data-v="categoria">Categoría</button>
+            <button data-v="nivel">Nivel RAM</button>
+            <button data-v="estado">Estado</button>
+            <button data-v="actividad">Actividad</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="cruce" id="tabla-cruce"></table></div>
+        <p class="nota" id="nota-cruce"></p>
+      </section>
+
+      <div class="stack span-4">
+        <section class="card">
+          <div class="card-head">
+            <div class="card-icon"><i data-lucide="activity"></i></div>
+            <div class="grow">
+              <div class="card-title">Estado de los riesgos</div>
+              <div class="card-sub">Ciclo de materialización</div>
+            </div>
+          </div>
+          <div id="estados"></div>
+        </section>
+        <section class="card chart-card">
+          <div class="card-head">
+            <div class="grow">
+              <div class="card-title">Identificados</div>
+              <div class="card-sub">Riesgos nuevos por semana</div>
+            </div>
+          </div>
+          <div class="stat-row"><div class="num md" id="n-semana">-</div><span class="trend" id="trend-semana"></span></div>
+          <div class="card-sub">en los últimos 7 días</div>
+          <div class="chart-box sm"><canvas id="chart-semanas"></canvas></div>
+        </section>
+      </div>
+
+      <section class="card span-12 chart-card">
+        <div class="card-head wrap">
+          <div class="card-icon"><i data-lucide="chart-column"></i></div>
+          <div class="grow">
+            <div class="card-title">Riesgos por categoría</div>
+            <div class="card-sub">Clic en una barra para ver esos riesgos</div>
+          </div>
+          <div class="seg" id="seg-tipo">
+            <button class="on" data-v="">Todos</button>
+            <button data-v="amenaza">Amenazas</button>
+            <button data-v="oportunidad">Oportunidades</button>
+          </div>
+        </div>
+        <div class="chart-box"><canvas id="chart-categoria"></canvas></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- =========================================================================================================== -->
+  <!-- 2. Proyectos y actividades: avance, cronograma y lo que falta por ejecutar                                  -->
+  <!-- =========================================================================================================== -->
+  <section class="vista" id="v-proyectos" hidden>
+    <div class="bento" id="proy-cards"></div>
+
+    <div class="bento">
+      <section class="card span-12">
+        <div class="card-head wrap">
+          <div class="card-icon"><i data-lucide="calendar-range"></i></div>
+          <div class="grow">
+            <div class="card-title" id="gantt-titulo">Cronograma</div>
+            <div class="card-sub">Clic en un paquete para ver sus actividades · la barra oscura es lo ejecutado</div>
+          </div>
+          <div class="leyenda">
+            <span><i class="sw plan"></i>Planeado</span><span><i class="sw proy"></i>Proyectado</span>
+            <span><i class="sw hecho"></i>Ejecutado</span><span><i class="sw atraso"></i>Atraso</span><span><i class="sw hoy"></i>Corte</span>
+          </div>
+        </div>
+        <div class="gantt" id="gantt"></div>
+      </section>
+
+      <section class="card span-8">
+        <div class="card-head">
+          <div class="card-icon"><i data-lucide="list-checks"></i></div>
+          <div class="grow">
+            <div class="card-title">Actividades</div>
+            <div class="card-sub" id="sub-actividades">-</div>
+          </div>
+        </div>
+        <div class="filtros">
+          <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="a-buscar" placeholder="Buscar actividad"></div>
+          <select class="field" id="a-paquete"></select>
+          <select class="field" id="a-tipo"></select>
+          <select class="field" id="a-estado"></select>
+        </div>
+        <div class="table-wrap actividades">
+          <table class="table" id="tabla-actividades">
+            <thead><tr>
+              <th class="sortable" data-col="orden">Actividad</th>
+              <th class="sortable" data-col="avance" title="Avance y estado de la actividad">Avance</th>
+              <th class="sortable" data-col="amenazas_abiertas" title="Amenazas abiertas que pegan en la actividad (en naranja, las de RAM alta o muy alta) y riesgos ya materializados en ella">Riesgos</th>
+              <th class="sortable" data-col="fecha_fin_proyectada" title="Inicio y fin planeados; abajo, el fin real si ya terminó o el proyectado al ritmo del paquete, y su atraso">Fechas</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="stack span-4">
+        <section class="card">
+          <div class="card-head">
+            <div class="card-icon"><i data-lucide="hexagon"></i></div>
+            <div class="grow">
+              <div class="card-title">Paquetes del proyecto</div>
+              <div class="card-sub">Avance, criticidad territorial y riesgos abiertos</div>
+            </div>
+          </div>
+          <div id="lista-paquetes"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <div class="card-icon"><i data-lucide="layers"></i></div>
+            <div class="grow">
+              <div class="card-title">Avance por tipo de actividad</div>
+              <div class="card-sub">Ponderado por el peso de cada actividad en el proyecto</div>
+            </div>
+          </div>
+          <div id="avance-tipos"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================================================== -->
+  <!-- 3. Riesgos: la matriz RAM, el registro con todos sus filtros y la ficha de cada riesgo                       -->
+  <!-- =========================================================================================================== -->
+  <section class="vista" id="v-riesgos" hidden>
+    <div class="bento">
+      <section class="card span-12 ram-card">
+        <div class="card-head wrap">
+          <div class="card-icon"><i data-lucide="grid-3x3"></i></div>
+          <div class="grow">
+            <div class="card-title">Matriz RAM de Ecopetrol</div>
+            <div class="card-sub" id="sub-ram">Amenazas abiertas en cada celda · clic en una celda para filtrar el registro</div>
+          </div>
+          <div class="seg" id="seg-ram">
+            <button class="on" data-v="residual" title="Con los controles actuales">Residual</button>
+            <button data-v="inherente" title="Sin controles">Inherente</button>
+          </div>
+        </div>
+        <div class="ram-cuerpo">
+          <div class="ram-izq">
+            <table class="ram-matriz" id="ram-matriz"></table>
+            <p class="ram-pie">Consecuencia de 0 a 5 en la dimensión que manda (Personas, Económica, Ambiental, Clientes o Imagen) · probabilidad de A a E según el historial. Pasa el cursor por los encabezados para ver las escalas.</p>
+          </div>
+          <div class="ram-niveles" id="ram-niveles"></div>
+        </div>
+        <p class="ram-fuente" id="ram-fuente"></p>
+      </section>
+
+      <section class="card span-12">
+        <div class="card-head">
+          <div class="card-icon"><i data-lucide="table-2"></i></div>
+          <div class="grow">
+            <div class="card-title">Registro de riesgos</div>
+            <div class="card-sub" id="sub-registro">-</div>
+          </div>
+          <button class="btn btn-outline sm" id="f-limpiar"><i data-lucide="eraser"></i> Quitar filtros</button>
+        </div>
+        <div class="filtros">
+          <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="f-buscar" placeholder="Buscar ID, paquete o texto"></div>
+          <select class="field" id="f-proyecto"></select>
+          <select class="field" id="f-paquete"></select>
+          <select class="field" id="f-actividad" title="Tipo de actividad a la que pega el riesgo; con un paquete elegido, también cada una de sus actividades"></select>
+          <select class="field" id="f-municipio"></select>
+          <select class="field" id="f-categoria"></select>
+          <select class="field" id="f-tipo"></select>
+          <select class="field" id="f-estado"></select>
+          <select class="field" id="f-accion" title="Estado de la acción de tratamiento: vencida si su fecha ya pasó y el riesgo sigue abierto. Para escalar un paquete a crisis el modelo cuenta solo las de amenazas"></select>
+          <button class="chip" id="f-ia" title="Riesgos que la IA asignó o que pide revisar: categoría contradicha por el texto o municipio lejano al paquete"><i data-lucide="sparkles"></i> IA: <span id="n-ia">-</span></button>
+          <span class="chip on" id="chip-ram" hidden></span>
+        </div>
+        <div class="table-wrap registro">
+          <table class="table" id="tabla-riesgos">
+            <thead><tr>
+              <th class="sortable" data-col="id_riesgo">Riesgo</th>
+              <th class="sortable" data-col="descripcion">Descripción</th>
+              <th class="sortable" data-col="id_paquete_trabajo" title="Paquete, tipo de actividad a la que pega y municipio donde está">Paquete</th>
+              <th class="sortable" data-col="fecha_identificacion">Identificado</th>
+              <th class="sortable sorted" data-col="puntaje_ram" title="Matriz RAM: nivel residual (con controles) y el inherente (sin controles)">RAM ↓</th>
+              <th class="sortable" data-col="estado">Estado</th>
+              <th class="sortable" data-col="fecha_ejecucion_accion" title="Acción de tratamiento, su fecha y su estado">Acción</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </section>
     </div>
-
-    <section class="card span-5 chart-card">
-      <div class="card-head">
-        <div class="card-icon"><i data-lucide="chart-column"></i></div>
-        <div class="grow">
-          <div class="card-title">Riesgos por categoría</div>
-          <div class="card-sub">Clic en una barra para filtrar el registro</div>
-        </div>
-        <div class="seg" id="seg-tipo">
-          <button class="on" data-v="">Todos</button>
-          <button data-v="amenaza">Amenazas</button>
-          <button data-v="oportunidad">Oport.</button>
-        </div>
-      </div>
-      <div class="chart-box"><canvas id="chart-categoria"></canvas></div>
-    </section>
-
-    <section class="card span-3 chart-card">
-      <div class="card-head">
-        <div class="grow">
-          <div class="card-title">Identificados</div>
-          <div class="card-sub">Riesgos nuevos por semana</div>
-        </div>
-      </div>
-      <div class="stat-row"><div class="num md" id="n-semana">-</div><span class="trend" id="trend-semana"></span></div>
-      <div class="card-sub">en los últimos 7 días</div>
-      <div class="chart-box sm"><canvas id="chart-semanas"></canvas></div>
-    </section>
-
-    <section class="card span-12 ram-card">
-      <div class="card-head">
-        <div class="card-icon"><i data-lucide="grid-3x3"></i></div>
-        <div class="grow">
-          <div class="card-title">Matriz RAM de Ecopetrol</div>
-          <div class="card-sub" id="sub-ram">Amenazas abiertas en cada celda · clic en una celda para filtrar el registro</div>
-        </div>
-        <div class="seg" id="seg-ram">
-          <button class="on" data-v="residual" title="Con los controles actuales">Residual</button>
-          <button data-v="inherente" title="Sin controles">Inherente</button>
-        </div>
-      </div>
-      <div class="ram-cuerpo">
-        <div class="ram-izq">
-          <table class="ram-matriz" id="ram-matriz"></table>
-          <p class="ram-pie">Consecuencia de 0 a 5 en la dimensión que manda (Personas, Económica, Ambiental, Clientes o Imagen) · probabilidad de A a E según el historial. Pasa el cursor por los encabezados para ver las escalas.</p>
-        </div>
-        <div class="ram-niveles" id="ram-niveles"></div>
-      </div>
-      <p class="ram-fuente" id="ram-fuente"></p>
-    </section>
-
-    <section class="card span-8">
-      <div class="card-head">
-        <div class="card-icon"><i data-lucide="table-2"></i></div>
-        <div class="grow">
-          <div class="card-title">Registro de riesgos</div>
-          <div class="card-sub" id="sub-registro">-</div>
-        </div>
-        <a class="icon-btn" href="mapa.html" title="Ver en el mapa"><i data-lucide="arrow-up-right"></i></a>
-      </div>
-      <div class="filtros">
-        <div class="buscar-field"><i data-lucide="search"></i><input class="field" id="f-buscar" placeholder="Buscar ID, paquete o texto"></div>
-        <select class="field" id="f-categoria"></select>
-        <select class="field" id="f-estado"></select>
-        <select class="field" id="f-accion" title="Estado de la acción de tratamiento: vencida si su fecha ya pasó y el riesgo sigue abierto. Para escalar un paquete a crisis el modelo cuenta solo las de amenazas"></select>
-        <button class="chip" id="f-ia" title="Riesgos que la IA asignó o que pide revisar: categoría contradicha por el texto o municipio lejano al paquete"><i data-lucide="sparkles"></i> IA: <span id="n-ia">-</span></button>
-        <span class="chip on" id="chip-paquete" hidden></span>
-        <span class="chip on" id="chip-ram" hidden></span>
-      </div>
-      <div class="table-wrap registro">
-        <table class="table" id="tabla-riesgos">
-          <thead><tr>
-            <th class="sortable" data-col="id_riesgo">Riesgo</th>
-            <th class="sortable" data-col="id_paquete_trabajo">Paquete</th>
-            <th class="sortable" data-col="fecha_identificacion">Identificado</th>
-            <th class="sortable sorted" data-col="puntaje_ram" title="Matriz RAM: nivel residual (con controles) y el inherente (sin controles)">RAM ↓</th>
-            <th class="sortable" data-col="estado">Estado</th>
-            <th class="sortable" data-col="fecha_ejecucion_accion" title="Acción de tratamiento, su fecha y su estado">Acción</th>
-            <th class="sortable" data-col="tipo">Tipo</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <div class="stack span-4">
-      <section class="card">
-        <div class="card-head">
-          <div class="grow">
-            <div class="card-title">Paquetes prioritarios</div>
-            <div class="card-sub">Ordenados por ICT · clic para filtrar</div>
-          </div>
-          <a class="icon-btn" href="mapa.html" title="Ver en el mapa"><i data-lucide="arrow-up-right"></i></a>
-        </div>
-        <div class="lista-paquetes" id="lista-paquetes"></div>
-      </section>
-
-      <section class="card">
-        <div class="card-head">
-          <div class="grow">
-            <div class="card-title">Estado de los riesgos</div>
-            <div class="card-sub">Ciclo de materialización</div>
-          </div>
-        </div>
-        <div id="estados"></div>
-      </section>
-    </div>
-  </div>
+  </section>
 </div>
+
+<!-- Ficha de un riesgo: panel lateral con todas sus caracteristicas -->
+<div class="velo" id="velo" hidden></div>
+<aside class="ficha" id="ficha" hidden aria-label="Ficha del riesgo">
+  <div class="ficha-head">
+    <div class="ficha-nav">
+      <button class="icon-btn sm" id="ficha-prev" title="Anterior (flecha arriba)"><i data-lucide="chevron-up"></i></button>
+      <button class="icon-btn sm" id="ficha-next" title="Siguiente (flecha abajo)"><i data-lucide="chevron-down"></i></button>
+      <span class="muted" id="ficha-pos"></span>
+    </div>
+    <button class="icon-btn sm" id="ficha-cerrar" title="Cerrar (Esc)"><i data-lucide="x"></i></button>
+  </div>
+  <div class="ficha-cuerpo" id="ficha-cuerpo"></div>
+</aside>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>

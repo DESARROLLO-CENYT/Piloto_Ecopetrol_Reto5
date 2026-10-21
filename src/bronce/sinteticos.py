@@ -25,9 +25,9 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import Point, LineString
 
-from comun.config import BRONCE, CRS_GEOGRAFICO, SEMILLA_ALEATORIA, asegurar_directorios
+from comun.config import BRONCE, CRS_GEOGRAFICO, SEMILLA_ALEATORIA, asegurar_directorios, cargar_parametros
 from comun.marco_guajira import centro_factible_mas_cercano, punto_en_tierra, tierra_interior
-from bronce import textos_sinteticos
+from bronce import cronograma_sintetico, fechas_riesgo_sintetico, riesgo_actividad_sintetico, textos_sinteticos
 
 rng = np.random.default_rng(SEMILLA_ALEATORIA)
 random.seed(SEMILLA_ALEATORIA)
@@ -286,8 +286,9 @@ def _ensuciar_texto(valor, prob=0.35):
     return valor
 
 
-def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_historico=180, n_riesgos=200):
-    """Registro de riesgos sucio a proposito y la clave de evaluacion de las categorias (ver textos_sinteticos)."""
+def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_historico=180, n_riesgos=200, actividades=None):
+    """Registro de riesgos sucio a proposito y la clave de evaluacion de las categorias (ver textos_sinteticos).
+    Con `actividades` (el cronograma), cada riesgo pega en una actividad de su paquete y su texto habla de ella."""
     filas = []
     categorias_reales, tipos = [], []
     ids_paquete = gdf_paquetes["id_paquete"].tolist()
@@ -356,8 +357,18 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
         filas.append(fila)
 
     df = pd.DataFrame(filas)
+    # actividad a la que pega cada riesgo (antes del texto: el texto se adapta a ella), con su propio generador aleatorio
+    r_act = np.random.default_rng(SEMILLA_ALEATORIA + 17)
+    verdad, claves_act = None, None
+    if actividades is not None:
+        verdad = riesgo_actividad_sintetico.elegir_todas(df, categorias_reales, tipos, actividades, hoy, r_act)
+        claves_act = [riesgo_actividad_sintetico.clave_de(a, actividades) for a in verdad]
+        # fechas coherentes con el estado, el nivel RAM y la actividad (reemplazan las sorteadas arriba)
+        matriz = {int(k): list(v) for k, v in cargar_parametros(oficial=True)["ram"]["matriz"].items()}
+        df = fechas_riesgo_sintetico.asignar(df, verdad, riesgo_actividad_sintetico.actividades_limpias(actividades), matriz, hoy,
+                                             np.random.default_rng(SEMILLA_ALEATORIA + 19))
     # texto libre realista (descripcion, causa, accion) y ~8 % sin categoria legible, con su propio generador aleatorio
-    df, clave = textos_sinteticos.redactar(df, categorias_reales, tipos, SEMILLA_ALEATORIA + 11)
+    df, clave = textos_sinteticos.redactar(df, categorias_reales, tipos, SEMILLA_ALEATORIA + 11, claves_act)
 
     # --- Ensuciar el dataset a proposito ---
     n = len(df)
@@ -372,6 +383,10 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
         idx = rng.choice(n, size=int(n * frac), replace=False)
         df.loc[idx, col] = None
 
+    # 2b) Fechas como las escribe la gente: dia/mes/ano, cruzadas, un ano de mas o sin fecha de materializacion
+    if verdad is not None:
+        df = fechas_riesgo_sintetico.ensuciar(df, np.random.default_rng(SEMILLA_ALEATORIA + 23))
+
     # 3) Duplicados (mismo riesgo reportado dos veces, con pequenas variaciones)
     n_dup = int(n * 0.06)
     duplicados = df.sample(n=n_dup, random_state=SEMILLA_ALEATORIA).copy()
@@ -379,31 +394,11 @@ def generar_registro_riesgos(gdf_paquetes, gdf_comunidades, gdf_areas, dias_hist
     duplicados["categoria"] = duplicados["categoria"].apply(lambda v: _ensuciar_texto(str(v), prob=0.8))
     df = pd.concat([df, duplicados], ignore_index=True)
 
-    return df, clave
-
-
-def generar_cronograma(gdf_paquetes):
-    """Cronograma y costo de parada de cada paquete (SINTETICO), para el modelo de riesgo de ejecucion.
-
-    Usa su propio generador aleatorio (semilla + 7) para no alterar el resto de los datos sinteticos. Los paquetes de
-    ruta critica no tienen holgura: todo su atraso pasa al proyecto.
-    """
-    r = np.random.default_rng(SEMILLA_ALEATORIA + 7)
-    filas = []
-    for _, p in gdf_paquetes.iterrows():
-        duracion = int(r.integers(8, 25))                       # meses
-        avance = round(float(r.uniform(0.1, 0.7)), 2)
-        critico = bool(p["ruta_critica"])
-        filas.append({
-            "id_paquete": p["id_paquete"],
-            "duracion_meses": duracion,
-            "avance": avance,
-            "meses_restantes": round(duracion * (1 - avance), 1),
-            "holgura_dias": 0 if critico else int(r.integers(10, 46)),
-            "costo_dia_parada_usd": int(r.integers(15, 91)) * 1000,   # equipos, personal y contratistas en espera
-            "presupuesto_usd": int(r.integers(8, 61)) * 1_000_000,
-        })
-    return pd.DataFrame(filas)
+    # 4) La actividad afectada, escrita como la escribe cada quien (codigo, nombre, nada, o un codigo equivocado)
+    if verdad is not None:
+        df["actividad_afectada"] = riesgo_actividad_sintetico.como_la_escriben(df, dict(zip(clave["id_riesgo"], verdad)), actividades, r_act)
+        clave["actividad_real"] = verdad
+    return df, clave.drop(columns=["plantilla"])
 
 
 def main():
@@ -415,8 +410,14 @@ def main():
     gdf_hidro = generar_hidrologia()
     gdf_vias = generar_vias()
     df_clima = generar_clima()
-    df_riesgos, clave = generar_registro_riesgos(gdf_paq, gdf_com, gdf_areas)
-    df_cronograma = generar_cronograma(gdf_paq)
+    hoy = date.today()      # fecha de corte del dato: el avance y las fechas proyectadas son las de este dia
+    df_cronograma, df_actividades, fechas_proyecto = cronograma_sintetico.generar(gdf_paq, hoy, SEMILLA_ALEATORIA)
+    gdf_proy = gdf_proy.merge(fechas_proyecto, on="id_proyecto", how="left")
+    # cada riesgo pega en una actividad de su paquete (ver bronce/riesgo_actividad_sintetico.py)
+    df_riesgos, clave = generar_registro_riesgos(gdf_paq, gdf_com, gdf_areas, actividades=df_actividades)
+    cols = list(df_riesgos.columns)
+    cols.insert(cols.index("id_paquete_trabajo") + 1, cols.pop(cols.index("actividad_afectada")))
+    df_riesgos = df_riesgos[cols]
 
     gdf_proy.to_file(BRONCE / "proyectos.geojson", driver="GeoJSON")
     gdf_paq.to_file(BRONCE / "paquetes_trabajo.geojson", driver="GeoJSON")
@@ -428,6 +429,7 @@ def main():
     df_riesgos.to_excel(BRONCE / "registro_riesgos.xlsx", index=False)
     clave.to_csv(BRONCE / "clave_categorias_sinteticas.csv", index=False)
     df_cronograma.to_csv(BRONCE / "cronograma_paquetes.csv", index=False)
+    df_actividades.to_csv(BRONCE / "actividades_cronograma.csv", index=False)
 
     print("Datos sinteticos generados en:", BRONCE)
     print(f"  proyectos:        {len(gdf_proy)}")
@@ -437,9 +439,10 @@ def main():
     print(f"  hidrologia:       {len(gdf_hidro)}")
     print(f"  vias:             {len(gdf_vias)}")
     print(f"  registros clima:  {len(df_clima)}")
-    print(f"  cronograma:       {len(df_cronograma)} paquetes")
+    print(f"  cronograma:       {len(df_cronograma)} paquetes, {len(df_actividades)} actividades (con repetidas), corte {hoy}")
     print(f"  riesgos (con duplicados y nulos a proposito): {len(df_riesgos)}")
     print(f"    sin coordenadas: {df_riesgos['lat'].isna().sum()} ({df_riesgos['lat'].isna().mean():.1%})")
+    print(f"    sin actividad afectada: {df_riesgos['actividad_afectada'].isna().sum()}")
 
 
 if __name__ == "__main__":

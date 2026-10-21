@@ -298,7 +298,7 @@ async function seguirRecalculo(total) {
   }
   b.disabled = false;
   if (est.estado === 'listo') {
-    aviso(`<i data-lucide="check"></i> Recalculado en ${est.segundos} s: el registro, el ICT, las alertas y el contexto ya usan esta matriz. <a href="explorar.html">Ver en Explorar</a>`);
+    aviso(`<i data-lucide="check"></i> Recalculado en ${est.segundos} s: el registro, el ICT, las alertas y el contexto ya usan esta matriz. <a href="explorar.html#riesgos">Ver en Explorar</a>`);
     M.riesgos = (await ui.json('/api/riesgos')).features.map((f) => f.properties);
     refrescar();
   } else {

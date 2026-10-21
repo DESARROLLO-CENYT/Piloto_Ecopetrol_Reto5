@@ -32,6 +32,7 @@ from catalogo import construir_catalogo  # noqa: E402
 from clima_vivo import obtener_ahora  # noqa: E402
 import ram_config  # noqa: E402
 import ejecucion_api  # noqa: E402
+import cronograma_api  # noqa: E402
 import tarea_diaria  # noqa: E402
 import tarea_programada  # noqa: E402
 import historial  # noqa: E402
@@ -185,6 +186,12 @@ def _recargar():
 def ejecucion_resultados():
     """Resultados del paso oro.ejecucion, con los supuestos vigentes y los base."""
     return ejecucion_api.resultados()
+
+
+@app.get("/api/cronograma")
+def cronograma_resultados():
+    """Avance y fechas (planeadas y proyectadas) por actividad, paquete y proyecto: lo que publico oro.cronograma."""
+    return cronograma_api.resultados()
 
 
 @app.post("/api/ejecucion/simular")

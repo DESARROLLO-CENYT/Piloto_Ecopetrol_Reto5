@@ -6,7 +6,9 @@ Formulacion (detalle en docs/MODELO_EJECUCION.md; parametros en parametros.yaml 
          lambda_i = lambda0(letra RAM residual) * exp( gamma * sum_k beta_k * z_k ) * f_estado
      z = covariables del territorio del paquete (0 = promedio de La Guajira), beta segun la categoria del riesgo.
      El multiplicador territorial se limita a [1/m, m].
-  2. Probabilidad en el horizonte T (anos que le faltan al paquete):  P_i = 1 - exp(-lambda_i * T)
+  2. Probabilidad en el horizonte T:  P_i = 1 - exp(-lambda_i * T)
+     T = lo que le falta a la actividad a la que pega el riesgo: de la fecha de corte (o de su inicio proyectado, si aun
+     no empieza) a su fin proyectado; 0 si ya termino. Sin actividad conocida, lo que le falta al paquete.
   3. Dias por evento: Triangular(0,5 D, D, 2 D), D = max_k dias(k, consecuencia RAM_ik)  (manda la peor dimension)
      Costo por evento: LogUniforme(banda USD de la consecuencia Economica) + costo diario de parada * dias
   4. Simulacion: N_i^s ~ Poisson(lambda_i * T * W_g^s); W_g = choque comun (Gamma, media 1) que comparten los riesgos
@@ -69,14 +71,25 @@ def momentos_costo_directo(nivel, cfg: dict) -> tuple[float, float]:
 # Tabla de riesgos con todo lo que necesita la simulacion
 # ---------------------------------------------------------------------------
 
+def horizonte_actividad(act: pd.Series, corte: pd.Timestamp) -> float:
+    """Anos durante los que un riesgo puede pegarle a su actividad: lo que le falta por ejecutarse desde el corte."""
+    if act.get("estado") == "completada":
+        return 0.0
+    ini = max(pd.Timestamp(corte), pd.Timestamp(act["fecha_inicio_proyectada"]))
+    return max(0.0, (pd.Timestamp(act["fecha_fin_proyectada"]) - ini).days) / 365.25
+
+
 def preparar_riesgos(riesgos: pd.DataFrame, paquetes: pd.DataFrame, z: pd.DataFrame, cfg: dict,
-                     piso_ambiental: pd.Series | None = None, escenario: dict | None = None) -> pd.DataFrame:
+                     piso_ambiental: pd.Series | None = None, escenario: dict | None = None,
+                     actividades: pd.DataFrame | None = None, corte: pd.Timestamp | None = None) -> pd.DataFrame:
     """Una fila por amenaza (abierta o materializada) con frecuencia, probabilidad, dias, costo y valor esperado.
 
     paquetes: indice id_paquete; columnas meses_restantes, costo_dia_parada_usd, id_proyecto, codigo_municipio.
     z: indice id_paquete; una columna por covariable territorial.
     piso_ambiental: consecuencia ambiental minima que sugiere el territorio (area protegida cercana), por paquete.
     escenario: {"factor": {categoria: x}} multiplica la frecuencia; {"controles": "inherente"} ignora los controles.
+    actividades: indice id_actividad; columnas nombre, estado, fecha_inicio_proyectada, fecha_fin_proyectada. Con ellas (y
+    `corte`), el horizonte de cada riesgo es el de su actividad; sin ellas, el del paquete.
     """
     escenario = escenario or {}
     factor_cat = escenario.get("factor") or {}
@@ -105,7 +118,12 @@ def preparar_riesgos(riesgos: pd.DataFrame, paquetes: pd.DataFrame, z: pd.DataFr
         letra = r["probabilidad"] if sin_controles else r["probabilidad_residual"]
         estado = r["estado"]
         futuro = estado != "materializado"
-        T = float(info.get("meses_restantes", np.nan)) / 12 if pd.notna(info.get("meses_restantes")) else horizonte_def
+        id_act = r.get("id_actividad")
+        if actividades is not None and corte is not None and pd.notna(id_act) and id_act in actividades.index:
+            T, origen_T = horizonte_actividad(actividades.loc[id_act], corte), "actividad"
+        else:
+            T = float(info.get("meses_restantes", np.nan)) / 12 if pd.notna(info.get("meses_restantes")) else horizonte_def
+            origen_T = "paquete"
         fx = float(factor_cat.get(r["categoria"], 1.0))
         lam = lam0[letra] * mult * float(f_estado.get(estado, 1.0)) * fx if futuro else 0.0
         lam_inh = lam0[r["probabilidad"]] * mult * float(f_estado.get(estado, 1.0)) * fx if futuro else 0.0
@@ -114,9 +132,11 @@ def preparar_riesgos(riesgos: pd.DataFrame, paquetes: pd.DataFrame, z: pd.DataFr
         grupo = CHOQUE.get(r["categoria"])
         filas.append({
             "id_riesgo": r["id_riesgo"], "id_paquete": p, "id_proyecto": info.get("id_proyecto"), "categoria": r["categoria"],
+            "id_actividad": id_act if pd.notna(id_act) else None,
+            "actividad": actividades.at[id_act, "nombre"] if origen_T == "actividad" else None,
             "estado": estado, "nivel_residual": r.get("nivel_residual"), "ram_residual": r.get("ram_residual"),
             "letra": letra, "lambda0": lam0[letra], "multiplicador_territorial": round(mult, 3), "lambda": lam,
-            "horizonte_anios": round(T, 3), "probabilidad": 1 - math.exp(-lam * T) if futuro else 1.0,
+            "horizonte_anios": round(T, 3), "horizonte_origen": origen_T, "probabilidad": 1 - math.exp(-lam * T) if futuro else 1.0,
             "dias_por_evento": dias, "costo_directo_medio": cd_media, "costo_directo_var": cd_var, "costo_dia": costo_dia,
             "atraso_esperado": lam * T * dias * TRI_MEDIA if futuro else 0.0,
             "costo_esperado": lam * T * costo_evento if futuro else 0.0,

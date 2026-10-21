@@ -5,7 +5,7 @@
 Documento de descripción completa del proyecto: el problema, la solución, cómo se abordó y cómo funciona el piloto paso a
 paso, desde la extracción de los datos hasta los modelos, la aplicación y el porqué de cada decisión.
 
-> **Sobre los datos del piloto.** El registro de riesgos, los proyectos, los paquetes de trabajo y su cronograma son
+> **Sobre los datos del piloto.** El registro de riesgos, los proyectos, los paquetes de trabajo y sus actividades con fechas y avance son
 > **sintéticos**: no son información de Ecopetrol ni de ninguna comunidad. El **territorio es real**: clima, vías, ríos,
 > municipios, censo, resguardos, áreas protegidas, delitos y emergencias vienen de datos abiertos oficiales. El modelo cruza
 > los dos. Por eso el piloto demuestra el mecanismo completo; sus cifras no son el riesgo real de ningún proyecto.
@@ -49,8 +49,8 @@ proyectos con las variables reales del territorio de La Guajira, y lo convierte 
   errores de ubicación.
 - **Todo configurable** desde la aplicación (pesos, umbrales, reglas, matriz RAM), con historial de versiones.
 
-El piloto corre de punta a punta: **39 pasos** de un pipeline medallion (Bronce → Plata → Oro → Consumo), **12 entidades
-públicas** como fuente, **215 pruebas automáticas** y una auditoría de **724 comprobaciones**, todas en verde.
+El piloto corre de punta a punta: **40 pasos** de un pipeline medallion (Bronce → Plata → Oro → Consumo), **12 entidades
+públicas** como fuente, **251 pruebas automáticas** y una auditoría de **766 comprobaciones**, todas en verde.
 
 ---
 
@@ -161,7 +161,7 @@ desde el principio: cuando llegue el registro de Ecopetrol, se reemplaza una sol
 ```mermaid
 flowchart TB
     subgraph Fuentes
-      F1["Generador sintético<br/>registro, proyectos, cronograma"]
+      F1["Generador sintético<br/>registro, proyectos, actividades"]
       F2["APIs y servicios abiertos<br/>IDEAM, CHIRPS, DANE, ANT, RUNAP,<br/>INVIAS, IGAC, MinDefensa, UNGRD, INS, ART"]
     end
     subgraph Bronce["Bronce · data/bronze"]
@@ -196,7 +196,7 @@ flowchart TB
 5. Una fuente abierta que falla no detiene nada: el pipeline sigue con la última descarga y lo dice. Los pasos del modelo sí
    son obligatorios.
 
-El orden de los 39 pasos no se escribe a mano: cada paso declara qué lee y qué escribe (`src/pipeline.py`) y el orden sale
+El orden de los 40 pasos no se escribe a mano: cada paso declara qué lee y qué escribe (`src/pipeline.py`) y el orden sale
 de esas dependencias. `--fuente ideam`, por ejemplo, corre el IDEAM y todo lo que depende de él.
 
 ---
@@ -467,12 +467,12 @@ pares de palabras, sin palabras vacías, suavizado de Laplace) aprende la taxono
 |---|---|---|
 | **Inicio** | Gerentes | ICT promedio, zonas en alerta, riesgos por categoría |
 | **Mapa** | Todos | Paquetes por ICT o IRE; escalamiento a crisis; mapa de calor (criticidad, amenazas, oportunidades) con puntos calientes; alertas con estado de la tarea diaria y "Actualizar ahora"; capas reales (municipios, indicadores sociales, resguardos, áreas protegidas, vías, ríos, clima del IDEAM en vivo, CHIRPS, cobertura de estaciones); controlador de tiempo por días o meses; fichas que explican cada paquete, riesgo, punto de crisis, estación, municipio |
-| **Explorar** | Equipos de riesgos | Registro ordenable y filtrable (categoría, estado, paquete, nivel RAM, texto, marcas de la IA), matriz RAM con conteos, paquetes prioritarios |
+| **Explorar** | Equipos de riesgos y de proyecto | Tres subpáginas: *Resumen* (conteos de proyectos, actividades y riesgos, por municipio y cruzados por proyecto y paquete), *Proyectos y actividades* (avance, cronograma tipo Gantt y actividades con su peso) y *Riesgos* (matriz RAM, registro filtrable y ficha completa de cada riesgo) |
 | **Matriz RAM** | Equipo de riesgos | Editar la matriz con vista previa del efecto y recálculo |
-| **Ejecución** | Gerentes de proyecto | Atraso y sobrecosto por proyecto y paquete, por qué, escenarios y supuestos editables |
+| **Ejecución** | Gerentes de proyecto | Cronograma y avance por actividad, atraso y sobrecosto por proyecto y paquete, por qué, escenarios y supuestos editables |
 | **Ajustar** | Equipo de riesgos | Pesos, AHP, umbrales, reglas y topes con vista previa e historial |
 | **Datos** | Equipo técnico | Arquitectura medallion, catálogo de tablas con linaje, calidad, explicación del modelo y su validación, leídos en vivo de los archivos |
-| **Flujo** | Todos | Recorrido de punta a punta: grafo vivo de los 39 pasos del pipeline con su linaje, fuentes con licencia y fecha, modelos, ciclo diario, tecnologías, calidad, ciberseguridad y paso a producción |
+| **Flujo** | Todos | Recorrido de punta a punta: grafo vivo de los 40 pasos del pipeline con su linaje, fuentes con licencia y fecha, modelos, ciclo diario, tecnologías, calidad, ciberseguridad y paso a producción |
 
 **API REST** (FastAPI): `/api/paquetes`, `/api/riesgos`, `/api/alertas`, `/api/alertas/estado`, `/api/capas/{capa}`,
 `/api/clima/ahora`, `/api/ejecucion`, `/api/modelo`, `/api/ram`, `/api/catalogo`, `/api/flujo`, entre otras.
@@ -496,7 +496,7 @@ disparar descargas exige la clave de `RETO5_CLAVE_EDICION`; sin ella, solo se ed
 | API | **FastAPI 0.141** + **uvicorn** | API tipada, rápida, con tareas en segundo plano |
 | Interfaz | **Leaflet 1.9.4**, **Chart.js 4.4.4**, **Lucide**, HTML/CSS/JS sin compilación | Ligera, sin claves ni licencias, fácil de mantener; sistema de diseño propio |
 | Mapas base | Esri World Imagery y OpenStreetMap | Sin clave |
-| Pruebas | **pytest 9** | 215 pruebas de limpieza, modelos, arquitectura, API y alertas |
+| Pruebas | **pytest 9** | 251 pruebas de limpieza, modelos, arquitectura, API y alertas |
 | Formatos de salida | GeoJSON, Parquet, CSV, JSON, **GeoPackage** | Abiertos y agnósticos: ArcGIS, QGIS, Power BI |
 
 **Arquitectura objetivo (producción, según la propuesta):** Azure Data Lake Storage Gen2 con la misma estructura medallion,
@@ -508,7 +508,7 @@ El piloto usa archivos locales y Python con la misma lógica, para migrar sin re
 
 ## 11. Calidad, pruebas y trazabilidad
 
-**Auditoría** (`python ejecutar_pipeline.py --auditar`): 724 comprobaciones en seis grupos.
+**Auditoría** (`python ejecutar_pipeline.py --auditar`): 766 comprobaciones en seis grupos.
 
 | Grupo | Comprueba |
 |---|---|
@@ -519,7 +519,7 @@ El piloto usa archivos locales y Python con la misma lógica, para migrar sin re
 | Geografía | Todo lo inventado cae dentro de La Guajira y en tierra firme |
 | Huérfanos | No sobran archivos de versiones anteriores |
 
-**Pruebas** (215): cada regla de limpieza con datos mínimos, la matriz RAM, cada criterio del ICT (escala fija, componentes
+**Pruebas** (251): cada regla de limpieza con datos mínimos, la matriz RAM, cada criterio del ICT (escala fija, componentes
 sin dato, alcance espacial, convergencia), la lluvia al día, el clasificador de texto, las alertas (incluido el envío a
 Teams contra un servidor local), el Monte Carlo (valor esperado, holgura, choque común, solapamiento), la configuración
 versionada y la protección de la edición.
@@ -551,7 +551,7 @@ versionada y la protección de la edición.
 8. **Es replicable y escalable.** Funciona con cualquier departamento con códigos DIVIPOLA y las mismas fuentes nacionales;
    el pipeline declarativo agrega fuentes sin tocar el resto; la lógica migra a Azure y Databricks sin reescribirse.
 9. **Es agnóstico del software SIG.** Todo sale en formatos abiertos; el GeoPackage abre directo en ArcGIS o QGIS.
-10. **Está probado.** 215 pruebas y 724 comprobaciones de auditoría pasan en cada corrida.
+10. **Está probado.** 251 pruebas y 766 comprobaciones de auditoría pasan en cada corrida.
 
 ---
 
@@ -590,7 +590,7 @@ versionada y la protección de la edición.
 - El censo es de 2018; los delitos son los registrados (subregistro rural); la UNGRD no publica 2021-2022.
 - El acierto de la IA se mide sobre texto sintético; el real se sabrá con el registro de Ecopetrol.
 - Las capas del IGAC son de uso libre solo sin fines comerciales.
-- El cronograma se modela por paquete con holgura, no como red de precedencias.
+- El cronograma se modela por actividades en secuencia dentro de cada paquete y paquetes con holgura, no como red de precedencias (ver `docs/CRONOGRAMA.md`). Cada riesgo pega en una sola actividad; la que se infiere cuando el registro no la trae acierta ~81 % contra la clave sintética. Los plazos de la acción según el nivel RAM son un supuesto del dato sintético.
 
 **Camino a producción (fases de la propuesta):**
 
@@ -621,7 +621,7 @@ abre la aplicación en `http://127.0.0.1:8000`.
 | `python ejecutar_pipeline.py --fuente ideam` | Una fuente y lo que depende de ella |
 | `python alertas_diarias.py` | Tarea diaria: descarga, recálculo, boletín y avisos |
 | `python alertas_diarias.py --programar` | Cómo programarla en Windows o Linux |
-| `python -m pytest tests/` | Las 215 pruebas |
+| `python -m pytest tests/` | Las 251 pruebas |
 
 Documentación relacionada: [README.md](../README.md), [PIPELINE.md](PIPELINE.md),
 [MODELO_ICT.md](MODELO_ICT.md), [MODELO_EJECUCION.md](MODELO_EJECUCION.md).

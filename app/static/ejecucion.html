@@ -59,6 +59,32 @@
       <div id="det-cuerpo"></div>
     </section>
 
+    <section class="card span-12" id="cronograma">
+      <div class="card-head">
+        <div class="card-icon"><i data-lucide="calendar-range"></i></div>
+        <div class="grow">
+          <div class="card-title">Cronograma y avance</div>
+          <div class="card-sub" id="sub-cron">-</div>
+        </div>
+        <span class="chip warn">Sintético</span>
+      </div>
+      <div id="cron-proy"></div>
+      <div class="cron-grid">
+        <div class="table-wrap">
+          <table class="table" id="tabla-cron">
+            <thead><tr>
+              <th>Paquete</th><th title="Avance real: suma de lo que aporta cada actividad (peso por avance)">Avance</th>
+              <th title="Lo que el calendario planeado dice que ya debería llevar a la fecha de corte">Planeado</th>
+              <th>Fin planeado</th><th title="Real si ya ocurrió; si falta, pronóstico al ritmo que lleva">Fin proyectado</th>
+              <th title="Atraso proyectado frente a la holgura del paquete">Atraso vs holgura</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="cron-act"></div>
+      </div>
+    </section>
+
     <section class="card span-12" id="escenarios">
       <div class="card-head">
         <div class="card-icon"><i data-lucide="flask-conical"></i></div>

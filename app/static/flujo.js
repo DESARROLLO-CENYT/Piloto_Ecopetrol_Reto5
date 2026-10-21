@@ -25,6 +25,7 @@
     ict: ['ICT, crisis y alertas', 'radar'],
     validacion: ['Validación del modelo', 'scale'],
     contexto: ['Contexto territorial', 'map-pinned'],
+    cronograma: ['Cronograma y avance', 'calendar-range'],
     ejecucion: ['Riesgo de ejecución', 'timer'],
     cobertura: ['Cobertura de estaciones', 'circle-dot'],
     indicadores: ['Indicadores municipales', 'chart-column'],
@@ -34,7 +35,7 @@
   };
   const nombre = (p) => (FUENTE[p.fuente] || [p.fuente])[0];
   const icono = (p) => (FUENTE[p.fuente] || [, 'circle'])[1];
-  const ORDEN = ['sinteticos', 'ict', 'validacion', 'contexto', 'ejecucion', 'alertas', 'ideam', 'cobertura', 'chirps',
+  const ORDEN = ['sinteticos', 'ict', 'validacion', 'contexto', 'cronograma', 'ejecucion', 'alertas', 'ideam', 'cobertura', 'chirps',
     'municipios', 'social', 'indicadores', 'resguardos', 'runap', 'territorios', 'seguridad', 'emergencias', 'invias',
     'vias_igac', 'red_vial', 'hidrografia', 'gis'];
   const CAPAS = [['bronce', 'Bronce', 'Extracción'], ['plata', 'Plata', 'Limpieza'], ['oro', 'Oro', 'Modelos'], ['consumo', 'Consumo', 'Salidas']];
@@ -45,7 +46,7 @@
       tono: 'origen', icon: 'satellite-dish', nombre: 'Fuentes', titulo: 'Origen de los datos',
       cifra: () => '12 <small>entidades + registro</small>',
       hace: [
-        'Registro de riesgos en Excel con texto libre, proyectos, paquetes y cronograma (sintéticos, sucios a propósito)',
+        'Registro de riesgos en Excel con texto libre, proyectos, paquetes y actividades con fechas y avance (sintéticos, sucios a propósito)',
         'Territorio real: clima, lluvia satelital, censo, resguardos, áreas protegidas, vías, ríos, delitos y emergencias',
         'Datos abiertos oficiales, sin claves ni registro',
       ],
@@ -86,10 +87,11 @@
         'Índice de Criticidad Territorial por paquete y por celda de 2 km',
         'Escalamiento a crisis, puntos de crisis y zonas de intervención',
         'Mapa de calor: densidad kernel y puntos calientes Getis-Ord Gi*',
+        'Avance y fechas proyectadas de cada proyecto desde sus actividades',
         'Alertas, riesgo de ejecución (Monte Carlo) y validación',
       ],
       con: ['NumPy', 'SciPy', 'GeoPandas'],
-      sale: ['paquetes_ict', 'grid_calor', 'puntos_crisis', 'alertas.json', 'ejecucion_*'],
+      sale: ['paquetes_ict', 'grid_calor', 'puntos_crisis', 'alertas.json', 'cronograma_*', 'ejecucion_*'],
       prod: 'Azure Databricks con Apache Sedona para los cruces espaciales distribuidos',
     },
     {
@@ -277,7 +279,7 @@
     { id: 'hidrografia', ent: 'IGAC', t: 'Hidrografía 1:100.000', q: 'Ríos, ciénagas, lagunas y embalses', f: 'ArcGIS REST · servicio del IDEAM', p: 'Cartografía básica', ic: 'waves' },
     { id: 'seguridad', ent: 'Ministerio de Defensa', t: 'Delitos por municipio', q: '11 delitos: homicidio, extorsión, secuestro, terrorismo, voladuras, piratería terrestre y otros', f: 'API Socrata · datos.gov.co', p: 'Mensual desde 2003', ic: 'shield-alert' },
     { id: 'emergencias', ent: 'UNGRD', t: 'Emergencias atendidas', q: 'Eventos y afectación por municipio', f: 'API Socrata · datos.gov.co', p: '2019, 2020 y 2023 en adelante', ic: 'siren' },
-    { id: 'sinteticos', ent: 'Generador propio · semilla 42', t: 'Registro de riesgos y proyectos', q: 'Riesgos con texto libre, RAM, estado y coordenadas; 3 proyectos, 14 paquetes y su cronograma. Sucio a propósito', f: 'Excel y CSV', p: 'Se regenera igual en cada corrida', ic: 'file-spreadsheet', sintetico: true },
+    { id: 'sinteticos', ent: 'Generador propio · semilla 42', t: 'Registro de riesgos y proyectos', q: 'Riesgos con texto libre, RAM, estado y coordenadas; 3 proyectos, 14 paquetes y 84 actividades con fechas planeadas y proyectadas. Sucio a propósito', f: 'Excel y CSV', p: 'Mismas cifras con la misma semilla; las fechas se cuentan desde el día de la corrida', ic: 'file-spreadsheet', sintetico: true },
   ];
 
   function pintarFuentes(meta) {

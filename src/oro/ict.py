@@ -537,6 +537,13 @@ def main():
     riesgos["causa_crisis"] = riesgos["id_riesgo"].map(pc)
     sens = sensibles(datos, params)
     riesgos = riesgos.join(sens)
+    # municipio donde esta cada riesgo (por sus coordenadas, no por su paquete): para contarlos por municipio
+    mun = _metrico(datos, "municipios")
+    if mun is not None and len(riesgos):
+        con_punto = riesgos[riesgos.geometry.notna() & ~riesgos.geometry.is_empty]
+        puntos_m = gpd.GeoSeries(con_punto.to_crs(CRS_METRICO).geometry.values, index=con_punto.index, crs=CRS_METRICO)
+        riesgos["codigo_municipio"] = m_terr.municipio_de(puntos_m, mun).reindex(riesgos.index)
+        riesgos["municipio"] = riesgos["codigo_municipio"].map(mun.set_index("codigo")["nombre"])
     riesgos.to_file(ORO / "riesgos.geojson", driver="GeoJSON")
     for nombre in ["proyectos", "comunidades", "areas", "hidro", "vias"]:
         datos[nombre].to_file(ORO / f"{nombre}.geojson", driver="GeoJSON")

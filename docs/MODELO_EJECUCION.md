@@ -71,10 +71,16 @@ Para la amenaza *i* del paquete *p* (latente o próxima a materializarse):
 ### 1.2 Probabilidad en lo que falta
 
 ```
-Pᵢ = 1 − exp(−λᵢ · T_p)
+Pᵢ = 1 − exp(−λᵢ · Tᵢ)
 ```
 
-T_p son los años que le faltan al paquete según su cronograma.
+Tᵢ es el tiempo durante el que la amenaza puede pegarle a **la actividad del cronograma a la que apunta** (ver
+[CRONOGRAMA.md](CRONOGRAMA.md#6-riesgos-y-actividades)): de la fecha de corte (o de su inicio proyectado, si la actividad
+aún no empieza) a su **fin proyectado**; 0 si la actividad ya terminó. Un riesgo de las pruebas solo puede ocurrir mientras
+duren las pruebas, no durante todo lo que le falta al paquete. Si no se sabe la actividad, Tᵢ es lo que le falta al paquete.
+Como las actividades de un paquete van en secuencia, un evento en cualquiera de ellas corre el fin del paquete.
+
+`ejecucion_riesgos.csv` dice de dónde salió cada horizonte (`horizonte_origen`: actividad o paquete) y la actividad.
 
 ### 1.3 Impacto por evento: de la RAM a días y dólares
 

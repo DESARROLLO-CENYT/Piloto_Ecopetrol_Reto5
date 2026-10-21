@@ -1820,9 +1820,10 @@ function detalleRiesgo(p) {
     ${iaDelRiesgo(p)}
     ${ramDelRiesgo(p)}
     <div class="kv"><span class="k">Paquete</span><span class="v">${ui.nombreCorto((S.paquetes.features.find((f) => f.properties.id_paquete === p.id_paquete_trabajo) || {}).properties?.nombre || p.id_paquete_trabajo)}</span></div>
+    ${p.actividad ? `<div class="kv"><span class="k">Actividad afectada</span><span class="v">${p.actividad}${p.revisar_actividad ? ' · <span class="sub">corregida, revisar</span>' : ''}</span></div>` : ''}
     <div class="kv"><span class="k">Identificado</span><span class="v">${ui.fecha(String(p.fecha_identificacion).slice(0, 10) + 'T12:00:00')}</span></div>
     <div class="kv"><span class="k">Ubicación</span><span class="v">${p.geolocalizacion_inferida ? 'Aproximada (centro del paquete)' : 'Con coordenadas'}</span></div>
-    <div class="det-foot">Acción de tratamiento: ${p.accion_tratamiento || '-'}</div>`;
+    <div class="det-foot">Acción de tratamiento: ${p.accion_tratamiento || '-'} · <a href="explorar.html#riesgos/${p.id_riesgo}">Ficha completa</a></div>`;
 }
 
 // Punto donde un riesgo puede escalar a crisis

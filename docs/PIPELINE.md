@@ -80,6 +80,7 @@ flowchart LR
     oro_territorios["territorios"]
     oro_indicadores["indicadores"]
     oro_contexto["contexto"]
+    oro_cronograma["cronograma"]
     oro_ejecucion["ejecucion"]
   end
   subgraph consumo["Consumo  ·  exports"]
@@ -157,6 +158,7 @@ flowchart LR
   plata_emergencias --> oro_contexto
   plata_resguardos --> oro_contexto
   plata_runap --> oro_contexto
+  plata_sinteticos --> oro_cronograma
   plata_sinteticos --> oro_ejecucion
   plata_seguridad --> oro_ejecucion
   plata_emergencias --> oro_ejecucion
@@ -168,6 +170,7 @@ flowchart LR
   oro_ict --> consumo_gis
   oro_ejecucion --> consumo_gis
   oro_contexto --> consumo_gis
+  oro_cronograma --> consumo_gis
   oro_municipios --> consumo_gis
   oro_territorios --> consumo_gis
   oro_red_vial --> consumo_gis
@@ -201,7 +204,7 @@ después de todos los que escriben algo que él lee.
 | 14 | `plata.invias` | Plata | Traduce dominios, quita tramos repetidos, recorta y simplifica la red nacional | `bronce:invias` | `plata:invias` | no |
 | 15 | `plata.hidrografia` | Plata | Une las 5 capas, repara y recorta geometrías y traduce el estado del cauce | `bronce:hidrografia` | `plata:hidrografia` | no |
 | 16 | `plata.municipios` | Plata | Nombres propios, código DANE, área en metros y geometría simplificada sin huecos | `bronce:municipios` | `plata:municipios` | no |
-| 17 | `plata.sinteticos` | Plata | Limpia el registro de riesgos: duplicados, taxonomía (con IA sobre el texto), matriz RAM y geolocalización inferida | `bronce:sinteticos`, `plata:municipios` | `plata:sinteticos` | no |
+| 17 | `plata.sinteticos` | Plata | Limpia el registro de riesgos (duplicados, taxonomía con IA, matriz RAM, geolocalización) y las actividades del cronograma (estados, avances, pesos) | `bronce:sinteticos`, `plata:municipios` | `plata:sinteticos` | no |
 | 18 | `plata.vias_igac` | Plata | Une las 7 capas de vías, traduce dominios y recorta al departamento (municipios del DANE) | `bronce:vias_igac`, `plata:municipios` | `plata:vias_igac` | no |
 | 19 | `plata.red_vial` | Plata | Une INVIAS e IGAC en una red sin duplicados y completa la superficie de INVIAS | `plata:invias`, `plata:vias_igac` | `plata:red_vial` | no |
 | 20 | `plata.chirps` | Plata | Lluvia mensual por municipio: promedio de las celdas ponderado por el área que cae en cada municipio | `bronce:chirps`, `plata:municipios` | `plata:chirps` | no |
@@ -221,9 +224,10 @@ después de todos los que escriben algo que él lee.
 | 34 | `oro.territorios` | Oro | Capas de resguardos indígenas y áreas protegidas para el mapa | `plata:resguardos`, `plata:runap` | `oro:territorios` | no |
 | 35 | `oro.indicadores` | Oro | Indicadores por municipio: censo 2018, agua, territorio étnico y protegido, delitos por mes y emergencias | `plata:municipios`, `plata:social`, `plata:seguridad`, `plata:emergencias`, `plata:resguardos`, `plata:runap` | `oro:indicadores` | no |
 | 36 | `oro.contexto` | Oro | Contexto real de cada paquete: municipio, pobreza, resguardos y áreas protegidas cercanas, delitos y emergencias | `plata:sinteticos`, `plata:municipios`, `plata:social`, `plata:seguridad`, `plata:emergencias`, `plata:resguardos`, `plata:runap` | `oro:contexto` | no |
-| 37 | `oro.ejecucion` | Oro | Riesgo de ejecución: Monte Carlo de días de atraso y USD de sobrecosto por paquete y proyecto (RAM + territorio) | `plata:sinteticos`, `plata:seguridad`, `plata:emergencias`, `plata:chirps`, `plata:social`, `plata:red_vial`, `plata:resguardos`, `oro:contexto` | `oro:ejecucion` | no |
-| 38 | `consumo.exportar_gis` | Consumo | Exporta a GeoPackage y GeoJSON (ArcGIS o QGIS) el modelo, el territorio real y una tabla de origen de cada capa | `oro:ict`, `oro:ejecucion`, `oro:contexto`, `oro:municipios`, `oro:territorios`, `oro:red_vial`, `oro:hidrografia`, `oro:ideam` | `consumo:gis` | no |
-| 39 | `consumo.alertas` | Consumo | Boletín diario de alertas tempranas: nuevas, que suben, siguen y resueltas frente al corte anterior | `oro:ict` | `consumo:alertas` | no |
+| 37 | `oro.cronograma` | Oro | Avance y fechas por actividad, paquete y proyecto: cada actividad pesa en su paquete y cada paquete en su proyecto; fechas planeadas y proyectadas | `plata:sinteticos` | `oro:cronograma` | no |
+| 38 | `oro.ejecucion` | Oro | Riesgo de ejecución: Monte Carlo de días de atraso y USD de sobrecosto por paquete y proyecto (RAM + territorio) | `plata:sinteticos`, `plata:seguridad`, `plata:emergencias`, `plata:chirps`, `plata:social`, `plata:red_vial`, `plata:resguardos`, `oro:contexto` | `oro:ejecucion` | no |
+| 39 | `consumo.exportar_gis` | Consumo | Exporta a GeoPackage y GeoJSON (ArcGIS o QGIS) el modelo, el territorio real y una tabla de origen de cada capa | `oro:ict`, `oro:ejecucion`, `oro:contexto`, `oro:cronograma`, `oro:municipios`, `oro:territorios`, `oro:red_vial`, `oro:hidrografia`, `oro:ideam` | `consumo:gis` | no |
+| 40 | `consumo.alertas` | Consumo | Boletín diario de alertas tempranas: nuevas, que suben, siguen y resueltas frente al corte anterior | `oro:ict` | `consumo:alertas` | no |
 <!-- /AUTO:pasos -->
 
 ## 4. Cómo ejecutarlo
@@ -363,8 +367,8 @@ municipio (código DANE de 5 dígitos) o se cruzan espacialmente con los municip
 
 | | |
 |---|---|
-| **Bronce** (`bronce.sinteticos`) | Proyectos, paquetes de trabajo, su cronograma y el registro de riesgos en Excel con **texto libre** (descripción, causa y acción redactadas como en un registro real, `bronce/textos_sinteticos.py`), con semilla 42 y **sucios a propósito**: duplicados, nulos, texto inconsistente, ~12 % sin coordenadas, ~8 % sin categoría o ilegible, ~3 % con una categoría equivocada y ~4 % que nombra un municipio lejano. La clave con la categoría verdadera (`clave_categorias_sinteticas.csv`) solo existe para medir el acierto de la IA. Comunidades, áreas, hidrología, vías y clima simulados quedan de la primera versión (el ICT ya no los usa). |
-| **Plata** (`plata.sinteticos`) | Normaliza taxonomía, estados y tipos; **la IA lee el texto** (`modelo/texto.py`): sugiere la categoría que falta, marca la que el texto contradice y los municipios lejanos (ver *IA sobre el texto* abajo); **ubica cada riesgo en la matriz RAM** (ver abajo); quita duplicados; ubica los riesgos sin coordenadas en el centroide de su paquete y los marca con `geolocalizacion_inferida`. |
+| **Bronce** (`bronce.sinteticos`) | Proyectos, paquetes de trabajo, sus actividades con fechas y avance (ver **[CRONOGRAMA.md](CRONOGRAMA.md)**) y el registro de riesgos en Excel con **texto libre** (descripción, causa y acción redactadas como en un registro real, `bronce/textos_sinteticos.py`), con semilla 42 y **sucios a propósito**: duplicados, nulos, texto inconsistente, ~12 % sin coordenadas, ~8 % sin categoría o ilegible, ~3 % con una categoría equivocada y ~4 % que nombra un municipio lejano. La clave con la categoría verdadera (`clave_categorias_sinteticas.csv`) solo existe para medir el acierto de la IA. Comunidades, áreas, hidrología, vías y clima simulados quedan de la primera versión (el ICT ya no los usa). |
+| **Plata** (`plata.sinteticos`) | Normaliza taxonomía, estados y tipos; **la IA lee el texto** (`modelo/texto.py`): sugiere la categoría que falta, marca la que el texto contradice y los municipios lejanos (ver *IA sobre el texto* abajo); **ubica cada riesgo en la matriz RAM** (ver abajo); quita duplicados; ubica los riesgos sin coordenadas en el centroide de su paquete y los marca con `geolocalizacion_inferida`. También limpia las actividades (repetidas, estados, avances en porcentaje, fechas invertidas, pesos que suman 1), calcula el cronograma de cada paquete desde ellas **revisa las fechas de cada riesgo** (día/mes/año, cruzadas, un año de más, sin fecha; ver [CRONOGRAMA.md](CRONOGRAMA.md#7-fechas-de-los-riesgos)) y **resuelve la actividad a la que pega cada riesgo** (código, nombre o inferida por su momento y su texto; ver [CRONOGRAMA.md](CRONOGRAMA.md#6-riesgos-y-actividades)). |
 | **Oro** (`oro.ict`, `oro.validacion`) | Índice de Criticidad Territorial por paquete con el **territorio real** (formulación en **[MODELO_ICT.md](MODELO_ICT.md)**): cinco criterios en escala fija con sus componentes y su valor crudo, confianza, oportunidad, tendencia, escalamiento a crisis (reglas de la RAM, del territorio sensible, de convergencia y de acciones vencidas) con sus **puntos de crisis** y **zonas de intervención**, mapa de calor (KDE de amenazas y de oportunidades), puntos calientes (Getis-Ord Gi* sobre la grilla), alertas, prueba de consistencia y sensibilidad de los pesos. |
 | **Ubicación** | Todo cae dentro de La Guajira y a tierra firme: puntos a más de ~2 km de la costa y la frontera; áreas, arroyos y vías enteros dentro. Los tres proyectos (norte, centro y sur) quedan en el punto más cercano a su zona donde cabe un círculo de ~21 km de radio, y sus paquetes dentro de él. Se usa el contorno `src/comun/contorno_guajira.wkt` (15 municipios del DANE, simplificados a ~1 km) para que los datos sintéticos se generen sin conexión y de forma reproducible. Un margen de 0,012° absorbe la simplificación, así que lo ubicado también queda dentro del límite oficial completo. |
 | **Supuestos** | La prueba de consistencia es **circular** (los materializados entran al ICT): confirma el mecanismo, no que pesos y criterios sean los correctos. El ICT se calcula "a la fecha de hoy" con la lluvia del IDEAM de los últimos 14 días; por eso corridas en días distintos dan resultados y tendencias distintos. Los topes de cada componente son supuestos de trabajo editables desde la vista *Ajustar*. |
@@ -413,6 +417,10 @@ decisiones viven en `parametros.yaml` → `ram` (si Ecopetrol entrega la versió
   - La conversión N=1 … VH=5 es práctica común, no la fija el instructivo.
   - Los controles solo bajan la probabilidad; no se modela la reducción de la consecuencia.
   - Las sugerencias del territorio no reemplazan el juicio del equipo: la RAM se califica por consenso de expertos.
+
+#### Cronograma por actividades (`oro.cronograma`)
+
+Cada actividad pesa en su paquete y cada paquete en su proyecto según su presupuesto; el avance, las fechas planeadas y las **proyectadas** y el atraso frente a la holgura se calculan hacia arriba desde las actividades. Escribe `cronograma_actividades.csv`, `cronograma_paquetes.csv` y `cronograma_proyectos.csv`. Formulación y supuestos: **[CRONOGRAMA.md](CRONOGRAMA.md)**.
 
 #### Riesgo de ejecución (`oro.ejecucion`)
 
@@ -477,13 +485,13 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 ## 8. Inventario de datos <small>(automático, de lo que hay hoy en `data/`)</small>
 
 <!-- AUTO:inventario -->
-**Bronce** (`data/bronze`): 503 archivos, 61.4 MB
+**Bronce** (`data/bronze`): 504 archivos, 61.3 MB
 
 <details><summary>Ver archivos</summary>
 
 | Artefacto | Archivo | Formato | Filas | Tamaño |
 |---|---|---|---:|---:|
-| `sinteticos` | `proyectos.geojson` | geojson | 3 | 9 KB |
+| `sinteticos` | `proyectos.geojson` | geojson | 3 | 10 KB |
 | `sinteticos` | `paquetes_trabajo.geojson` | geojson | 14 | 44 KB |
 | `sinteticos` | `comunidades.geojson` | geojson | 18 | 5 KB |
 | `sinteticos` | `areas_protegidas.geojson` | geojson | 6 | 19 KB |
@@ -492,14 +500,15 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `sinteticos` | `clima_sintetico.csv` | csv | 600 | 42 KB |
 | `sinteticos` | `registro_riesgos.xlsx` | xlsx | 212 | 41 KB |
 | `sinteticos` | `cronograma_paquetes.csv` | csv | 14 | 1 KB |
-| `sinteticos` | `clave_categorias_sinteticas.csv` | csv | 200 | 6 KB |
-| `ideam` | `ideam_estaciones.csv` | csv | 438 | 213 KB |
+| `sinteticos` | `actividades_cronograma.csv` | csv | 86 | 15 KB |
+| `sinteticos` | `clave_categorias_sinteticas.csv` | csv | 200 | 9 KB |
+| `ideam` | `ideam_estaciones.csv` | csv | 259 | 126 KB |
 | `ideam` | `ideam_meta.json` | json | 1 | 6 KB |
-| `ideam` | `ideam_normales.csv` | csv | 420 | 65 KB |
-| `ideam` | `ideam_precipitacion.parquet` | parquet | 68.400 | 234 KB |
+| `ideam` | `ideam_normales.csv` | csv | 420 | 66 KB |
+| `ideam` | `ideam_precipitacion.parquet` | parquet | 70.635 | 239 KB |
 | `ideam` | `ideam_radiacion.csv` | csv | 7 | 1 KB |
-| `ideam` | `ideam_ultimas_horas.parquet` | parquet | 3.303 | 34 KB |
-| `ideam` | `ideam_variables.parquet` | parquet | 204.330 | 767 KB |
+| `ideam` | `ideam_ultimas_horas.parquet` | parquet | 3.221 | 32 KB |
+| `ideam` | `ideam_variables.parquet` | parquet | 211.342 | 794 KB |
 | `invias` | `invias_meta.json` | json | 1 | 0 KB |
 | `invias` | `invias_red_vial.geojson` | geojson | 11 | 2.8 MB |
 | `vias_igac` | `igac_via_caminos.geojson` | geojson | 1.944 | 3.9 MB |
@@ -964,7 +973,7 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `social` | `ins_irca.csv` | csv | 257 | 20 KB |
 | `social` | `art_pdet.csv` | csv | 170 | 9 KB |
 | `social` | `social_meta.json` | json | 1 | 1 KB |
-| `resguardos` | `ant_resguardos.geojson` | geojson | 40 | 2.4 MB |
+| `resguardos` | `ant_resguardos.geojson` | geojson | 41 | 2.4 MB |
 | `resguardos` | `mininterior_resguardos_poblacion.csv` | csv | 31 | 2 KB |
 | `resguardos` | `resguardos_meta.json` | json | 1 | 1 KB |
 | `runap` | `runap_areas_protegidas.geojson` | geojson | 28 | 5.4 MB |
@@ -989,29 +998,30 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 
 </details>
 
-**Plata** (`data/silver`): 53 archivos, 14.8 MB
+**Plata** (`data/silver`): 54 archivos, 14.9 MB
 
 <details><summary>Ver archivos</summary>
 
 | Artefacto | Archivo | Formato | Filas | Tamaño |
 |---|---|---|---:|---:|
-| `sinteticos` | `riesgos.geojson` | geojson | 200 | 283 KB |
+| `sinteticos` | `riesgos.geojson` | geojson | 200 | 330 KB |
 | `sinteticos` | `paquetes.geojson` | geojson | 14 | 44 KB |
-| `sinteticos` | `proyectos.geojson` | geojson | 3 | 9 KB |
+| `sinteticos` | `proyectos.geojson` | geojson | 3 | 10 KB |
 | `sinteticos` | `comunidades.geojson` | geojson | 18 | 5 KB |
 | `sinteticos` | `areas.geojson` | geojson | 6 | 19 KB |
 | `sinteticos` | `hidro.geojson` | geojson | 8 | 3 KB |
 | `sinteticos` | `vias.geojson` | geojson | 10 | 2 KB |
 | `sinteticos` | `clima_sintetico.parquet` | parquet | 600 | 10 KB |
-| `sinteticos` | `cronograma.parquet` | parquet | 14 | 6 KB |
-| `sinteticos` | `reporte_calidad_bronce_a_plata.csv` | csv | 1 | 1 KB |
-| `ideam` | `ideam_estaciones.geojson` | geojson | 219 | 162 KB |
+| `sinteticos` | `cronograma.parquet` | parquet | 14 | 14 KB |
+| `sinteticos` | `actividades.parquet` | parquet | 84 | 17 KB |
+| `sinteticos` | `reporte_calidad_bronce_a_plata.csv` | csv | 1 | 2 KB |
+| `ideam` | `ideam_estaciones.geojson` | geojson | 259 | 191 KB |
 | `ideam` | `ideam_normales.parquet` | parquet | 101 | 24 KB |
-| `ideam` | `ideam_precip_diaria.parquet` | parquet | 335 | 5 KB |
+| `ideam` | `ideam_precip_diaria.parquet` | parquet | 351 | 5 KB |
 | `ideam` | `ideam_radiacion.parquet` | parquet | 7 | 13 KB |
-| `ideam` | `ideam_ultimas_horas.parquet` | parquet | 3.129 | 12 KB |
-| `ideam` | `ideam_variables_diaria.parquet` | parquet | 2.213 | 26 KB |
-| `ideam` | `ideam_variables_horaria.parquet` | parquet | 198.579 | 877 KB |
+| `ideam` | `ideam_ultimas_horas.parquet` | parquet | 3.063 | 12 KB |
+| `ideam` | `ideam_variables_diaria.parquet` | parquet | 2.335 | 27 KB |
+| `ideam` | `ideam_variables_horaria.parquet` | parquet | 205.598 | 883 KB |
 | `ideam` | `reporte_calidad_ideam.csv` | csv | 1 | 1 KB |
 | `ideam` | `proveniencia_ideam.json` | json | 1 | 6 KB |
 | `invias` | `invias_red_vial.geojson` | geojson | 9 | 16 KB |
@@ -1036,7 +1046,7 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `social` | `irca_anual.parquet` | parquet | 257 | 7 KB |
 | `social` | `reporte_calidad_social.csv` | csv | 1 | 0 KB |
 | `social` | `proveniencia_social.json` | json | 1 | 1 KB |
-| `resguardos` | `resguardos.geojson` | geojson | 38 | 232 KB |
+| `resguardos` | `resguardos.geojson` | geojson | 39 | 233 KB |
 | `resguardos` | `reporte_calidad_resguardos.csv` | csv | 1 | 0 KB |
 | `resguardos` | `proveniencia_resguardos.json` | json | 1 | 1 KB |
 | `runap` | `areas_protegidas_runap.geojson` | geojson | 25 | 473 KB |
@@ -1051,7 +1061,7 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 
 </details>
 
-**Oro** (`data/gold`): 32 archivos, 10.7 MB
+**Oro** (`data/gold`): 35 archivos, 10.8 MB
 
 <details><summary>Ver archivos</summary>
 
@@ -1059,11 +1069,11 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 |---|---|---|---:|---:|
 | `ict` | `paquetes_ict.geojson` | geojson | 14 | 69 KB |
 | `ict` | `grid_calor.geojson` | geojson | 686 | 200 KB |
-| `ict` | `alertas.json` | json | 6 | 9 KB |
-| `ict` | `puntos_crisis.geojson` | geojson | 19 | 15 KB |
-| `ict` | `zonas_intervencion.geojson` | geojson | 6 | 28 KB |
-| `ict` | `riesgos.geojson` | geojson | 200 | 307 KB |
-| `ict` | `proyectos.geojson` | geojson | 3 | 9 KB |
+| `ict` | `alertas.json` | json | 5 | 8 KB |
+| `ict` | `puntos_crisis.geojson` | geojson | 18 | 14 KB |
+| `ict` | `zonas_intervencion.geojson` | geojson | 5 | 25 KB |
+| `ict` | `riesgos.geojson` | geojson | 200 | 364 KB |
+| `ict` | `proyectos.geojson` | geojson | 3 | 10 KB |
 | `ict` | `comunidades.geojson` | geojson | 18 | 5 KB |
 | `ict` | `areas.geojson` | geojson | 6 | 19 KB |
 | `ict` | `hidro.geojson` | geojson | 8 | 3 KB |
@@ -1081,18 +1091,21 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `chirps` | `lluvia_chirps.json` | json | 1 | 31 KB |
 | `cobertura` | `cobertura_estaciones.geojson` | geojson | 160 | 239 KB |
 | `cobertura` | `cobertura_paquetes.csv` | csv | 84 | 6 KB |
-| `territorios` | `resguardos.geojson` | geojson | 38 | 216 KB |
+| `territorios` | `resguardos.geojson` | geojson | 39 | 217 KB |
 | `territorios` | `areas_protegidas_runap.geojson` | geojson | 25 | 443 KB |
 | `indicadores` | `indicadores_municipio.json` | json | 1 | 131 KB |
 | `contexto` | `contexto_paquetes.csv` | csv | 14 | 5 KB |
+| `cronograma` | `cronograma_actividades.csv` | csv | 84 | 21 KB |
+| `cronograma` | `cronograma_paquetes.csv` | csv | 14 | 3 KB |
+| `cronograma` | `cronograma_proyectos.csv` | csv | 3 | 1 KB |
 | `ejecucion` | `ejecucion_paquetes.csv` | csv | 14 | 4 KB |
 | `ejecucion` | `ejecucion_proyectos.csv` | csv | 3 | 0 KB |
-| `ejecucion` | `ejecucion_riesgos.csv` | csv | 168 | 27 KB |
+| `ejecucion` | `ejecucion_riesgos.csv` | csv | 168 | 36 KB |
 | `ejecucion` | `ejecucion_resumen.json` | json | 1 | 6 KB |
 
 </details>
 
-**Consumo** (`exports`): 28 archivos, 18.2 MB
+**Consumo** (`exports`): 35 archivos, 18.5 MB
 
 <details><summary>Ver archivos</summary>
 
@@ -1103,6 +1116,9 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `gis` | `areas_protegidas_sinteticas.geojson` | geojson |  | 19 KB |
 | `gis` | `comunidades_sinteticas.geojson` | geojson |  | 5 KB |
 | `gis` | `contexto_paquetes.geojson` | geojson |  | 57 KB |
+| `gis` | `cronograma_actividades.csv` | csv |  | 21 KB |
+| `gis` | `cronograma_paquetes.geojson` | geojson |  | 52 KB |
+| `gis` | `cronograma_proyectos.csv` | csv |  | 1 KB |
 | `gis` | `cuerpos_agua.geojson` | geojson |  | 306 KB |
 | `gis` | `estaciones_ideam.geojson` | geojson |  | 8 KB |
 | `gis` | `grid_calor.geojson` | geojson |  | 200 KB |
@@ -1111,20 +1127,24 @@ las reglas de capas (incluyendo que *detectan* los cruces prohibidos) y la consi
 | `gis` | `limite_departamental.geojson` | geojson |  | 127 KB |
 | `gis` | `municipios.geojson` | geojson |  | 376 KB |
 | `gis` | `paquetes_ict.geojson` | geojson |  | 69 KB |
-| `gis` | `proyectos.geojson` | geojson |  | 9 KB |
-| `gis` | `puntos_crisis.geojson` | geojson |  | 15 KB |
+| `gis` | `proyectos.geojson` | geojson |  | 10 KB |
+| `gis` | `puntos_crisis.geojson` | geojson |  | 14 KB |
 | `gis` | `red_vial.geojson` | geojson |  | 3.9 MB |
-| `gis` | `resguardos.geojson` | geojson |  | 232 KB |
-| `gis` | `reto5_piloto.gpkg` | gpkg |  | 7.5 MB |
+| `gis` | `resguardos.geojson` | geojson |  | 233 KB |
+| `gis` | `reto5_piloto.gpkg` | gpkg |  | 7.6 MB |
 | `gis` | `riesgo_ejecucion_paquetes.geojson` | geojson |  | 57 KB |
-| `gis` | `riesgos.geojson` | geojson |  | 303 KB |
+| `gis` | `riesgos.geojson` | geojson |  | 360 KB |
 | `gis` | `rios.geojson` | geojson |  | 4.5 MB |
 | `gis` | `vias_sinteticas.geojson` | geojson |  | 2 KB |
-| `gis` | `zonas_intervencion.geojson` | geojson |  | 28 KB |
+| `gis` | `zonas_intervencion.geojson` | geojson |  | 25 KB |
 | `alertas` | `boletin_2026-10-08.html` | html |  | 9 KB |
 | `alertas` | `boletin_2026-10-08.md` | md |  | 4 KB |
-| `alertas` | `historial.jsonl` | jsonl |  | 1 KB |
-| `alertas` | `novedades.json` | json | 1 | 2 KB |
+| `alertas` | `boletin_2026-10-13.html` | html |  | 8 KB |
+| `alertas` | `boletin_2026-10-13.md` | md |  | 4 KB |
+| `alertas` | `boletin_2026-10-14.html` | html |  | 8 KB |
+| `alertas` | `boletin_2026-10-14.md` | md |  | 4 KB |
+| `alertas` | `historial.jsonl` | jsonl |  | 3 KB |
+| `alertas` | `novedades.json` | json | 1 | 1 KB |
 | `alertas` | `ultima_tarea.json` | json | 1 | 0 KB |
 
 </details>

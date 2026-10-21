@@ -4,7 +4,7 @@ const D = { cat: null, params: null, capa: 'gold', sel: { gold: 'paquetes_ict.ge
 
 const ORDEN = [
   'riesgos', 'paquetes_ict', 'paquetes', 'alertas', 'puntos_crisis', 'zonas_intervencion', 'grid_calor', 'clima_estaciones', 'clima_sintetico',
-  'ejecucion_proyectos', 'ejecucion_paquetes', 'ejecucion_riesgos', 'ejecucion_resumen', 'cronograma',
+  'ejecucion_proyectos', 'ejecucion_paquetes', 'ejecucion_riesgos', 'ejecucion_resumen', 'cronograma', 'cronograma_proyectos', 'actividades',
   'contexto_paquetes', 'indicadores_municipio', 'indicadores_censo2018', 'irca_anual', 'dane_censo2018', 'ins_irca', 'art_pdet', 'social_meta', 'social_reporte_calidad',
   'resguardos', 'ant_resguardos', 'mininterior_resguardos_poblacion', 'resguardos_meta', 'resguardos_reporte_calidad',
   'areas_protegidas', 'runap_crudo', 'runap_meta', 'runap_reporte_calidad',
@@ -50,7 +50,7 @@ function renderFlujo() {
   document.getElementById('flujo').innerHTML = [
     etapa('', '<span class="chip white"><i data-lucide="sparkles"></i> Origen</span>', 'Dos orígenes',
       2, 'fuentes de datos', 'src/bronce/*.py', [
-        '<b>Sintético</b>: proyectos, paquetes, su cronograma y el registro de riesgos en Excel con texto libre (semilla 42, siempre igual)',
+        '<b>Sintético</b>: proyectos, paquetes, sus actividades con fechas y avance, y el registro de riesgos en Excel con texto libre (semilla 42; las fechas se cuentan desde el día en que se genera)',
         '<b>Real</b>: clima (IDEAM, CHIRPS), vías (INVIAS, IGAC), ríos (IGAC), municipios y censo (DANE), resguardos (ANT), áreas protegidas (RUNAP), delitos (MinDefensa) y emergencias (UNGRD), de fuentes abiertas sin clave',
       ]),
     etapa('bronce', '<span class="medal bronce">Bronce</span>', 'Datos crudos',
